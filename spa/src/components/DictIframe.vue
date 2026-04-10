@@ -98,8 +98,11 @@ function renderIframe() {
           iframeId: '${iframeId.value}',
           sound: href.replace('sound://', '')
         }, '*');
+      }else if (href.startsWith('http://localhost:9595/dict#')) {
+      // 允许跳转 dict# 开头的链接
       }
       else {
+        console.log("该链接被拦截：", href)
         e.preventDefault();
       }
     });
@@ -156,11 +159,3 @@ onUnmounted(() => {
   window.removeEventListener('message', messageListener) // 关键！
 })
 </script>
-
-<style scoped>
-.dict-iframe {
-  width: 100%;
-  border: none;
-  background: #fff;
-}
-</style>

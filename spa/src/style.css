@@ -1,0 +1,51 @@
+html {
+    box-sizing: border-box;
+}
+
+* {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+body {
+    overflow-x: hidden; /* 禁用水平滚动 */
+    overflow-y: auto; /* 保留垂直滚动（可选） */
+}
+
+body::-webkit-scrollbar-thumb {
+    background: var(--body-scrollbar-background);
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit; /* 继承html的box-sizing设置 */
+}
+
+
+::-webkit-scrollbar {
+    width: 7px;
+    margin: 0 auto;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+}
+
+#app {
+    /* font-family: Avenir, Helvetica, Arial, sans-serif; */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* text-align: center; */
+    margin-top: 0px;
+    height: 100vh;
+}
+
+.app-container {
+    height: 100vh;
+}
+
+.dict-iframe {
+  width: 100%;
+  border: none;
+}
