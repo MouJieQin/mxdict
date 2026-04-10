@@ -122,7 +122,7 @@ const autoHideScrollbar = () => {
 }
 
 const handleScroll = () => {
-    autoHideScrollbar()
+    // autoHideScrollbar()
 }
 
 </script>

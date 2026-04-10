@@ -1,10 +1,11 @@
-<!-- src/views/ChatLayout.vue -->
 <template>
     <!-- 自定义 macOS 标题栏（仅 macOS 显示，包含 Pin 置顶按钮） -->
     <div class="mxdict-titlebar">
-        <el-autocomplete v-model="keyword" :fetch-suggestions="querySearchAsync" placeholder="Please input"
-            @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter" @focus="handleFocus" clearable
-            hide-loading />
+        <div class="floating-window-titlebar">
+            <el-autocomplete class="floating-window-search" v-model="keyword" :fetch-suggestions="querySearchAsync"
+                placeholder="Please input" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
+                @focus="handleFocus" clearable hide-loading />
+        </div>
         <!-- <span class="floating-window-title">{{ title }}</span> -->
     </div>
 </template>
@@ -13,6 +14,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import { useRoute } from 'vue-router'
+import { Star, StarFilled, Pin, PinFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const props = defineProps({

@@ -55,7 +55,39 @@ body::-webkit-scrollbar-thumb {
     height: 100vh;
 }
 
+.main-content {
+  margin-top: 40px;
+}
+
 .dict-iframe {
   width: 100%;
   border: none;
+}
+
+
+.floating-window-titlebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    z-index: 9999;
+    -webkit-app-region: drag;
+    /* 允许拖动窗口 */
+    display: flex;
+    align-items: center;
+    padding-left: 70px;
+    background: var(--el-bg-color);
+    /* 留出系统红绿灯位置 */
+}
+
+.floating-window-search {
+    -webkit-app-region: no-drag;
+    max-width: 80%;
+    margin-left: 0;
+    padding: 0 10px;
+}
+
+.pin-button:hover {
+    opacity: 1;
 }

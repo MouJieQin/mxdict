@@ -2,6 +2,8 @@ import json
 import time
 import threading
 import asyncio
+from websockets.asyncio.client import ClientConnection
+
 
 from fastapi import WebSocket
 from libs.log_config import logger
@@ -15,6 +17,24 @@ mdict_searcher = MdictSearcher()
 
 class MessageHandler:
     """消息处理器，处理不同类型的WebSocket消息"""
+
+    @staticmethod
+    async def handle_command_message(command_type: str, data: dict) -> None:
+        """处理命令消息"""
+        if command_type == "toggle_dict_float_window":
+            pass
+        else:
+            logger.warning(f"未知的命令类型: {command_type}")
+
+    @staticmethod
+    async def handle_iwin_message(ws: ClientConnection, data: str):
+        """处理iWin消息"""
+        message = json.loads(data)
+        command_type = message["type"]
+        if command_type == "toggle_dict_float_window":
+            pass
+        else:
+            logger.warning(f"未知的iWin命令类型: {command_type}")
 
     @staticmethod
     async def handle_session_message(
