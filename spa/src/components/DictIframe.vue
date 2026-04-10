@@ -1,4 +1,5 @@
 <template>
+  <!-- {{ finalHtml }} -->
   <iframe ref="iframeRef" class="dict-iframe" frameborder="0" scrolling="no"
     sandbox="allow-scripts allow-same-origin"></iframe>
 </template>
@@ -19,6 +20,7 @@ const iframeRef = ref<HTMLIFrameElement | null>(null)
 const baseUrl = ref("http://localhost:5959/api/download?path=" + props.basePath)
 const emits = defineEmits(['entry-click'])
 const iframeId = ref(props.dictionaryRoot)
+const finalHtml = ref('')
 // ==============================================
 // 你要触发的 VUE 方法（在这里写业务逻辑）
 // ==============================================
@@ -54,11 +56,11 @@ function renderIframe() {
 
   // 1. 替换资源路径
   let html = props.html
-    // .replace(/sound:\//g, baseUrl.value)
+    .replace(/src=\"/g, 'src=\"' + baseUrl.value + "/")
     .replace(/file:\//g, baseUrl.value)
 
   // 2. 最终 HTML（关键：注入通信方法）
-  const finalHtml = `
+  finalHtml.value = `
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -107,7 +109,7 @@ function renderIframe() {
   `
 
   doc.open()
-  doc.write(finalHtml)
+  doc.write(finalHtml.value)
   doc.close()
 
   // 自动高度
@@ -146,7 +148,7 @@ const messageListener = (e: MessageEvent) => {
       });
     } catch (e) {
       console.log("🔊 播放音频：", soundPath); // 打开控制台看路径是否正确
-     }
+    }
   }
 }
 window.addEventListener('message', messageListener)
