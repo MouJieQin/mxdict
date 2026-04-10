@@ -1,24 +1,32 @@
 <template>
-  <!-- <dev>
-    {{ props.html }}
-  </dev> -->
   <iframe ref="iframeRef" class="dict-iframe" frameborder="0" scrolling="no"
     sandbox="allow-scripts allow-same-origin"></iframe>
 </template>
+
 <script setup lang="ts">
 import { ref, watch, nextTick, onUnmounted } from 'vue'
 
 interface Props {
-  html: string          // 词典返回的原始 HTML
-  cssUrl: string        // 词典 CSS URL
-  jsUrl: string         // 词典 JS URL
-  basePath: string      // 资源基础路径（音频/图片）
-  dictionaryRoot: string // 词典所在目录，如 /dictionaries/dic1/
+  html: string
+  cssUrl: string
+  jsUrl: string
+  basePath: string
+  dictionaryRoot: string
 }
 
 const props = defineProps<Props>()
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 const baseUrl = ref("http://localhost:5959/api/download?path=" + props.basePath)
+const emits = defineEmits(['entry-click'])
+const iframeId = ref(props.dictionaryRoot)
+// ==============================================
+// 你要触发的 VUE 方法（在这里写业务逻辑）
+// ==============================================
+function handleEntryClick(entryPath: string) {
+  console.log("✅ 收到 entry 点击：", entryPath)
+  // 在这里写你的逻辑：查询、跳转、渲染……
+  emits('entry-click', entryPath)
+}
 
 // 监听变化 → 刷新 iframe
 watch(
@@ -30,7 +38,6 @@ watch(
   { deep: true, immediate: true }
 )
 
-// 销毁时清理
 onUnmounted(() => {
   if (iframeRef.value) {
     iframeRef.value.srcdoc = ''
@@ -42,45 +49,54 @@ function renderIframe() {
   const iframe = iframeRef.value
   if (!iframe) return
 
-  // 获取 iframe document
   const doc = iframe.contentDocument || iframe.contentWindow?.document
   if (!doc) return
 
   // 1. 替换资源路径
   let html = props.html
-    .replace(/sound:\//g, baseUrl.value)
+    // .replace(/sound:\//g, baseUrl.value)
     .replace(/file:\//g, baseUrl.value)
-    // .replace(/entry:\/\//g, 'javascript:void(0)')
 
-  // 2. 拼接最终 HTML（修复转义 + 拼接错误）
+  // 2. 最终 HTML（关键：注入通信方法）
   const finalHtml = `
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">`.concat(
-    props.cssUrl !== '' ? `<link rel="stylesheet" href="http://localhost:5959/api/download?path=${props.cssUrl}">` : '').concat(
-      `</head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${props.cssUrl !== '' ? `<link rel="stylesheet" href="http://localhost:5959/api/download?path=${props.cssUrl}">` : ''}
+</head>
 <body>
-  ${html}`).concat(
-        props.jsUrl !== '' ? `<script src="http://localhost:5959/api/download?path=${props.jsUrl}" charset="UTF-8"><\/script>` : ''
-      ).concat(
-        `<script>
-    // 全局拦截点击：只允许播放音频
+  ${html}
+
+  ${props.jsUrl !== '' ? `<script src="http://localhost:5959/api/download?path=${props.jsUrl}" charset="UTF-8"><\/script>` : ''}
+
+  <script>
+    // 全局点击拦截 + 通信
     document.addEventListener('click', (e) => {
       const aTag = e.target.closest('a[href]');
       if (!aTag) return;
       const href = aTag.href || aTag.getAttribute('href');
 
-      // 发音链接：播放音频
-      if (href.startsWith('http://localhost:5959/api/download?path=')) {
+      // entry:// 链接 → 发送消息给外层 Vue
+      if (href.startsWith('entry://')) {
         e.preventDefault();
-        new Audio(href).play().catch(err => console.log('播放失败', err));
+        // ======================================
+        // 核心：发送消息给父页面（Vue 组件）
+        // ======================================
+        window.parent.postMessage({
+          type: 'ENTRY_CLICK',
+          iframeId: '${iframeId.value}',
+          entry: href.replace('entry://', '')
+        }, '*');
+      }else if (href.startsWith('sound://')) {
+          e.preventDefault();
+          window.parent.postMessage({
+          type: 'SOUND_CLICK',
+          iframeId: '${iframeId.value}',
+          sound: href.replace('sound://', '')
+        }, '*');
       }
-      else if (href.startsWith('entry://')) {
-        e.preventDefault();
-      }
-      // 其他所有链接：禁止跳转
       else {
         e.preventDefault();
       }
@@ -88,21 +104,55 @@ function renderIframe() {
   <\/script>
 </body>
 </html>
-  `)
+  `
 
-  // 3. 写入 iframe
   doc.open()
   doc.write(finalHtml)
   doc.close()
 
-  // 4. 自动高度（修复：立即执行 + 延时兜底）
+  // 自动高度
   const autoHeight = () => {
     if (!iframe.contentDocument) return
     iframe.style.height = iframe.contentDocument.body.scrollHeight + 50 + 'px'
   }
   iframe.onload = autoHeight
-  setTimeout(autoHeight, 100) // 延时兜底，解决 CSS 加载后高度变化
+  setTimeout(autoHeight, 50)
 }
+
+// ==============================================
+// 监听 iframe 发来的消息
+// ==============================================
+const messageListener = (e: MessageEvent) => {
+  // 只处理当前 iframe 发来的消息 ✅
+  if (e.data?.iframeId !== iframeId.value) return
+  if (e.data?.type === 'ENTRY_CLICK') {
+    try {
+      // 解码 URL 编码 → 正常文字
+      const realWord = decodeURIComponent(e.data.entry)
+      // 触发你的函数
+      handleEntryClick(realWord)
+    } catch (err) {
+      // 防止解码报错
+      handleEntryClick(e.data.entry)
+    }
+  } else if (e.data?.type === 'SOUND_CLICK') {
+    const soundPath = baseUrl.value + "/" + e.data.sound;
+    try {
+      const audio = new Audio(soundPath);
+      audio.play().catch(err => {
+        // 大部分情况是路径问题，不是浏览器不支持
+        console.warn("音频播放提示（可忽略）：", err);
+        console.log("🔊 播放音频：", soundPath); // 打开控制台看路径是否正确
+      });
+    } catch (e) {
+      console.log("🔊 播放音频：", soundPath); // 打开控制台看路径是否正确
+     }
+  }
+}
+window.addEventListener('message', messageListener)
+onUnmounted(() => {
+  window.removeEventListener('message', messageListener) // 关键！
+})
 </script>
 
 <style scoped>
