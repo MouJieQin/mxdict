@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
@@ -32,6 +32,7 @@ import DictIframe from '@/components/DictIframe.vue';
 const router = useRouter()
 
 const webSocket = ref<SessionWebSocketService | null>(null)
+const bodyScrollTimeoutId = ref<number | null>(null)
 let redirectWord = ref<string>('')
 let dictInfo = ref<any>(null)
 let lookupKeywordResult = ref<any>(null)
@@ -51,8 +52,13 @@ const setupWebSocket = () => {
 onMounted(() => {
     setupWebSocket()
     // window.addEventListener('keydown', handleKeydown)
+    window.addEventListener('scroll', handleScroll)
 })
 
+onUnmounted(() => {
+    // 移除滚动事件监听器，防止内存泄漏
+    window.removeEventListener('scroll', handleScroll)
+})
 
 router.beforeEach(async (to, from, next) => {
     // 关闭 WebSocket
@@ -64,7 +70,6 @@ onBeforeUnmount(() => {
     document.title = 'MXDict'
 
 })
-
 
 // 处理WebSocket消息
 const handleWebSocketMessage = (message: any) => {
@@ -101,4 +106,23 @@ const handleEntryClick = (entryPath: string) => {
     redirectWord.value = entryPath
     console.log('redirectWord.value:', redirectWord.value)
 }
+
+
+const autoHideScrollbar = () => {
+    if (bodyScrollTimeoutId.value) {
+        clearTimeout(bodyScrollTimeoutId.value)
+    }
+    const scrollbarBackground = getComputedStyle(document.documentElement)
+        .getPropertyValue('--scrollbar-background');
+    document.documentElement.style.setProperty('--body-scrollbar-background', scrollbarBackground)
+    bodyScrollTimeoutId.value = setTimeout(() => {
+        document.documentElement.style.setProperty('--body-scrollbar-background', 'rgba(0, 0, 0, 0)')
+        bodyScrollTimeoutId.value = null
+    }, 1000)
+}
+
+const handleScroll = () => {
+    autoHideScrollbar()
+}
+
 </script>

@@ -22,6 +22,16 @@ body::-webkit-scrollbar-thumb {
     box-sizing: inherit; /* 继承html的box-sizing设置 */
 }
 
+:root {
+    /* scrollbar */
+    --body-scrollbar-background: rgba(0, 0, 0, 0);
+    --scrollbar-background: rgba(217, 217, 217, 1);
+}
+
+.dark {
+    --scrollbar-background: rgba(107, 107, 107, 1);
+}
+
 
 ::-webkit-scrollbar {
     width: 7px;
