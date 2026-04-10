@@ -1,0 +1,14 @@
+# npm related
+./**/node_modules
+./**/dist
+
+./**/.DS_Store
+.DS_Store
+
+# python related
+./**/__pycache__
+
+
+# vscode related
+./**/.vscode
+
