@@ -62,8 +62,6 @@ async function renderIframe() {
     doc.head.appendChild(script)
   }
 
-  console.log("doc.head.innerHTML:", doc.head.innerHTML)
-
   // 注入一次全局点击监听
   injectClickHandler(doc)
 
@@ -71,6 +69,10 @@ async function renderIframe() {
 
   // 只更新内容，不重建整个 iframe
   doc.body.innerHTML = content
+  const p = doc.createElement('p')
+  p.textContent = "tail"
+  p.id = props.dictionaryRoot + '-dict-tail'
+  doc.body.appendChild(p)
   updateIframeHeight()
 }
 
@@ -130,6 +132,56 @@ watch(
   { deep: true, immediate: true }
 )
 
+// 🔥 自动高度（终极版，任何内容变化都能触发）
+let mutationObserver: MutationObserver | null = null
+const changedByThisCode = ref(false)
+
+watch(iframeRef, (val) => {
+  // 清理旧监听
+  if (mutationObserver) {
+    mutationObserver.disconnect()
+    mutationObserver = null
+  }
+  if (!val) return
+
+  nextTick(() => {
+    const doc = val.contentDocument
+    if (!doc) return
+
+    // ==========================================
+    // 🔥 监听 iframe 内部内容变化（变大变小都能触发）
+    // ==========================================
+    mutationObserver = new MutationObserver(() => {
+      console.log(props.dictionaryRoot, "**resizeObserver is triggered:", doc.documentElement.scrollHeight)
+      if (changedByThisCode.value) return
+      changedByThisCode.value = true
+
+      // 无论内容多少，直接取最新高度
+      const realHeight = doc.getElementById(`${props.dictionaryRoot}-dict-tail`)?.getBoundingClientRect().bottom || 0
+      console.log(props.dictionaryRoot, "**realHeight:", realHeight)
+      // 赋值给 iframe
+      val.style.height = `${realHeight + 30}px`
+
+      setTimeout(() => {
+        changedByThisCode.value = false
+      }, 100)
+    })
+
+    // 监听整个 body 的所有变化
+    mutationObserver.observe(doc.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      characterData: true
+    })
+  })
+}, { immediate: true })
+
+// 销毁时清理
+onUnmounted(() => {
+  mutationObserver?.disconnect()
+})
+
 // ================ 外层消息监听 ================
 const messageListener = (e: MessageEvent) => {
   if (e.data?.iframeId !== iframeId.value) return
@@ -152,6 +204,7 @@ const messageListener = (e: MessageEvent) => {
 window.addEventListener('message', messageListener)
 
 onUnmounted(() => {
+  mutationObserver?.disconnect()
   window.removeEventListener('message', messageListener)
   if (iframeRef.value) {
     iframeRef.value.srcdoc = ''

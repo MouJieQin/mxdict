@@ -3,19 +3,19 @@
         :redirectWord="redirectWord" />
     <div class="word-detail">
         <h1>음식</h1>
-        <!-- <el-collapse expand-icon-position="left"> -->
-        <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-            <!-- <el-collapse-item :title="dictName" :name="dictName" :isActive="true"> -->
-            {{ dictName }}
-            <div v-for="html in result" :key="html">
-                <el-divider />
-                <DictIframe :html="html" :css-url="dictInfo[dictName].css" :js-url="dictInfo[dictName].js"
-                    :base-path="dictInfo[dictName].data" :dictionary-root="dictInfo[dictName].root"
-                    @entry-click="handleEntryClick" />
+        <el-collapse expand-icon-position="left" v-model="activeNames">
+            <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
+                <el-collapse-item :title="dictName" :name="dictName" :isActive="true">
+                    <!-- {{ dictName }} -->
+                    <div v-for="html in result" :key="html">
+                        <el-divider />
+                        <DictIframe :html="html" :css-url="dictInfo[dictName].css" :js-url="dictInfo[dictName].js"
+                            :base-path="dictInfo[dictName].data" :dictionary-root="dictInfo[dictName].root"
+                            @entry-click="handleEntryClick" />
+                    </div>
+                </el-collapse-item>
             </div>
-            <!-- </el-collapse-item> -->
-            <!-- </el-collapse> -->
-        </div>
+        </el-collapse>
     </div>
 </template>
 
@@ -40,6 +40,8 @@ const redirectWord = ref<string>('')
 const dictInfo = ref<any>(null)
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
+
+const activeNames = ref<string[]>([])
 
 // 初始化WebSocket
 const setupWebSocket = () => {
@@ -102,6 +104,7 @@ const handleLookupKeyword = (data: any) => {
     const keyword = data.keyword
     document.title = keyword || 'MxDict'
     lookupKeywordResult.value = data.result
+    activeNames.value = Object.keys(data.result).map((key) => key)
     console.log('lookup_keyword', keyword, data)
 }
 

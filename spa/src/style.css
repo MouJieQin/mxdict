@@ -8,12 +8,12 @@ html {
 }
 
 body {
-    overflow-x: hidden; /* 禁用水平滚动 */
-    overflow-y: auto; /* 保留垂直滚动（可选） */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 body::-webkit-scrollbar-thumb {
-    background: var(--body-scrollbar-background);
+    background: var(--body-scrollbar-backgroqund);
 }
 
 *,
@@ -32,10 +32,9 @@ body::-webkit-scrollbar-thumb {
     --scrollbar-background: rgba(107, 107, 107, 1);
 }
 
-
 ::-webkit-scrollbar {
-    width: 7px;
-    margin: 0 auto;
+    /* width: 7px; */
+    /* margin: 0 auto; */
 }
 
 ::-webkit-scrollbar-thumb {
@@ -56,14 +55,13 @@ body::-webkit-scrollbar-thumb {
 }
 
 .main-content {
-  margin-top: 40px;
+    margin-top: 40px;
 }
 
 .dict-iframe {
-  width: 100%;
-  border: none;
+    width: 100%;
+    border: none;
 }
-
 
 .floating-window-titlebar {
     position: fixed;
