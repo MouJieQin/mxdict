@@ -76,9 +76,11 @@ async def command_command(request: CommandRequest):
 @app.websocket("/ws/dictionary/session/{clientID}")
 async def dictionary_session_websocket_endpoint(websocket: WebSocket, clientID: str):
     """Dictionary Session WebSocket端点"""
+    try:
+        session_id = int(clientID)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid session ID")
     await websocket.accept()
-
-    session_id = int(clientID)
     connection_id = int(time.time() * 1000)
     if session_id not in Utils.session_websockets:
         Utils.session_websockets[session_id] = {}
@@ -118,7 +120,7 @@ async def main_server():
     os.chdir(os.path.dirname(__file__))
 
     # 2. 后台启动 Electron WebSocket 客户端
-    asyncio.create_task(iwin_ws_client.connect())
+    # asyncio.create_task(iwin_ws_client.connect())
 
     # 3. 启动 FastAPI 服务器
     config = uvicorn.Config(
