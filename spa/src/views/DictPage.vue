@@ -1,5 +1,6 @@
 <template>
-    <Titlebar :webSocket="webSocket" title="MXDict" :wordOptions="wordOptions" :redirectWord="redirectWord" />
+    <Titlebar :webSocket="webSocket as SessionWebSocketService" title="MXDict" :wordOptions="wordOptions"
+        :redirectWord="redirectWord" />
     <div class="word-detail">
         <h1>음식</h1>
         <!-- <el-collapse expand-icon-position="left"> -->
@@ -19,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
@@ -33,26 +34,16 @@ const route = useRoute()
 const router = useRouter()
 
 const webSocket = ref<SessionWebSocketService | null>(null)
-const bodyScrollTimeoutId = ref<number | null>(null)
+// const bodyScrollTimeoutId = ref<number | null>(null)
 const sessionId = ref(-1)
-let redirectWord = ref<string>('')
-let dictInfo = ref<any>(null)
-let lookupKeywordResult = ref<any>(null)
-let wordOptions = ref<string[]>([])
-
-// 监听路由变化
-const watchRouteChange = () => {
-    watch(() => route.params.id, (newId) => {
-        const newSessionId = newId ? Number(newId) : -1
-        if (newSessionId !== sessionId.value) {
-            sessionId.value = newSessionId
-            setupWebSocket()
-        }
-    }, { immediate: true })
-}
+const redirectWord = ref<string>('')
+const dictInfo = ref<any>(null)
+const lookupKeywordResult = ref<any>(null)
+const wordOptions = ref<string[]>([])
 
 // 初始化WebSocket
 const setupWebSocket = () => {
+    sessionId.value = Number(route.params.id)
     webSocket.value = useSessionWebSocket(sessionId.value)
     if (webSocket.value) {
         webSocket.value.handleMessage = (message: any) => {
@@ -63,8 +54,7 @@ const setupWebSocket = () => {
 
 // 初始化
 onMounted(() => {
-    watchRouteChange()
-    // setupWebSocket()
+    setupWebSocket()
     // window.addEventListener('keydown', handleKeydown)
     window.addEventListener('scroll', handleScroll)
 })
@@ -74,7 +64,7 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll)
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (__, _, next) => {
     // 关闭 WebSocket
     webSocket.value?.close()
     next()
@@ -121,18 +111,6 @@ const handleEntryClick = (entryPath: string) => {
 }
 
 
-const autoHideScrollbar = () => {
-    if (bodyScrollTimeoutId.value) {
-        clearTimeout(bodyScrollTimeoutId.value)
-    }
-    const scrollbarBackground = getComputedStyle(document.documentElement)
-        .getPropertyValue('--scrollbar-background');
-    document.documentElement.style.setProperty('--body-scrollbar-background', scrollbarBackground)
-    bodyScrollTimeoutId.value = setTimeout(() => {
-        document.documentElement.style.setProperty('--body-scrollbar-background', 'rgba(0, 0, 0, 0)')
-        bodyScrollTimeoutId.value = null
-    }, 1000)
-}
 
 const handleScroll = () => {
     // autoHideScrollbar()

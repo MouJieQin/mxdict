@@ -13,13 +13,10 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
-import { useRoute } from 'vue-router'
-import { Star, StarFilled, Pin, PinFilled } from '@element-plus/icons-vue'
 
-const route = useRoute()
 const props = defineProps({
     webSocket: {
-        type: SessionWebSocketService,
+        type: [SessionWebSocketService, null],
         required: true
     },
     title: {
@@ -40,7 +37,8 @@ const props = defineProps({
 
 const keyword = ref('')
 // 定义与ref同名的变量
-const autoCompleteRef = ref(null)
+import type { ElAutocomplete } from 'element-plus'
+const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
 
 // 用来存储定时器 ID（关键）
 let searchTimer: number | null = null
@@ -119,8 +117,8 @@ const lookupKeyword = () => {
 
 const handleEnter = (e: KeyboardEvent) => {
     e.preventDefault()
-    lookupKeyword()
-    autoCompleteRef.value?.close()
+    lookupKeyword();
+    (autoCompleteRef.value as InstanceType<typeof ElAutocomplete> | null)?.close()
 
     console.log("handleEnter:", keyword.value)
 }
@@ -132,7 +130,7 @@ const handleSelect = (item: Record<string, any>) => {
 
 const handleFocus = (e: FocusEvent) => {
     // 拿到原生 input 元素并全选
-    e.target.select()
+    (e.target as HTMLInputElement).select()
 }
 
 
