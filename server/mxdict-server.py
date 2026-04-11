@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from starlette.responses import FileResponse
 from pathlib import Path
-
+from urllib.parse import unquote
 
 # from libs.mdict_query.mdict_query import IndexBuilder
 from libs.log_config import logger
@@ -48,6 +48,7 @@ app.add_middleware(
 
 @app.get("/api/download")
 async def download(path: str):
+    path = unquote(path)
     logger.info(f"download path: {path}")
     # path = Utils.DATA_PATH + path
     if not os.path.isfile(path):

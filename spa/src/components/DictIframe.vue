@@ -1,15 +1,10 @@
 <template>
-  <iframe
-    ref="iframeRef"
-    class="dict-iframe"
-    frameborder="0"
-    scrolling="no"
-    sandbox="allow-scripts allow-same-origin"
-  ></iframe>
+  <iframe ref="iframeRef" class="dict-iframe" frameborder="0" scrolling="no"
+    sandbox="allow-scripts allow-same-origin"></iframe>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onUnmounted, shallowRef } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 
 interface Props {
   html: string
@@ -24,17 +19,9 @@ const props = defineProps<Props>()
 const emits = defineEmits(['entry-click'])
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
-const baseUrl = ref(`http://localhost:5959/api/download?path=${props.basePath}`)
+const API_PREFIX = 'http://localhost:5959/api/download?path='
+const baseUrl = ref(`${API_PREFIX}${props.basePath}`)
 const iframeId = ref(props.dictionaryRoot)
-
-// ================ 缓存 ================
-// 缓存已渲染过的词条 HTML
-const htmlCache = ref<Record<string, string>>({})
-// 音频缓存
-const audioCache = shallowRef<Record<string, HTMLAudioElement>>({})
-
-// ================ 只加载一次标记 ================
-const hasLoadedCssJs = ref(false)
 
 // ================ 业务逻辑 ================
 function handleEntryClick(entryPath: string) {
@@ -50,50 +37,37 @@ async function renderIframe() {
   const doc = iframe.contentDocument || iframe.contentWindow?.document
   if (!doc) return
 
-  // 缓存 key：用 currentWord 最好，没有就用 html 本身
-  const cacheKey = props.currentWord ?? props.html
-
-  // 命中缓存 → 直接秒渲染
-  if (htmlCache.value[cacheKey]) {
-    doc.body.innerHTML = htmlCache.value[cacheKey]
-    updateIframeHeight()
-    return
-  }
-
   // 处理资源路径
   let content = props.html
     .replace(/src=\"/g, `src="${baseUrl.value}/`)
     .replace(/file:\//g, baseUrl.value)
 
-  // 写入缓存
-  htmlCache.value[cacheKey] = content
 
   // 只在第一次加载 CSS/JS
-  if (!hasLoadedCssJs.value) {
-    doc.body.innerHTML = ''
+  doc.body.innerHTML = ''
 
-    // CSS
-    if (props.cssUrl) {
-      const link = doc.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = `http://localhost:5959/api/download?path=${props.cssUrl}`
-      doc.head.appendChild(link)
-    }
-
-    // JS
-    if (props.jsUrl) {
-      const script = doc.createElement('script')
-      script.src = `http://localhost:5959/api/download?path=${props.jsUrl}`
-      script.charset = 'UTF-8'
-      doc.body.appendChild(script)
-    }
-
-    // 注入一次全局点击监听
-    injectClickHandler(doc)
-
-    hasLoadedCssJs.value = true
-    await nextTick()
+  // CSS
+  if (props.cssUrl) {
+    const link = doc.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = `${API_PREFIX}${props.cssUrl}`
+    doc.head.appendChild(link)
   }
+
+  // JS
+  if (props.jsUrl) {
+    const script = doc.createElement('script')
+    script.src = `${API_PREFIX}${props.jsUrl}`
+    script.charset = 'UTF-8'
+    doc.head.appendChild(script)
+  }
+
+  console.log("doc.head.innerHTML:", doc.head.innerHTML)
+
+  // 注入一次全局点击监听
+  injectClickHandler(doc)
+
+  await nextTick()
 
   // 只更新内容，不重建整个 iframe
   doc.body.innerHTML = content
@@ -169,14 +143,7 @@ const messageListener = (e: MessageEvent) => {
   }
   else if (e.data?.type === 'SOUND_CLICK') {
     const soundUrl = `${baseUrl.value}/${e.data.sound}`
-
-    // 音频缓存
-    let audio = audioCache.value[soundUrl]
-    if (!audio) {
-      audio = new Audio(soundUrl)
-      audioCache.value[soundUrl] = audio
-    }
-
+    const audio = new Audio(soundUrl)
     audio.currentTime = 0
     audio.play().catch(err => console.warn('播放失败', err))
   }
