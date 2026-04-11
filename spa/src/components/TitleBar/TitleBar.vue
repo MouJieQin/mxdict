@@ -2,9 +2,11 @@
     <!-- 自定义 macOS 标题栏（仅 macOS 显示，包含 Pin 置顶按钮） -->
     <div class="mxdict-titlebar">
         <div class="floating-window-titlebar">
-            <el-autocomplete class="floating-window-search" v-model="keyword" :fetch-suggestions="querySearchAsync"
-                placeholder="Please input" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
-                @focus="handleFocus" clearable hide-loading />
+            <div class="floating-window-search-container">
+                <el-autocomplete class="floating-window-search" v-model="keyword" :fetch-suggestions="querySearchAsync"
+                    placeholder="Please input" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
+                    @focus="handleFocus" clearable hide-loading />
+            </div>
         </div>
         <!-- <span class="floating-window-title">{{ title }}</span> -->
     </div>

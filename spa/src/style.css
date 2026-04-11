@@ -79,9 +79,15 @@ body::-webkit-scrollbar-thumb {
     /* 留出系统红绿灯位置 */
 }
 
+.floating-window-search-container {
+    /* position: relative; */
+    /* max-width: 100%; */
+    /* -webkit-app-region: drag; */
+}
+
 .floating-window-search {
     -webkit-app-region: no-drag;
-    max-width: 80%;
+    /* width: 100%; */
     margin-left: 0;
     padding: 0 10px;
 }
