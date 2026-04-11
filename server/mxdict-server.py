@@ -33,7 +33,6 @@ from libs.message_handler import MessageHandler
 from libs.websocket_client import WsClient
 
 
-
 # 配置应用
 app = FastAPI(
     title="Dictionary API Server", description="WebSocket-based dictionary API server"
@@ -74,37 +73,41 @@ async def command_command(request: CommandRequest):
     return {"success": res}
 
 
-@app.websocket("/ws/dictionary/session")
-async def dictionary_session_websocket_endpoint(websocket: WebSocket):
+@app.websocket("/ws/dictionary/session/{clientID}")
+async def dictionary_session_websocket_endpoint(websocket: WebSocket, clientID: str):
     """Dictionary Session WebSocket端点"""
     await websocket.accept()
+
+    session_id = int(clientID)
     connection_id = int(time.time() * 1000)
-    Utils.session_websockets[connection_id] = websocket
+    if session_id not in Utils.session_websockets:
+        Utils.session_websockets[session_id] = {}
+    Utils.session_websockets[session_id][connection_id] = websocket
 
     try:
-        await SessionManager.send_dict_info_to_session(connection_id)
+        await SessionManager.send_dict_info_to_session(session_id, connection_id)
         while True:
-            data = await websocket.receive_text()
-            await MessageHandler.handle_session_message(websocket, connection_id, data)
+            text = await websocket.receive_text()
+            await MessageHandler.handle_session_message(
+                websocket, session_id, connection_id, text
+            )
 
     except WebSocketDisconnect:
-        logger.info(f"SPA WebSocket断开连接")
+        logger.info(f"session {session_id} WebSocket断开连接")
     except Exception as e:
-        logger.error(f"SPA WebSocket错误: {e}", exc_info=True)
+        logger.error(f"session {session_id} WebSocket错误: {e}", exc_info=True)
     finally:
-        if connection_id in Utils.spa_websockets:
-            del Utils.spa_websockets[connection_id]
-
-
-
+        if connection_id in Utils.session_websockets[session_id]:
+            del Utils.session_websockets[session_id][connection_id]
 
 
 # ==============================================
 # WebSocket Client 连接 iWin 服务器
 # ==============================================
 # 全局单例（整个程序共用一个连接）
-iwin_ws_client = WsClient("ws://localhost:9999/ws/mxdict", MessageHandler.handle_iwin_message)
-
+iwin_ws_client = WsClient(
+    "ws://localhost:9999/ws/mxdict", MessageHandler.handle_iwin_message
+)
 
 
 # ==============================================
@@ -126,6 +129,7 @@ async def main_server():
     )
     server = uvicorn.Server(config)
     await server.serve()
+
 
 if __name__ == "__main__":
     asyncio.run(main_server())

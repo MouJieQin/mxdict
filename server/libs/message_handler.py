@@ -38,7 +38,7 @@ class MessageHandler:
 
     @staticmethod
     async def handle_session_message(
-        websocket: WebSocket, session_id: int, message_text: str
+        websocket: WebSocket, session_id: int, connection_id: int, message_text: str
     ):
         """处理会话WebSocket消息"""
         try:
@@ -52,7 +52,9 @@ class MessageHandler:
             }
 
             if message_type in handlers:
-                await handlers[message_type](websocket, session_id, message)
+                await handlers[message_type](
+                    websocket, session_id, connection_id, message
+                )
             else:
                 logger.warning(f"未知的会话消息类型: {message_type}")
 
@@ -61,7 +63,7 @@ class MessageHandler:
 
     @staticmethod
     async def _handle_toggle_float_pin(
-        websocket: WebSocket, session_id: int, message: dict
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         url = "http://localhost:3999" + message["data"]["full_path"]
         msg = {
@@ -71,11 +73,13 @@ class MessageHandler:
                 "session_id": session_id,
             },
         }
-        await SessionManager.send_msg_to_session_by_id(session_id, json.dumps(msg))
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
 
     @staticmethod
     async def _handle_keyword_options_search(
-        websocket: WebSocket, session_id: int, message: dict
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         keyword = message["data"]["keyword"]
         options = mdict_searcher.keyword_options_search(keyword)
@@ -86,10 +90,14 @@ class MessageHandler:
                 "options": options,
             },
         }
-        await SessionManager.send_msg_to_session_by_id(session_id, json.dumps(msg))
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
 
     @staticmethod
-    async def _handle_lookup(websocket: WebSocket, session_id: int, message: dict):
+    async def _handle_lookup(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
         keyword = message["data"]["keyword"]
         results = mdict_searcher.mdx_lookup(keyword)
         msg = {
@@ -99,4 +107,6 @@ class MessageHandler:
                 "result": results,
             },
         }
-        await SessionManager.send_msg_to_session_by_id(session_id, json.dumps(msg))
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
