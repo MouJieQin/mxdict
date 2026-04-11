@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
@@ -29,18 +29,31 @@ import DictIframe from '@/components/DictIframe.vue';
 
 
 // 路由与状态
+const route = useRoute()
 const router = useRouter()
 
 const webSocket = ref<SessionWebSocketService | null>(null)
 const bodyScrollTimeoutId = ref<number | null>(null)
+const sessionId = ref(-1)
 let redirectWord = ref<string>('')
 let dictInfo = ref<any>(null)
 let lookupKeywordResult = ref<any>(null)
 let wordOptions = ref<string[]>([])
 
+// 监听路由变化
+const watchRouteChange = () => {
+    watch(() => route.params.id, (newId) => {
+        const newSessionId = newId ? Number(newId) : -1
+        if (newSessionId !== sessionId.value) {
+            sessionId.value = newSessionId
+            setupWebSocket()
+        }
+    }, { immediate: true })
+}
+
 // 初始化WebSocket
 const setupWebSocket = () => {
-    webSocket.value = useSessionWebSocket()
+    webSocket.value = useSessionWebSocket(sessionId.value)
     if (webSocket.value) {
         webSocket.value.handleMessage = (message: any) => {
             handleWebSocketMessage(message)
@@ -50,7 +63,8 @@ const setupWebSocket = () => {
 
 // 初始化
 onMounted(() => {
-    setupWebSocket()
+    watchRouteChange()
+    // setupWebSocket()
     // window.addEventListener('keydown', handleKeydown)
     window.addEventListener('scroll', handleScroll)
 })
@@ -67,8 +81,7 @@ router.beforeEach(async (to, from, next) => {
 })
 
 onBeforeUnmount(() => {
-    document.title = 'MXDict'
-
+    document.title = 'MxDict'
 })
 
 // 处理WebSocket消息

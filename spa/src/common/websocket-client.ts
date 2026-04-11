@@ -1,13 +1,13 @@
 import { ref } from 'vue';
 
 // WebSocket 状态枚举
-enum WebSocketStatus {
-    CONNECTING = 'connecting',
-    OPEN = 'open',
-    CLOSING = 'closing',
-    CLOSED = 'closed',
-    ERROR = 'error'
-}
+const WebSocketStatus = {
+    CONNECTING: 'connecting',
+    OPEN: 'open',
+    CLOSING: 'closing',
+    CLOSED: 'closed',
+    ERROR: 'error'
+} as const;
 
 // // 自定义消息类型，根据实际后端协议调整
 // type WebSocketMessage = {
@@ -17,7 +17,7 @@ enum WebSocketStatus {
 
 class WebSocketService {
     private socket: WebSocket | null = null;
-    private status = ref<WebSocketStatus>(WebSocketStatus.CLOSED);
+    private status = ref<typeof WebSocketStatus[keyof typeof WebSocketStatus]>(WebSocketStatus.CLOSED);
     private reconnectInterval: number | null = null; // 重连定时器
     private url: string; // WebSocket 服务器地址
     private isClosedByUser: boolean = false;

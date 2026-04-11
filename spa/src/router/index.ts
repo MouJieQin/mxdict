@@ -9,7 +9,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/DictLayout.vue'),
         children: [
             {
-                path: 'dict',
+                path: 'dict/:id',
                 name: 'Dict',
                 component: Dict
             }
