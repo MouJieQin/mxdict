@@ -1,11 +1,15 @@
 <template>
-  <!-- {{ finalHtml }} -->
-  <iframe ref="iframeRef" class="dict-iframe" frameborder="0" scrolling="no"
-    sandbox="allow-scripts allow-same-origin"></iframe>
+  <iframe
+    ref="iframeRef"
+    class="dict-iframe"
+    frameborder="0"
+    scrolling="no"
+    sandbox="allow-scripts allow-same-origin"
+  ></iframe>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onUnmounted, shallowRef } from 'vue'
 
 interface Props {
   html: string
@@ -13,26 +17,137 @@ interface Props {
   jsUrl: string
   basePath: string
   dictionaryRoot: string
+  currentWord?: string // 如果你有当前单词，传进来做缓存 key
 }
 
 const props = defineProps<Props>()
-const iframeRef = ref<HTMLIFrameElement | null>(null)
-const baseUrl = ref("http://localhost:5959/api/download?path=" + props.basePath)
 const emits = defineEmits(['entry-click'])
+
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+const baseUrl = ref(`http://localhost:5959/api/download?path=${props.basePath}`)
 const iframeId = ref(props.dictionaryRoot)
-const finalHtml = ref('')
-// ==============================================
-// 你要触发的 VUE 方法（在这里写业务逻辑）
-// ==============================================
+
+// ================ 缓存 ================
+// 缓存已渲染过的词条 HTML
+const htmlCache = ref<Record<string, string>>({})
+// 音频缓存
+const audioCache = shallowRef<Record<string, HTMLAudioElement>>({})
+
+// ================ 只加载一次标记 ================
+const hasLoadedCssJs = ref(false)
+
+// ================ 业务逻辑 ================
 function handleEntryClick(entryPath: string) {
-  console.log("✅ 收到 entry 点击：", entryPath)
-  // 在这里写你的逻辑：查询、跳转、渲染……
+  console.log('✅ 点击词条:', entryPath)
   emits('entry-click', entryPath)
 }
 
-// 监听变化 → 刷新 iframe
+// ================ 核心渲染（极速版） ================
+async function renderIframe() {
+  const iframe = iframeRef.value
+  if (!iframe) return
+
+  const doc = iframe.contentDocument || iframe.contentWindow?.document
+  if (!doc) return
+
+  // 缓存 key：用 currentWord 最好，没有就用 html 本身
+  const cacheKey = props.currentWord ?? props.html
+
+  // 命中缓存 → 直接秒渲染
+  if (htmlCache.value[cacheKey]) {
+    doc.body.innerHTML = htmlCache.value[cacheKey]
+    updateIframeHeight()
+    return
+  }
+
+  // 处理资源路径
+  let content = props.html
+    .replace(/src=\"/g, `src="${baseUrl.value}/`)
+    .replace(/file:\//g, baseUrl.value)
+
+  // 写入缓存
+  htmlCache.value[cacheKey] = content
+
+  // 只在第一次加载 CSS/JS
+  if (!hasLoadedCssJs.value) {
+    doc.body.innerHTML = ''
+
+    // CSS
+    if (props.cssUrl) {
+      const link = doc.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = `http://localhost:5959/api/download?path=${props.cssUrl}`
+      doc.head.appendChild(link)
+    }
+
+    // JS
+    if (props.jsUrl) {
+      const script = doc.createElement('script')
+      script.src = `http://localhost:5959/api/download?path=${props.jsUrl}`
+      script.charset = 'UTF-8'
+      doc.body.appendChild(script)
+    }
+
+    // 注入一次全局点击监听
+    injectClickHandler(doc)
+
+    hasLoadedCssJs.value = true
+    await nextTick()
+  }
+
+  // 只更新内容，不重建整个 iframe
+  doc.body.innerHTML = content
+  updateIframeHeight()
+}
+
+// ================ 点击事件只注入一次 ================
+function injectClickHandler(doc: Document) {
+  const script = doc.createElement('script')
+  script.textContent = `
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href]');
+      if (!a) return;
+      const href = a.href || a.getAttribute('href');
+
+      if (href.startsWith('entry://')) {
+        e.preventDefault();
+        window.parent.postMessage({
+          type: 'ENTRY_CLICK',
+          iframeId: '${iframeId.value}',
+          entry: href.replace('entry://', '')
+        }, '*');
+      }
+      else if (href.startsWith('sound://')) {
+        e.preventDefault();
+        window.parent.postMessage({
+          type: 'SOUND_CLICK',
+          iframeId: '${iframeId.value}',
+          sound: href.replace('sound://', '')
+        }, '*');
+      }
+      else if (href.startsWith('http://localhost:9595/dict#')) {
+        // 放行
+      }
+      else {
+        e.preventDefault();
+        console.log('拦截链接:', href);
+      }
+    });
+  `
+  doc.body.appendChild(script)
+}
+
+// ================ 高度自适应 ================
+function updateIframeHeight() {
+  const iframe = iframeRef.value
+  if (!iframe?.contentDocument) return
+  const h = iframe.contentDocument.body.scrollHeight
+  iframe.style.height = `${h + 30}px`
+}
+
+// ================ 监听变化 ================
 watch(
-  () => [props.html, props.cssUrl, props.jsUrl, props.basePath],
+  () => [props.html, props.basePath],
   async () => {
     await nextTick()
     renderIframe()
@@ -40,122 +155,45 @@ watch(
   { deep: true, immediate: true }
 )
 
+// ================ 外层消息监听 ================
+const messageListener = (e: MessageEvent) => {
+  if (e.data?.iframeId !== iframeId.value) return
+
+  if (e.data?.type === 'ENTRY_CLICK') {
+    try {
+      handleEntryClick(decodeURIComponent(e.data.entry))
+    } catch {
+      handleEntryClick(e.data.entry)
+    }
+  }
+  else if (e.data?.type === 'SOUND_CLICK') {
+    const soundUrl = `${baseUrl.value}/${e.data.sound}`
+
+    // 音频缓存
+    let audio = audioCache.value[soundUrl]
+    if (!audio) {
+      audio = new Audio(soundUrl)
+      audioCache.value[soundUrl] = audio
+    }
+
+    audio.currentTime = 0
+    audio.play().catch(err => console.warn('播放失败', err))
+  }
+}
+
+window.addEventListener('message', messageListener)
+
 onUnmounted(() => {
+  window.removeEventListener('message', messageListener)
   if (iframeRef.value) {
     iframeRef.value.srcdoc = ''
   }
 })
-
-// 核心：渲染 iframe
-function renderIframe() {
-  const iframe = iframeRef.value
-  if (!iframe) return
-
-  const doc = iframe.contentDocument || iframe.contentWindow?.document
-  if (!doc) return
-
-  // 1. 替换资源路径
-  let html = props.html
-    .replace(/src=\"/g, 'src=\"' + baseUrl.value + "/")
-    .replace(/file:\//g, baseUrl.value)
-
-  // 2. 最终 HTML（关键：注入通信方法）
-  finalHtml.value = `
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${props.cssUrl !== '' ? `<link rel="stylesheet" href="http://localhost:5959/api/download?path=${props.cssUrl}">` : ''}
-</head>
-<body>
-  ${html}
-
-  ${props.jsUrl !== '' ? `<script src="http://localhost:5959/api/download?path=${props.jsUrl}" charset="UTF-8"><\/script>` : ''}
-
-  <script>
-    // 全局点击拦截 + 通信
-    document.addEventListener('click', (e) => {
-      const aTag = e.target.closest('a[href]');
-      if (!aTag) return;
-      const href = aTag.href || aTag.getAttribute('href');
-
-      // entry:// 链接 → 发送消息给外层 Vue
-      if (href.startsWith('entry://')) {
-        e.preventDefault();
-        // ======================================
-        // 核心：发送消息给父页面（Vue 组件）
-        // ======================================
-        window.parent.postMessage({
-          type: 'ENTRY_CLICK',
-          iframeId: '${iframeId.value}',
-          entry: href.replace('entry://', '')
-        }, '*');
-      }else if (href.startsWith('sound://')) {
-          e.preventDefault();
-          window.parent.postMessage({
-          type: 'SOUND_CLICK',
-          iframeId: '${iframeId.value}',
-          sound: href.replace('sound://', '')
-        }, '*');
-      }else if (href.startsWith('http://localhost:9595/dict#')) {
-      // 允许跳转 dict# 开头的链接
-      }
-      else {
-        console.log("该链接被拦截：", href)
-        e.preventDefault();
-      }
-    });
-  <\/script>
-</body>
-</html>
-  `
-
-  doc.open()
-  doc.write(finalHtml.value)
-  doc.close()
-
-  // 自动高度
-  const autoHeight = () => {
-    if (!iframe.contentDocument) return
-    iframe.style.height = iframe.contentDocument.body.scrollHeight + 50 + 'px'
-  }
-  iframe.onload = autoHeight
-  setTimeout(autoHeight, 50)
-}
-
-// ==============================================
-// 监听 iframe 发来的消息
-// ==============================================
-const messageListener = (e: MessageEvent) => {
-  // 只处理当前 iframe 发来的消息 ✅
-  if (e.data?.iframeId !== iframeId.value) return
-  if (e.data?.type === 'ENTRY_CLICK') {
-    try {
-      // 解码 URL 编码 → 正常文字
-      const realWord = decodeURIComponent(e.data.entry)
-      // 触发你的函数
-      handleEntryClick(realWord)
-    } catch (err) {
-      // 防止解码报错
-      handleEntryClick(e.data.entry)
-    }
-  } else if (e.data?.type === 'SOUND_CLICK') {
-    const soundPath = baseUrl.value + "/" + e.data.sound;
-    try {
-      const audio = new Audio(soundPath);
-      audio.play().catch(err => {
-        // 大部分情况是路径问题，不是浏览器不支持
-        console.warn("音频播放提示（可忽略）：", err);
-        console.log("🔊 播放音频：", soundPath); // 打开控制台看路径是否正确
-      });
-    } catch (e) {
-      console.log("🔊 播放音频：", soundPath); // 打开控制台看路径是否正确
-    }
-  }
-}
-window.addEventListener('message', messageListener)
-onUnmounted(() => {
-  window.removeEventListener('message', messageListener) // 关键！
-})
 </script>
+
+<style scoped>
+.dict-iframe {
+  width: 100%;
+  border: none;
+}
+</style>
