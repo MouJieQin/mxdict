@@ -2,6 +2,7 @@
 # _*_coding:utf-8_*_
 
 import json
+import signal
 import os
 import time
 import asyncio
@@ -26,7 +27,6 @@ from urllib.parse import unquote
 
 # from libs.mdict_query.mdict_query import IndexBuilder
 from libs.log_config import logger
-from libs.mdict_searcher import MdictSearcher
 from libs.common import Utils
 from libs.session_manager import SessionManager
 from libs.message_handler import MessageHandler
@@ -52,13 +52,32 @@ async def download(path: str):
     logger.info(f"download path: {path}")
     # path = Utils.DATA_PATH + path
     if not os.path.isfile(path):
-        raise HTTPException(status_code=400, detail="Not a file or does not exist")
+        raise HTTPException(status_code=400, detail="Is not a file or does not exist")
 
     fr = FileResponse(
         path=path,
         filename=Path(path).name,
     )
     return fr
+
+
+# ==============================================
+# WebSocket Client 连接 iWin 服务器
+# ==============================================
+# 全局单例（整个程序共用一个连接）
+iwin_ws_client = WsClient(
+    "ws://localhost:9999/ws/mxdict", MessageHandler.handle_iwin_message
+)
+
+
+# curl -X GET "http://localhost:8000/api/connectiwin"
+@app.get("/api/connectiwin")
+async def connectiwin():
+    if iwin_ws_client.is_connected():
+        return {"status": "connected"}
+    # 🔥 关键：用 create_task 后台启动，不阻塞接口
+    asyncio.create_task(iwin_ws_client.connect())
+    return {"status": "connecting"}
 
 
 class CommandRequest(BaseModel):
@@ -104,50 +123,30 @@ async def dictionary_session_websocket_endpoint(websocket: WebSocket, clientID: 
             del Utils.session_websockets[session_id][connection_id]
 
 
-# ==============================================
-# WebSocket Client 连接 iWin 服务器
-# ==============================================
-# 全局单例（整个程序共用一个连接）
-iwin_ws_client = WsClient(
-    "ws://localhost:9999/ws/mxdict", MessageHandler.handle_iwin_message
-)
 
+# ================= 正确的信号处理 =================
+def signal_handler(sig, frame):
+    logger.info("🛑 Ctrl+C 退出，正在关闭所有连接...")
+    # 同步调用停止重连
+    iwin_ws_client.set_do_not_retry()
+    logger.info("✅ 所有连接已关闭，程序退出")
+    os._exit(0)  # 强制安全退出
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 # ==============================================
-# 启动应用（同时启动 WebSocket 客户端）
+# 启动应用
 # ==============================================
-async def main_server():
-    # 1. 初始化
+if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
+    # 初始化会话
+    # SessionManager.initialize_sessions()
 
-    # 2. 后台启动 Electron WebSocket 客户端
-    # asyncio.create_task(iwin_ws_client.connect())
-
-    # 3. 启动 FastAPI 服务器
-    config = uvicorn.Config(
+    # 启动服务器
+    uvicorn.run(
         app="mxdict-server:app",
         host="localhost",
         port=5959,
         reload=False,
     )
-    server = uvicorn.Server(config)
-    await server.serve()
-
-
-if __name__ == "__main__":
-    asyncio.run(main_server())
-
-
-# # 启动应用
-# if __name__ == "__main__":
-#     os.chdir(os.path.dirname(__file__))
-#     # 初始化会话
-#     # SessionManager.initialize_sessions()
-
-#     # 启动服务器
-#     uvicorn.run(
-#         app="mxdict-server:app",
-#         host="localhost",
-#         port=5959,
-#         reload=False,
-#     )

@@ -4,39 +4,74 @@ import typing
 from websockets.exceptions import ConnectionClosed
 from websockets.asyncio.client import ClientConnection
 
+from libs.log_config import logger
+
 
 class WsClient:
     def __init__(self, uri: str, message_handler):
         self.uri = uri
-        self.ws = None
-        # self.loop = asyncio.get_event_loop()
+        self.ws: typing.Optional[ClientConnection] = None
         self.message_handler = message_handler
+        self._retry_count = 0
+        self._connected_task = None  # 保存连接任务
+        self._do_not_retry = False
+
+    def is_connected(self):
+        # websockets >=11.0 uses 'open' property to check connection status
+        return self.ws is not None
+
+    # and getattr(self.ws, 'open', False)
+
+    def set_do_not_retry(self):
+        self._do_not_retry = True
+
+    async def close(self):
+        """外部调用：立刻关闭连接并退出循环"""
+        if self.ws is not None:
+            await self.ws.close()
+            self.ws = None
+            logger.info(f"✅ 已关闭 {self.uri} WebSocket 连接")
 
     async def connect(self):
         """自动重连的 WebSocket 客户端"""
         while True:
+            if self._do_not_retry:
+                break
+            self._retry_count += 1
+            if self._retry_count > 5:
+                logger.error("❌连接尝试次数超过最大5次")
+                self._retry_count = 0
+                break
+
             try:
-                async with websockets.connect(self.uri, ping_interval=30) as ws:
-                    self.ws = ws
-                    print(f"✅ 已连接 Electron WS服务器: {self.uri}")
+                # 去掉 async with，改用手动管理，才能被外部 close() 打断
+                self.ws = await websockets.connect(self.uri, ping_interval=30)
+                logger.info(f"✅ 已连接 {self.uri} WS服务器: {self.uri}")
+                self._retry_count = 0
 
-                    # 监听消息
-                    async for msg in ws:
-                        print(f"\n📩 从 Electron 收到: {msg}")
-                        # 在这里处理消息 → 可以调用你现有的函数
-                        await self.message_handler(ws, str(msg))
+                # 监听消息
+                while True:
+                    try:
+                        msg = await self.ws.recv()
+                        print(f"\n📩 从 {self.uri} WebSocket 收到: {msg}")
+                        await self.message_handler(self.ws, str(msg))
 
-            except ConnectionClosed:
-                print("🔌 Electron 连接断开，5秒后重连...")
-                await asyncio.sleep(5)
+                    except ConnectionClosed:
+                        logger.warning(f"🔌 {self.uri} WebSocket 连接断开")
+                        break
+
             except Exception as e:
-                print(f"❌ Electron WS 错误: {e}，5秒后重连")
-                await asyncio.sleep(5)
+                logger.error(f"❌ {self.uri} WS 错误: {e}，5秒后重连")
+
+            # 退出连接，准备重连
+            self.ws = None
+            logger.info("等待 5 秒后重连...")
+            await asyncio.sleep(5)
 
     async def send(self, msg):
-        """发送消息到 Electron"""
-        if self.ws and not self.ws.closed:
-            await self.ws.send(msg)
-            print(f"✅ 发给Electron: {msg}")
+        """发送消息到"""
+        if self.is_connected():
+            await self.ws.send(msg)  # type: ignore
+            print(f"✅ 发给 {self.uri} WebSocket: {msg}")
         else:
-            print("❌ 未连接 Electron")
+            print(f"❌ 未连接 {self.uri}")
