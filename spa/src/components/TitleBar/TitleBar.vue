@@ -5,7 +5,20 @@
             <div class="floating-window-search-container">
                 <el-autocomplete class="floating-window-search" v-model="keyword" :fetch-suggestions="querySearchAsync"
                     placeholder="Please input" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
-                    @focus="handleFocus" clearable hide-loading />
+                    @focus="handleFocus" clearable hide-loading>
+                    <template #prefix>
+                        <el-icon>
+                            <div @click="">
+                                <component :is="props.isPinned ? BsPinAngleFill : BsPin" />
+                            </div>
+                        </el-icon>
+                    </template>
+                </el-autocomplete>
+            </div>
+            <div class="floating-window-titlebar-button-container">
+                <div class="float-windown-titlebar-pin-button" @click="handlePinClick">
+                    <component :is="props.isPinned ? BsPinAngleFill : BsPin" />
+                </div>
             </div>
         </div>
         <!-- <span class="floating-window-title">{{ title }}</span> -->
@@ -15,12 +28,17 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
+import { BsPin, BsPinAngleFill } from 'vue-icons-plus/bs'
 
 const props = defineProps({
     webSocket: {
         type: [SessionWebSocketService, null],
         required: true
     },
+    sessionId: {
+        type: Number,
+        required: true
+    },  
     title: {
         type: String,
         required: true,
@@ -35,6 +53,10 @@ const props = defineProps({
         required: true,
         default: '',
     },
+    isPinned: {
+        type: Boolean,
+        default: true
+    }
 })
 
 const keyword = ref('')
@@ -44,6 +66,10 @@ const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
 
 // 用来存储定时器 ID（关键）
 let searchTimer: number | null = null
+
+const handlePinClick = () => {
+    props.webSocket?.sendFloatingWindowPinClick(props.sessionId)
+}
 
 // watch(() => keyword.value, (newVal) => {
 // })

@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+import json
 import typing
 from websockets.exceptions import ConnectionClosed
 from websockets.asyncio.client import ClientConnection
@@ -12,6 +13,7 @@ class WsClient:
         self.uri = uri
         self.ws: typing.Optional[ClientConnection] = None
         self.message_handler = message_handler
+        self._client_id = ""
         self._retry_count = 0
         self._connected_task = None  # 保存连接任务
         self._do_not_retry = False
@@ -25,6 +27,9 @@ class WsClient:
     def set_do_not_retry(self):
         self._do_not_retry = True
 
+    def set_client_id(self, client_id: str):
+        self._client_id = client_id
+
     async def close(self):
         """外部调用：立刻关闭连接并退出循环"""
         if self.ws is not None:
@@ -36,12 +41,12 @@ class WsClient:
         """自动重连的 WebSocket 客户端"""
         while True:
             if self._do_not_retry:
-                break
+                return
             self._retry_count += 1
             if self._retry_count > 5:
                 logger.error("❌连接尝试次数超过最大5次")
                 self._retry_count = 0
-                break
+                return
 
             try:
                 # 去掉 async with，改用手动管理，才能被外部 close() 打断
@@ -53,7 +58,7 @@ class WsClient:
                 while True:
                     try:
                         msg = await self.ws.recv()
-                        print(f"\n📩 从 {self.uri} WebSocket 收到: {msg}")
+                        logger.info(f"\n📩 从 {self.uri} WebSocket 收到: {msg}")
                         await self.message_handler(self.ws, str(msg))
 
                     except ConnectionClosed:
@@ -61,6 +66,7 @@ class WsClient:
                         break
 
             except Exception as e:
+                await self.close()  # 确保连接被正确关闭
                 logger.error(f"❌ {self.uri} WS 错误: {e}，5秒后重连")
 
             # 退出连接，准备重连
@@ -68,10 +74,11 @@ class WsClient:
             logger.info("等待 5 秒后重连...")
             await asyncio.sleep(5)
 
-    async def send(self, msg):
+    async def send(self, msg: typing.Dict):
         """发送消息到"""
         if self.is_connected():
-            await self.ws.send(msg)  # type: ignore
+            msg["data"]["client_id"] = self._client_id
+            await self.ws.send(json.dumps(msg))  # type: ignore
             print(f"✅ 发给 {self.uri} WebSocket: {msg}")
         else:
             print(f"❌ 未连接 {self.uri}")

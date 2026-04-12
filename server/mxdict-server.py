@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # _*_coding:utf-8_*_
 
-import json
 import signal
 import os
 import time
@@ -65,18 +64,17 @@ async def download(path: str):
 # WebSocket Client 连接 iWin 服务器
 # ==============================================
 # 全局单例（整个程序共用一个连接）
-iwin_ws_client = WsClient(
+Utils.iwin_ws_client = WsClient(
     "ws://localhost:9999/ws/mxdict", MessageHandler.handle_iwin_message
 )
 
 
-# curl -X GET "http://localhost:8000/api/connectiwin"
 @app.get("/api/connectiwin")
 async def connectiwin():
-    if iwin_ws_client.is_connected():
+    if Utils.iwin_ws_client.is_connected():
         return {"status": "connected"}
     # 🔥 关键：用 create_task 后台启动，不阻塞接口
-    asyncio.create_task(iwin_ws_client.connect())
+    asyncio.create_task(Utils.iwin_ws_client.connect())
     return {"status": "connecting"}
 
 
@@ -123,14 +121,14 @@ async def dictionary_session_websocket_endpoint(websocket: WebSocket, clientID: 
             del Utils.session_websockets[session_id][connection_id]
 
 
-
 # ================= 正确的信号处理 =================
 def signal_handler(sig, frame):
     logger.info("🛑 Ctrl+C 退出，正在关闭所有连接...")
     # 同步调用停止重连
-    iwin_ws_client.set_do_not_retry()
+    Utils.iwin_ws_client.set_do_not_retry()
     logger.info("✅ 所有连接已关闭，程序退出")
     os._exit(0)  # 强制安全退出
+
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)

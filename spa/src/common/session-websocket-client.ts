@@ -24,6 +24,15 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendFloatingWindowPinClick(sessionId: number) {
+        this._send(
+            'toggle_floating_pin',
+            {
+                session_id: sessionId
+            }
+        )
+    }
+
     sendKeywordOptionsSearch(keyword: string) {
         this._send(
             'keyword_options_search',

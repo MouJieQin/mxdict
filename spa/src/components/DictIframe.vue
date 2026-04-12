@@ -101,8 +101,12 @@ function injectClickHandler(doc: Document) {
           sound: href.replace('sound://', '')
         }, '*');
       }
-      else if (href.startsWith('http://localhost:9595/dict#')) {
+      else if (href.startsWith('http://localhost:9595/#')) {
         // 放行
+        // href = href.replace('#', '#/dict/2#')
+        const location_href = href.replace('http://localhost:9595/#', 'http://localhost:9595/#/dict/2#')
+        console.log('放行链接:', location_href);
+        // window.location.href = location_href
       }
       else {
         e.preventDefault();

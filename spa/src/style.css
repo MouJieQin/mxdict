@@ -72,8 +72,8 @@ body::-webkit-scrollbar-thumb {
     z-index: 9999;
     -webkit-app-region: drag;
     /* 允许拖动窗口 */
-    display: flex;
-    align-items: center;
+    /* display: flex; */
+    /* align-items: center; */
     padding-left: 70px;
     background: var(--el-bg-color);
     /* 留出系统红绿灯位置 */
@@ -81,17 +81,45 @@ body::-webkit-scrollbar-thumb {
 
 .floating-window-search-container {
     /* position: relative; */
-    /* max-width: 100%; */
+    display: flex;
+    position: fixed;
+    /* padding: 0 10px; */
+    max-width: 80%;
     /* -webkit-app-region: drag; */
 }
 
 .floating-window-search {
     -webkit-app-region: no-drag;
-    /* width: 100%; */
+    width: 100%;
     margin-left: 0;
-    padding: 0 10px;
+    /* padding-left:30px; */
+    /* padding: 2px 0px; */
+    margin:2px 0;
 }
 
-.pin-button:hover {
+.floating-window-titlebar-button-container {
+    /* position: relative; */
+    width: 20%;
+    display: flex;
+    -webkit-app-region: no-drag;
+    /* 允许点击按钮 */
+}
+
+.float-windown-titlebar-pin-button {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.6;
+    -webkit-app-region: no-drag;
+}
+
+.float-windown-titlebar-pin-button:hover {
     opacity: 1;
+    color: var(--el-color-primary);
 }

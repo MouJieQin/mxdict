@@ -1,6 +1,6 @@
 <template>
-    <Titlebar :webSocket="webSocket as SessionWebSocketService" title="MXDict" :wordOptions="wordOptions"
-        :redirectWord="redirectWord" />
+    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
+        :isPinned="isFloatingWindowPinned" title="MXDict" :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
         <h1>음식</h1>
         <el-collapse expand-icon-position="left" v-model="activeNames">
@@ -42,6 +42,7 @@ const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
 
 const activeNames = ref<string[]>([])
+const isFloatingWindowPinned = ref(true) // 默认固定
 
 // 初始化WebSocket
 const setupWebSocket = () => {
@@ -93,6 +94,9 @@ const handleWebSocketMessage = (message: any) => {
         case 'lookup_keyword':
             handleLookupKeyword(message.data)
             console.log('lookup_keyword:', message.data)
+            break
+        case 'toggle_floating_pin':
+            isFloatingWindowPinned.value = message.data.is_pinned
             break
         case 'error_session_not_exist':
             router.push('/')

@@ -1,9 +1,11 @@
 from typing import Dict, Optional
 from libs.config import UtilsBase
-
+from libs.websocket_client import WsClient
 
 class Utils(UtilsBase):
-    pass
+    """通用工具类"""
+    iwin_ws_client: WsClient
+    
     # 初始化服务
     # db = ChatDatabase(UtilsBase.DATABASE_PATH)
     # api = OpenAIChatAPI(db)
