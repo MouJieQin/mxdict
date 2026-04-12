@@ -93,7 +93,8 @@ class MessageHandler:
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         keyword = message["data"]["keyword"]
-        options = mdict_searcher.keyword_options_search(keyword)
+        search_method = message["data"]["search_method"]
+        options = mdict_searcher.keyword_options_search(keyword, search_method)
         msg = {
             "type": "keyword_options_search",
             "data": {

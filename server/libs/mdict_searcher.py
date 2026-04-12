@@ -69,9 +69,18 @@ class MdictSearcher:
                             result, indexBuilder, res_redirect, words_show, ignorecase
                         )
 
-    def keyword_options_search(self, keyword: str, limit=20):
+    def keyword_options_search(self, keyword: str, search_method: str, limit=20):
         """关键词选项搜索"""
-        return self.prefix_search(self._all_words_sorted, keyword, limit)
+        if search_method == "prefix_search":
+            return self.prefix_search(self._all_words_sorted, keyword, limit)
+        elif search_method == "contains_search":
+            return self.contains_search(self._all_words_sorted, keyword, limit)
+        elif search_method == "fuzzy_search":
+            return self.fuzzy_search(self._all_words_sorted, keyword, limit)
+        elif search_method == "fuzzy_contains_search":
+            return self.fuzzy_contains_search(self._all_words_sorted, keyword, limit)
+        else:
+            raise ValueError("Invalid search method")
 
     @staticmethod
     def prefix_search(words_sorted: list[str], keyword: str, limit=20):
@@ -115,6 +124,28 @@ class MdictSearcher:
 
         for word in words:
             word_lower = word.lower()
+            dist = distance(keyword, word_lower)
+
+            # 推入堆（距离，单词）
+            heapq.heappush(heap, (dist, word))
+
+        # 取出前 limit 个
+        result = [word for _, word in heapq.nsmallest(limit, heap)]
+        return result
+
+    @staticmethod
+    def fuzzy_contains_search(words: list[str], keyword: str, limit=20):
+        """
+        模糊包含搜索：找最相似的前 N 个
+        """
+        # 用堆取 TopN，比全排序快 10 倍以上
+        heap = []
+        keyword = keyword.lower()
+
+        for word in words:
+            word_lower = word.lower()
+            if keyword not in word_lower:
+                continue
             dist = distance(keyword, word_lower)
 
             # 推入堆（距离，单词）

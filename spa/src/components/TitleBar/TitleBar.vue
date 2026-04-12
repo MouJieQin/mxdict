@@ -4,31 +4,37 @@
         <div class="floating-window-titlebar">
             <div class="floating-window-search-container">
                 <el-autocomplete class="floating-window-search" v-model="keyword" :fetch-suggestions="querySearchAsync"
-                    placeholder="Please input" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
+                    placeholder="Search" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
                     @focus="handleFocus" clearable hide-loading>
+                    <!-- 前缀插槽：动态图标 + 点击弹出下拉 -->
                     <template #prefix>
-                        <el-icon>
-                            <div @click="">
-                                <component :is="props.isPinned ? BsPinAngleFill : BsPin" />
-                            </div>
-                        </el-icon>
+                        <SearchMethodSelect :searchMethod="searchMethod"
+                            @update-search-method="handleSearchMethodChange" />
                     </template>
                 </el-autocomplete>
             </div>
             <div class="floating-window-titlebar-button-container">
                 <div class="float-windown-titlebar-pin-button" @click="handlePinClick">
-                    <component :is="props.isPinned ? BsPinAngleFill : BsPin" />
+                    <BsPin v-show="!props.isPinned" />
+                    <BsPinAngleFill v-show="props.isPinned"
+                        style="width: 18px; height: 18px; color: var(--el-color-danger);" />
                 </div>
             </div>
         </div>
-        <!-- <span class="floating-window-title">{{ title }}</span> -->
     </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch, onMounted } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
-import { BsPin, BsPinAngleFill } from 'vue-icons-plus/bs'
+import {
+    BsPin, BsPinAngleFill,
+} from 'vue-icons-plus/bs'
+import SearchMethodSelect from '@/components/TitleBar/SearchMethodSelect.vue'
+
+
+
+
 
 const props = defineProps({
     webSocket: {
@@ -38,7 +44,7 @@ const props = defineProps({
     sessionId: {
         type: Number,
         required: true
-    },  
+    },
     title: {
         type: String,
         required: true,
@@ -60,6 +66,7 @@ const props = defineProps({
 })
 
 const keyword = ref('')
+const searchMethod = ref('prefix_search') // 默认搜索方法
 // 定义与ref同名的变量
 import type { ElAutocomplete } from 'element-plus'
 const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
@@ -69,6 +76,14 @@ let searchTimer: number | null = null
 
 const handlePinClick = () => {
     props.webSocket?.sendFloatingWindowPinClick(props.sessionId)
+}
+
+const handleSearchMethodChange = (newMethod: string) => {
+    searchMethod.value = newMethod
+    // 重新触发搜索以应用新的搜索方法
+    if (keyword.value.trim()) {
+        querySearchAsync(keyword.value, () => { })
+    }
 }
 
 // watch(() => keyword.value, (newVal) => {
@@ -108,7 +123,7 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
         return
     }
     isOptionsLoading.value = true
-    props.webSocket?.sendKeywordOptionsSearch(keyword.value)
+    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value)
 
     // 1. 先清除上一次的定时器（核心！）
     if (searchTimer) {

@@ -3,6 +3,7 @@
         :isPinned="isFloatingWindowPinned" title="MXDict" :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
         <h1>음식</h1>
+        <!-- <DictSelectAndSort /> -->
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
                 <el-collapse-item :title="dictName" :name="dictName" :isActive="true">
@@ -25,6 +26,8 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
+import DictSelectAndSort from '@/views/DictSelectAndSort.vue'
+
 
 import DictIframe from '@/components/DictIframe.vue';
 

@@ -33,11 +33,12 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
-    sendKeywordOptionsSearch(keyword: string) {
+    sendKeywordOptionsSearch(keyword: string, searchMethod: string = 'prefix_search') {
         this._send(
             'keyword_options_search',
             {
                 keyword: keyword,
+                search_method: searchMethod, // 使用传入的搜索方法
             }
         )
     }

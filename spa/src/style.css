@@ -109,8 +109,8 @@ body::-webkit-scrollbar-thumb {
     position: absolute;
     right: 10px;
     top: 8px;
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    /* height: 24px; */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -121,5 +121,5 @@ body::-webkit-scrollbar-thumb {
 
 .float-windown-titlebar-pin-button:hover {
     opacity: 1;
-    color: var(--el-color-primary);
+    color: var(--el-color-danger);
 }
