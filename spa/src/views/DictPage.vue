@@ -1,17 +1,16 @@
 <template>
-    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
+    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :dictsSetting="dictsSetting"
         :isPinned="isFloatingWindowPinned" title="MXDict" :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
-        <h1>음식</h1>
-        <!-- <DictSelectAndSort /> -->
+        <!-- <h1>음식</h1> -->
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-                <el-collapse-item :title="dictName" :name="dictName" :isActive="true">
-                    <!-- {{ dictName }} -->
+                <el-collapse-item :title="dictName" :name="dictName" :isActive="true"
+                    style="font-weight:bold !important;">
                     <div v-for="html in result" :key="html">
-                        <el-divider />
-                        <DictIframe :html="html" :css-url="dictInfo[dictName].css" :js-url="dictInfo[dictName].js"
-                            :base-path="dictInfo[dictName].data" :dictionary-root="dictInfo[dictName].root"
+                        <el-divider style="margin:0 10px" />
+                        <DictIframe :html="html" :css-urls="dictsInfo[dictName].css" :js-urls="dictsInfo[dictName].js"
+                            :base-path="dictsInfo[dictName].data" :dictionary-root="dictsInfo[dictName].root"
                             @entry-click="handleEntryClick" />
                     </div>
                 </el-collapse-item>
@@ -26,10 +25,8 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
-import DictSelectAndSort from '@/views/DictSelectAndSort.vue'
-
-
 import DictIframe from '@/components/DictIframe.vue';
+import { type DictsInfo, type DictsSettingInfo } from '@/common/type-interface'
 
 
 // 路由与状态
@@ -40,12 +37,25 @@ const webSocket = ref<SessionWebSocketService | null>(null)
 // const bodyScrollTimeoutId = ref<number | null>(null)
 const sessionId = ref(-1)
 const redirectWord = ref<string>('')
-const dictInfo = ref<any>(null)
+const dictsInfo = ref<DictsInfo>({})
+const dictsSetting = ref<DictsSettingInfo>([])
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
 
 const activeNames = ref<string[]>([])
 const isFloatingWindowPinned = ref(true) // 默认固定
+
+const setupDicsSettingsInfo = () => {
+    for (const dictName in dictsInfo.value) {
+        const dict = dictsInfo.value[dictName]
+        dictsSetting.value.push({
+            id: dictName,
+            name: dict.name,
+            cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
+            is_enabled: true
+        })
+    }
+}
 
 // 初始化WebSocket
 const setupWebSocket = () => {
@@ -87,8 +97,9 @@ const handleWebSocketMessage = (message: any) => {
         //     handleToggleFloatPin(message)
         //     break
         case 'dict_info':
-            dictInfo.value = message.data
-            console.log('dict_info:', dictInfo.value)
+            dictsInfo.value = message.data
+            setupDicsSettingsInfo()
+            console.log('dict_info:', dictsInfo.value)
             break
         case 'keyword_options_search':
             wordOptions.value = message.data.options
@@ -97,6 +108,9 @@ const handleWebSocketMessage = (message: any) => {
         case 'lookup_keyword':
             handleLookupKeyword(message.data)
             console.log('lookup_keyword:', message.data)
+            break
+        case 'session_dict_settings':
+            dictsSetting.value = message.data.settings
             break
         case 'toggle_floating_pin':
             isFloatingWindowPinned.value = message.data.is_pinned

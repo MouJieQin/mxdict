@@ -106,6 +106,7 @@ def init_config():
                             UtilsBase.DICT_INFO[file.name] = mdict_info
                     else:
                         UtilsBase.DICT_INFO[file.name] = {}
+                        UtilsBase.DICT_INFO[file.name]["name"] = file.name
                         UtilsBase.DICT_INFO[file.name]["root"] = str(file.resolve())
                         UtilsBase.DICT_INFO[file.name]["path"] = str(mdx_path.resolve())
                         UtilsBase.DICT_INFO[file.name]["css"] = (

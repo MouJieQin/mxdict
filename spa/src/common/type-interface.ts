@@ -1,24 +1,26 @@
 
-
-// export interface LookupKeywordMsg {
-//     dict_name
-// }
-
-
-
-export interface SentenceInfo {
-    text: string;
-    messageId: number;
-    sentenceId: number;
-    isHeading?: boolean;
+export interface DictInfo{
+    name: string;
+    path: string;
+    root: string;
+    css: string[];
+    js: string[];
+    data: string;
+    cover: string;
 }
 
-// 处理结果接口
-export interface ProcessResult {
-    html: string;
-    sentences: SentenceInfo[];
+export interface DictsInfo {
+    [dict_name: string]: DictInfo;
 }
 
+export interface DictSettingInfo{
+    id:string;
+    name:string;
+    cover_url:string;
+    is_enabled: boolean;
+}
+
+export type DictsSettingInfo = DictSettingInfo[]
 
 
 export interface Message {
@@ -26,7 +28,6 @@ export interface Message {
     raw_text: string;
     secondary_response: string | null;
     processed_html: string;
-    sentences: Array<SentenceInfo>;
     time: string;
     role: 'user' | 'assistant' | 'system';
     is_playing: boolean;

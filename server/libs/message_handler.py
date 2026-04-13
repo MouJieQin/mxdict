@@ -63,6 +63,7 @@ class MessageHandler:
                 "toggle_floating_pin": MessageHandler._handle_toggle_floating_pin,
                 "keyword_options_search": MessageHandler._handle_keyword_options_search,
                 "lookup_keyword": MessageHandler._handle_lookup,
+                "session_dict_settings": MessageHandler._handle_session_dict_settings,
             }
 
             if message_type in handlers:
@@ -94,7 +95,9 @@ class MessageHandler:
     ):
         keyword = message["data"]["keyword"]
         search_method = message["data"]["search_method"]
-        options = mdict_searcher.keyword_options_search(keyword, search_method)
+        options = mdict_searcher.keyword_options_search(
+            keyword, search_method, dict_names=message["data"]["dict_settings"]
+        )
         msg = {
             "type": "keyword_options_search",
             "data": {
@@ -111,7 +114,9 @@ class MessageHandler:
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         keyword = message["data"]["keyword"]
-        results = mdict_searcher.mdx_lookup(keyword)
+        results = mdict_searcher.mdx_lookup(
+            keyword, dict_names=message["data"]["dict_settings"]
+        )
         msg = {
             "type": "lookup_keyword",
             "data": {
@@ -122,3 +127,10 @@ class MessageHandler:
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)
         )
+
+    @staticmethod
+    async def _handle_session_dict_settings(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        # to do
+        await SessionManager.broadcast_session(session_id, json.dumps(message))

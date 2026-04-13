@@ -1,4 +1,5 @@
 import { WebSocketService } from '@/common/websocket-client'
+import type { DictsSettingInfo } from '@/common/type-interface'
 
 class SessionWebSocketService extends WebSocketService {
     constructor(url: string) {
@@ -15,11 +16,21 @@ class SessionWebSocketService extends WebSocketService {
     }
 
     // 发送用户输入
-    sendLookupKeyword(keyword: string) {
+    sendLookupKeyword(keyword: string, dictSettings: string[] | null = null) {
         this._send(
             'lookup_keyword',
             {
                 keyword: keyword,
+                dict_settings: dictSettings,
+            }
+        )
+    }
+
+    sendSessionDictSettings(settings: DictsSettingInfo) {
+        this._send(
+            'session_dict_settings',
+            {
+                settings: settings,
             }
         )
     }
@@ -33,12 +44,13 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
-    sendKeywordOptionsSearch(keyword: string, searchMethod: string = 'prefix_search') {
+    sendKeywordOptionsSearch(keyword: string, searchMethod: string = 'prefix_search', dictSettings: string[] | null = null) {
         this._send(
             'keyword_options_search',
             {
                 keyword: keyword,
                 search_method: searchMethod, // 使用传入的搜索方法
+                dict_settings: dictSettings, // 使用传入的字典设置
             }
         )
     }

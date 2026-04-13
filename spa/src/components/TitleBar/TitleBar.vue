@@ -13,14 +13,17 @@
                     </template>
                 </el-autocomplete>
             </div>
-            <div class="floating-window-titlebar-button-container">
-                <div class="float-windown-titlebar-pin-button" @click="handlePinClick">
-                    <BsPin v-show="!props.isPinned" />
-                    <BsPinAngleFill v-show="props.isPinned"
-                        style="width: 18px; height: 18px; color: var(--el-color-danger);" />
-                </div>
-            </div>
+            <el-button-group class="floating-window-titlebar-button-container">
+                <el-button :icon="ImBooks" text @click="dictSSDialogVisible = !dictSSDialogVisible"
+                    class="floating-window-titlebar-button" size="small" />
+                <el-button :icon="props.isPinned ? BsPinAngleFill : BsPin" text @click="handlePinClick"
+                    class="floating-window-titlebar-button" size="small" />
+            </el-button-group>
         </div>
+        <el-dialog v-model="dictSSDialogVisible" fullscreen>
+            <DictSelectAndSortDialog :webSocket="props.webSocket" :dictSSDialogVisible="dictSSDialogVisible"
+                :dictsSetting="props.dictsSetting"></DictSelectAndSortDialog>
+        </el-dialog>
     </div>
 </template>
 
@@ -30,9 +33,10 @@ import { SessionWebSocketService } from '@/common/session-websocket-client'
 import {
     BsPin, BsPinAngleFill,
 } from 'vue-icons-plus/bs'
+import { ImBooks } from 'vue-icons-plus/im'
 import SearchMethodSelect from '@/components/TitleBar/SearchMethodSelect.vue'
-
-
+import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
+import { type DictsSettingInfo } from '@/common/type-interface'
 
 
 
@@ -44,6 +48,10 @@ const props = defineProps({
     sessionId: {
         type: Number,
         required: true
+    },
+    dictsSetting: {
+        type: Array as () => DictsSettingInfo,
+        default: () => []
     },
     title: {
         type: String,
@@ -67,6 +75,7 @@ const props = defineProps({
 
 const keyword = ref('')
 const searchMethod = ref('prefix_search') // 默认搜索方法
+const dictSSDialogVisible = ref(false)
 // 定义与ref同名的变量
 import type { ElAutocomplete } from 'element-plus'
 const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
@@ -117,13 +126,20 @@ const loadAll = (): LinkItem[] => {
 
 let isOptionsLoading = ref(false)
 
+const getDictSettingsForLookup = () => {
+    // return a list that contains the dict name which is not disable in the same order.
+    let dictnames: string[] = []
+    props.dictsSetting.filter(item => item.is_enabled).map(item => dictnames.push(item.name))
+    return dictnames
+}
+
 const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
     console.log("queryString", queryString)
     if (!keyword.value.trim()) {
         return
     }
     isOptionsLoading.value = true
-    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value)
+    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup())
 
     // 1. 先清除上一次的定时器（核心！）
     if (searchTimer) {
@@ -155,7 +171,7 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
 }
 
 const lookupKeyword = () => {
-    props.webSocket?.sendLookupKeyword(keyword.value)
+    props.webSocket?.sendLookupKeyword(keyword.value, getDictSettingsForLookup())
 }
 
 const handleEnter = (e: KeyboardEvent) => {

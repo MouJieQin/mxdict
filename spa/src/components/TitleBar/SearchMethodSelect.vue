@@ -99,7 +99,7 @@ const openSelect = (e: MouseEvent | TouchEvent) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
+    width: 15px;
     height: 100%;
     cursor: pointer;
 }

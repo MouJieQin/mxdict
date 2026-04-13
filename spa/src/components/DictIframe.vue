@@ -8,11 +8,10 @@ import { ref, watch, nextTick, onUnmounted } from 'vue'
 
 interface Props {
   html: string
-  cssUrl: string
-  jsUrl: string
+  cssUrls: string[]
+  jsUrls: string[]
   basePath: string
   dictionaryRoot: string
-  currentWord?: string // 如果你有当前单词，传进来做缓存 key
 }
 
 const props = defineProps<Props>()
@@ -47,19 +46,23 @@ async function renderIframe() {
   doc.body.innerHTML = ''
 
   // CSS
-  if (props.cssUrl) {
-    const link = doc.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = `${API_PREFIX}${props.cssUrl}`
-    doc.head.appendChild(link)
+  if (props.cssUrls) {
+    for (const cssUrl of props.cssUrls) {
+      const link = doc.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = `${API_PREFIX}${cssUrl}`
+      doc.head.appendChild(link)
+    }
   }
 
   // JS
-  if (props.jsUrl) {
-    const script = doc.createElement('script')
-    script.src = `${API_PREFIX}${props.jsUrl}`
-    script.charset = 'UTF-8'
-    doc.head.appendChild(script)
+  if (props.jsUrls) {
+    for (const jsUrl of props.jsUrls) {
+      const script = doc.createElement('script')
+      script.src = `${API_PREFIX}${jsUrl}`
+      script.charset = 'UTF-8'
+      doc.head.appendChild(script)
+    }
   }
 
   // 注入一次全局点击监听
@@ -164,7 +167,7 @@ watch(iframeRef, (val) => {
       const realHeight = doc.getElementById(`${props.dictionaryRoot}-dict-tail`)?.getBoundingClientRect().bottom || 0
       console.log(props.dictionaryRoot, "**realHeight:", realHeight)
       // 赋值给 iframe
-      val.style.height = `${realHeight + 30}px`
+      val.style.height = `${realHeight + 10}px`
 
       setTimeout(() => {
         changedByThisCode.value = false
@@ -215,10 +218,3 @@ onUnmounted(() => {
   }
 })
 </script>
-
-<style scoped>
-.dict-iframe {
-  width: 100%;
-  border: none;
-}
-</style>
