@@ -48,17 +48,18 @@ class UtilsBase:
             os.remove(path)
 
     @staticmethod
-    def find_file_by_postfix(root_dir: str, postfix: str) -> str:
+    def find_files_by_postfix(root_dir: str, postfix: str) -> list[str]:
         # 递归遍历目录
+        files = []
         for dir_path, _, filenames in os.walk(root_dir):
             # 遍历当前目录所有文件
             for filename in filenames:
                 # 判断是否是 css 文件
                 if filename.lower().endswith(postfix):
                     # 返回完整路径
-                    return os.path.join(dir_path, filename)
+                    files.append(os.path.join(dir_path, filename))
         # 没找到返回 ""
-        return ""
+        return files
 
     class Config:
         @staticmethod
@@ -97,23 +98,50 @@ def init_config():
         for file in dict_path.iterdir():
             if file.is_dir():
                 mdx_path = file.resolve() / f"{file.name}.mdx"
+                mdict_info_json = file.resolve() / "mxdict_info.json"
                 if mdx_path.is_file():
-                    UtilsBase.DICT_INFO[file.name] = {}
-                    UtilsBase.DICT_INFO[file.name]["root"] = str(file.resolve())
-                    UtilsBase.DICT_INFO[file.name]["path"] = str(mdx_path.resolve())
-                    UtilsBase.DICT_INFO[file.name]["css"] = (
-                        UtilsBase.find_file_by_postfix(str(file.resolve()), ".css")
-                    )
-                    UtilsBase.DICT_INFO[file.name]["js"] = (
-                        UtilsBase.find_file_by_postfix(str(file.resolve()), ".js")
-                    )
-                    data_path = file.resolve() / "data"
-                    if data_path.is_dir():
-                        UtilsBase.DICT_INFO[file.name]["data"] = str(
-                            data_path.resolve()
-                        )
+                    if mdict_info_json.is_file():
+                        with open(mdict_info_json, mode="r", encoding="utf-8") as f:
+                            mdict_info = json.load(f)
+                            UtilsBase.DICT_INFO[file.name] = mdict_info
                     else:
-                        UtilsBase.DICT_INFO[file.name]["data"] = ""
+                        UtilsBase.DICT_INFO[file.name] = {}
+                        UtilsBase.DICT_INFO[file.name]["root"] = str(file.resolve())
+                        UtilsBase.DICT_INFO[file.name]["path"] = str(mdx_path.resolve())
+                        UtilsBase.DICT_INFO[file.name]["css"] = (
+                            UtilsBase.find_files_by_postfix(str(file.resolve()), ".css")
+                        )
+                        UtilsBase.DICT_INFO[file.name]["js"] = (
+                            UtilsBase.find_files_by_postfix(str(file.resolve()), ".js")
+                        )
+                        data_path = file.resolve() / "data"
+                        if data_path.is_dir():
+                            UtilsBase.DICT_INFO[file.name]["data"] = str(
+                                data_path.resolve()
+                            )
+                        else:
+                            UtilsBase.DICT_INFO[file.name]["data"] = ""
+                        UtilsBase.DICT_INFO[file.name]["cover"] = ""
+                        # walk through the current folder to find cover image with suffix .jpg/.jpeg/.png/.gif
+                        for img_file in file.iterdir():
+                            if img_file.is_file() and img_file.suffix.lower() in [
+                                ".jpg",
+                                ".jpeg",
+                                ".png",
+                                ".gif",
+                            ]:
+                                UtilsBase.DICT_INFO[file.name]["cover"] = str(
+                                    img_file.resolve()
+                                )
+                                break
+                        # save dict info into mxdict_info.json
+                        with open(mdict_info_json, mode="w", encoding="utf-8") as f:
+                            json.dump(
+                                UtilsBase.DICT_INFO[file.name],
+                                f,
+                                ensure_ascii=False,
+                                indent=4,
+                            )
 
     checkDickInfo()
 
