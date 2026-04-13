@@ -2,7 +2,6 @@
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :dictsSetting="dictsSetting"
         :isPinned="isFloatingWindowPinned" title="MXDict" :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
-        <!-- <h1>음식</h1> -->
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
                 <el-collapse-item :title="dictName" :name="dictName" :isActive="true"
@@ -104,6 +103,10 @@ const handleWebSocketMessage = (message: any) => {
         case 'keyword_options_search':
             wordOptions.value = message.data.options
             console.log('keyword_options_search:', wordOptions.value)
+            break
+        case 'lookup_keyword_request':
+            redirectWord.value = message.data.keyword
+            console.log('lookup_keyword_request:', message.data)
             break
         case 'lookup_keyword':
             handleLookupKeyword(message.data)

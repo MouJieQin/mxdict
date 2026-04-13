@@ -22,8 +22,11 @@ class MessageHandler:
     @staticmethod
     async def handle_command_message(command_type: str, data: dict) -> None:
         """处理命令消息"""
-        if command_type == "":
-            pass
+        if command_type == "lookup_keyword_request":
+            session_id = data["session_id"]
+            await SessionManager.broadcast_session(
+                session_id, json.dumps({"type": "lookup_keyword_request", "data": data})
+            )
         else:
             logger.warning(f"未知的命令类型: {command_type}")
 

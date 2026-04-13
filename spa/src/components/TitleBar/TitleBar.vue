@@ -37,6 +37,7 @@ import { ImBooks } from 'vue-icons-plus/im'
 import SearchMethodSelect from '@/components/TitleBar/SearchMethodSelect.vue'
 import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
 import { type DictsSettingInfo } from '@/common/type-interface'
+import { getDictSettingsForLookup } from '@/common/utility'
 
 
 
@@ -126,20 +127,13 @@ const loadAll = (): LinkItem[] => {
 
 let isOptionsLoading = ref(false)
 
-const getDictSettingsForLookup = () => {
-    // return a list that contains the dict name which is not disable in the same order.
-    let dictnames: string[] = []
-    props.dictsSetting.filter(item => item.is_enabled).map(item => dictnames.push(item.name))
-    return dictnames
-}
-
 const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
     console.log("queryString", queryString)
     if (!keyword.value.trim()) {
         return
     }
     isOptionsLoading.value = true
-    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup())
+    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup(props.dictsSetting))
 
     // 1. 先清除上一次的定时器（核心！）
     if (searchTimer) {
@@ -171,7 +165,7 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
 }
 
 const lookupKeyword = () => {
-    props.webSocket?.sendLookupKeyword(keyword.value, getDictSettingsForLookup())
+    props.webSocket?.sendLookupKeyword(keyword.value, getDictSettingsForLookup(props.dictsSetting))
 }
 
 const handleEnter = (e: KeyboardEvent) => {
