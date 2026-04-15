@@ -1,5 +1,5 @@
 import { WebSocketService } from '@/common/websocket-client'
-import type { DictsSettingInfo } from '@/common/type-interface'
+import type {SessionConfig } from '@/common/type-interface'
 
 class SessionWebSocketService extends WebSocketService {
     constructor(url: string) {
@@ -26,11 +26,11 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
-    sendSessionDictSettings(settings: DictsSettingInfo) {
+    sendSessionConfig(config: SessionConfig) {
         this._send(
-            'session_dict_settings',
+            'session_config',
             {
-                settings: settings,
+                config: config,
             }
         )
     }

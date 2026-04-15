@@ -24,7 +24,7 @@
 import { ref, onMounted, watch } from 'vue'
 import Sortable from 'sortablejs'
 
-import type { DictSettingInfo, DictsSettingInfo } from '@/common/type-interface'
+import type { DictSettingInfo, DictsSettingInfo, SessionConfig } from '@/common/type-interface'
 import type { PropType } from 'vue'
 import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
@@ -38,21 +38,23 @@ const props = defineProps({
     type: [SessionWebSocketService, null],
     required: true
   },
-  dictsSetting: {
-    type: Object as PropType<DictsSettingInfo>,
+  sessionConfig: {
+    type: Object as PropType<SessionConfig>,
     required: true
   }
 })
 
 const listRef = ref(null)
-const list = ref<DictsSettingInfo>(JSON.parse(JSON.stringify(props.dictsSetting)))
+const sessionConfig = ref<SessionConfig>(JSON.parse(JSON.stringify(props.sessionConfig || {})))
+const list = ref<DictsSettingInfo>(sessionConfig.value?.dictsSettingInfo || [])
 
 watch(() => props.dictSSDialogVisible, (newVal) => {
   if (newVal) {
-    list.value = JSON.parse(JSON.stringify(props.dictsSetting))
+    sessionConfig.value = JSON.parse(JSON.stringify(props.sessionConfig || {}))
+    list.value = sessionConfig.value?.dictsSettingInfo || []
   } else {
-    if (JSON.stringify(list.value) !== JSON.stringify(props.dictsSetting)) {
-      props.webSocket?.sendSessionDictSettings(list.value as DictsSettingInfo)
+    if (JSON.stringify(sessionConfig.value) !== JSON.stringify(props.sessionConfig)) {
+      props.webSocket?.sendSessionConfig(sessionConfig.value)
     }
   }
 })

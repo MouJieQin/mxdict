@@ -66,7 +66,7 @@ class MessageHandler:
                 "toggle_floating_pin": MessageHandler._handle_toggle_floating_pin,
                 "keyword_options_search": MessageHandler._handle_keyword_options_search,
                 "lookup_keyword": MessageHandler._handle_lookup,
-                "session_dict_settings": MessageHandler._handle_session_dict_settings,
+                "session_config": MessageHandler._handle_session_config,
             }
 
             if message_type in handlers:
@@ -132,8 +132,9 @@ class MessageHandler:
         )
 
     @staticmethod
-    async def _handle_session_dict_settings(
+    async def _handle_session_config(
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
-        # to do
+        logger.info(f"收到会话配置: {message['data']['config']}")
+        Utils.db.update_session_config(session_id, message["data"]["config"])
         await SessionManager.broadcast_session(session_id, json.dumps(message))

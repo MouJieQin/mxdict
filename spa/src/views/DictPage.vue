@@ -1,6 +1,7 @@
 <template>
-    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :dictsSetting="dictsSetting"
-        :isPinned="isFloatingWindowPinned" title="MXDict" :wordOptions="wordOptions" :redirectWord="redirectWord" />
+    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
+        :sessionConfig="sessionConfig as SessionConfig" :isPinned="isFloatingWindowPinned" title="MXDict"
+        :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
@@ -25,7 +26,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
-import { type DictsInfo, type DictsSettingInfo } from '@/common/type-interface'
+import { type DictsInfo, type SessionConfig } from '@/common/type-interface'
 
 
 // 路由与状态
@@ -37,7 +38,9 @@ const webSocket = ref<SessionWebSocketService | null>(null)
 const sessionId = ref(-1)
 const redirectWord = ref<string>('')
 const dictsInfo = ref<DictsInfo>({})
-const dictsSetting = ref<DictsSettingInfo>([])
+const sessionConfig = ref<SessionConfig>({
+    dictsSettingInfo: []
+})
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
 
@@ -47,7 +50,7 @@ const isFloatingWindowPinned = ref(true) // 默认固定
 const setupDicsSettingsInfo = () => {
     for (const dictName in dictsInfo.value) {
         const dict = dictsInfo.value[dictName]
-        dictsSetting.value.push({
+        sessionConfig.value?.dictsSettingInfo.push({
             id: dictName,
             name: dict.name,
             cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
@@ -112,8 +115,8 @@ const handleWebSocketMessage = (message: any) => {
             handleLookupKeyword(message.data)
             console.log('lookup_keyword:', message.data)
             break
-        case 'session_dict_settings':
-            dictsSetting.value = message.data.settings
+        case 'session_config':
+            sessionConfig.value = message.data.config
             break
         case 'toggle_floating_pin':
             isFloatingWindowPinned.value = message.data.is_pinned

@@ -22,7 +22,7 @@
         </div>
         <el-dialog v-model="dictSSDialogVisible" fullscreen>
             <DictSelectAndSortDialog :webSocket="props.webSocket" :dictSSDialogVisible="dictSSDialogVisible"
-                :dictsSetting="props.dictsSetting"></DictSelectAndSortDialog>
+                :sessionConfig="props.sessionConfig"></DictSelectAndSortDialog>
         </el-dialog>
     </div>
 </template>
@@ -36,7 +36,7 @@ import {
 import { ImBooks } from 'vue-icons-plus/im'
 import SearchMethodSelect from '@/components/TitleBar/SearchMethodSelect.vue'
 import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
-import { type DictsSettingInfo } from '@/common/type-interface'
+import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
 
 
@@ -50,9 +50,10 @@ const props = defineProps({
         type: Number,
         required: true
     },
-    dictsSetting: {
-        type: Array as () => DictsSettingInfo,
-        default: () => []
+    sessionConfig: {
+        type: Object as () => SessionConfig,
+        required: true,
+        default: () => ({})
     },
     title: {
         type: String,
@@ -133,7 +134,7 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
         return
     }
     isOptionsLoading.value = true
-    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup(props.dictsSetting))
+    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
 
     // 1. 先清除上一次的定时器（核心！）
     if (searchTimer) {
@@ -165,7 +166,7 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
 }
 
 const lookupKeyword = () => {
-    props.webSocket?.sendLookupKeyword(keyword.value, getDictSettingsForLookup(props.dictsSetting))
+    props.webSocket?.sendLookupKeyword(keyword.value, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
 }
 
 const handleEnter = (e: KeyboardEvent) => {

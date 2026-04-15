@@ -25,7 +25,7 @@ class SessionManager:
             await websocket.send_text(message)
         except Exception as e:
             logger.error(f"会话广播错误: {e}")
-            del Utils.session_websockets[connection_id]
+            del Utils.session_websockets[session_id][connection_id]
 
     @staticmethod
     async def send_dict_info_to_session(session_id: int, connection_id: int):
@@ -33,6 +33,20 @@ class SessionManager:
         msg = {
             "type": "dict_info",
             "data": Utils.DICT_INFO,
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
+    async def send_session_config_to_session(session_id: int, connection_id: int):
+        """向特定会话的WebSocket连接发送会话配置"""
+        config = Utils.db.get_session_config(session_id)
+        if config is None:
+            return
+        msg = {
+            "type": "session_config",
+            "data": {"config": config},
         }
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)

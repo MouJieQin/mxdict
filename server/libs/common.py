@@ -1,11 +1,15 @@
 from typing import Dict, Optional
 from libs.config import UtilsBase
 from libs.websocket_client import WsClient
+from libs.dict_database import DictDatabase
+
 
 class Utils(UtilsBase):
     """通用工具类"""
+
+    db = DictDatabase(UtilsBase.DATABASE_PATH)
     iwin_ws_client: WsClient
-    
+
     # 初始化服务
     # db = ChatDatabase(UtilsBase.DATABASE_PATH)
     # api = OpenAIChatAPI(db)
@@ -24,5 +28,3 @@ class Utils(UtilsBase):
     #     Utils.api = OpenAIChatAPI(Utils.db)
     #     Utils.speaker = Speaker(UtilsBase.CONFIG, UtilsBase.VOICHAI_STORAGE_PATH)
     #     Utils.recognizer = Recognizer(UtilsBase.CONFIG)
-
- 

@@ -23,6 +23,11 @@ export interface DictSettingInfo{
 export type DictsSettingInfo = DictSettingInfo[]
 
 
+export interface SessionConfig {
+    dictsSettingInfo: DictsSettingInfo;
+}
+
+
 export interface Message {
     message_id: number;
     raw_text: string;
