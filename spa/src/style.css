@@ -191,17 +191,107 @@ body::-webkit-scrollbar-thumb {
 
 
 
-
 .dict-iframe {
   width: 100%;
   border: none;
 }
 
-
-/* 深度作用选择器，必须加 :deep() */
+/* element-plus 自定义样式 */
 .el-collapse-item__header{
   font-size: 1.1em !important;    /* 字体大小 */
   /* color: #333;     */
   font-weight: bold !important;   /* 字体粗细 */
   line-height: 1.5 !important;   /* 行高 */
+}
+
+
+/*  */
+/* setting */
+/*  */
+.setting-container {
+    padding-bottom: 50px;
+}
+
+.setting-footer-button-group {
+    position: fixed;
+    bottom: 0;
+    right: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/*  */
+/* config */
+/*  */
+
+.config-radio-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px;
+}
+
+.config-radio-icon {
+    font-size: 24px !important;
+}
+
+.system-config-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.config-form {
+    margin-top: 20px;
+}
+
+.config-class {
+    margin: 0 auto;
+    max-width: clamp(300px, 80vw, 800px);
+    padding: 20px;
+    border-radius: var(--el-border-radius-base);
+    box-shadow: var(--el-box-shadow);
+    margin-bottom: 30px;
+}
+
+.config-class-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.config-class-desc {
+    font-size: 14px;
+    text-align: left;
+    margin-bottom: 30px;
+    opacity: 0.5;
+}
+
+.el-form-item {
+    /* justify-content: flex-start; */
+    margin-bottom: 16px;
+}
+
+.config-form .el-input {
+    max-width: 600px;
+}
+
+.config-form .el-form-item {
+    max-width: 600px;
+}
+
+.el-tabs__nav {
+    overflow-x: scroll;
+    border: none !important;
+    white-space: nowrap;
+    display: block;
+}
+
+el-tabs__item {
+    float: none;
+    display: inline-block;
 }

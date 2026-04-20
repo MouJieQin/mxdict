@@ -14,12 +14,24 @@
                 </el-autocomplete>
             </div>
             <el-button-group class="floating-window-titlebar-button-container">
+                <el-tooltip v-if="showFavorButtonTooltip" content="请先设置默认收藏夹" trigger="hover">
+                    <el-button :icon="BsHeart" text class="floating-window-titlebar-button" size="small" disabled />
+                </el-tooltip>
+                <el-button v-if="!showFavorButtonTooltip" :icon="props.isWordFavorited ? BsHeartFill : BsHeart" text
+                    @click="handleFavorClick" class="floating-window-titlebar-button" size="small"
+                    :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
                 <el-button :icon="ImBooks" text @click="dictSSDialogVisible = !dictSSDialogVisible"
+                    class="floating-window-titlebar-button" size="small" />
+                <el-button :icon="Setting" text @click="settingDialogVisible = !settingDialogVisible"
                     class="floating-window-titlebar-button" size="small" />
                 <el-button :icon="props.isPinned ? BsPinAngleFill : BsPin" text @click="handlePinClick"
                     class="floating-window-titlebar-button" size="small" />
             </el-button-group>
         </div>
+        <el-dialog v-model="settingDialogVisible" fullscreen>
+            <Settings :webSocket="props.webSocket" :settingDialogVisible="settingDialogVisible"
+                :sessionConfig="props.sessionConfig"></Settings>
+        </el-dialog>
         <el-dialog v-model="dictSSDialogVisible" fullscreen>
             <DictSelectAndSortDialog :webSocket="props.webSocket" :dictSSDialogVisible="dictSSDialogVisible"
                 :sessionConfig="props.sessionConfig"></DictSelectAndSortDialog>
@@ -28,16 +40,19 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import {
-    BsPin, BsPinAngleFill,
+    BsPin, BsPinAngleFill, BsHeartFill, BsHeart,
 } from 'vue-icons-plus/bs'
 import { ImBooks } from 'vue-icons-plus/im'
 import SearchMethodSelect from '@/components/TitleBar/SearchMethodSelect.vue'
 import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
+import Settings from '@/views/Settings.vue'
 import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
+import { Setting } from '@element-plus/icons-vue'
+import { useSystemConfigStore } from '@/stores/stores'
 
 
 
@@ -55,10 +70,19 @@ const props = defineProps({
         required: true,
         default: () => ({})
     },
-    title: {
+    lastSearchKeyword: {
         type: String,
         required: true,
-        default: 'Voichai'
+    },
+    hasResultLastSearch: {
+        type: Boolean,
+        required: true,
+        default: false,
+    },
+    isWordFavorited: {
+        type: Boolean,
+        required: true,
+        default: false,
     },
     wordOptions: {
         type: Array,
@@ -78,15 +102,26 @@ const props = defineProps({
 const keyword = ref('')
 const searchMethod = ref('prefix_search') // 默认搜索方法
 const dictSSDialogVisible = ref(false)
+const settingDialogVisible = ref(false)
 // 定义与ref同名的变量
 import type { ElAutocomplete } from 'element-plus'
 const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
+const systemConfigStore = useSystemConfigStore()
 
 // 用来存储定时器 ID（关键）
 let searchTimer: number | null = null
 
+
+const showFavorButtonTooltip = computed(() => {
+    return !props.sessionConfig.default_folder.id || !systemConfigStore.systemConfig?.folders?.folder_info.some((item) => item.id === props.sessionConfig.default_folder.id)
+})
+
 const handlePinClick = () => {
     props.webSocket?.sendFloatingWindowPinClick(props.sessionId)
+}
+
+const handleFavorClick = () => {
+    props.webSocket?.sendToggleFavor(props.lastSearchKeyword, props.sessionConfig.default_folder.id)
 }
 
 const handleSearchMethodChange = (newMethod: string) => {
@@ -166,15 +201,16 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
 }
 
 const lookupKeyword = () => {
-    props.webSocket?.sendLookupKeyword(keyword.value, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
+    props.webSocket?.sendLookupKeyword(keyword.value.trim(), props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
 }
 
 const handleEnter = (e: KeyboardEvent) => {
     e.preventDefault()
+    if (props.lastSearchKeyword === keyword.value.trim()) {
+        return
+    }
     lookupKeyword();
     (autoCompleteRef.value as InstanceType<typeof ElAutocomplete> | null)?.close()
-
-    console.log("handleEnter:", keyword.value)
 }
 
 const handleSelect = (item: Record<string, any>) => {

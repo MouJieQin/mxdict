@@ -1,7 +1,8 @@
 <template>
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
-        :sessionConfig="sessionConfig as SessionConfig" :isPinned="isFloatingWindowPinned" title="MXDict"
-        :wordOptions="wordOptions" :redirectWord="redirectWord" />
+        :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
+        :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
+        :hasResultLastSearch="hasResultLastSearch" :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
@@ -27,25 +28,33 @@ import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-w
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
 import { type DictsInfo, type SessionConfig } from '@/common/type-interface'
+import { useSystemConfigStore } from '@/stores/stores'
+
 
 
 // 路由与状态
 const route = useRoute()
 const router = useRouter()
 
+const systemConfigStore = useSystemConfigStore()
 const webSocket = ref<SessionWebSocketService | null>(null)
 // const bodyScrollTimeoutId = ref<number | null>(null)
 const sessionId = ref(-1)
 const redirectWord = ref<string>('')
 const dictsInfo = ref<DictsInfo>({})
 const sessionConfig = ref<SessionConfig>({
+    default_folder: { "id": null },
     dictsSettingInfo: []
 })
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
 
 const activeNames = ref<string[]>([])
+const isWordFavorited = ref<boolean>(false)
 const isFloatingWindowPinned = ref(true) // 默认固定
+const lastSearchKeyword = ref<string>('')
+const hasResultLastSearch = ref<boolean>(false)
+
 
 const setupDicsSettingsInfo = () => {
     for (const dictName in dictsInfo.value) {
@@ -117,9 +126,17 @@ const handleWebSocketMessage = (message: any) => {
             break
         case 'session_config':
             sessionConfig.value = message.data.config
+            console.log('session_config:', sessionConfig.value)
             break
         case 'toggle_floating_pin':
             isFloatingWindowPinned.value = message.data.is_pinned
+            break
+        case 'toggle_favor':
+            isWordFavorited.value = message.data.is_word_favorited
+            break
+        case 'system_config':
+            systemConfigStore.setSystemConfig(message.data)
+            console.log('system_config:', message.data)
             break
         case 'error_session_not_exist':
             router.push('/')
@@ -130,7 +147,11 @@ const handleWebSocketMessage = (message: any) => {
 const handleLookupKeyword = (data: any) => {
     const keyword = data.keyword
     document.title = keyword || 'MxDict'
+    lastSearchKeyword.value = keyword || ''
     lookupKeywordResult.value = data.result
+    hasResultLastSearch.value = data.result !== null && data.result !== undefined && Object.keys(data.result).length !== 0
+    console.log('Object.keys(data.result).length:', Object.keys(data.result).length)
+    isWordFavorited.value = data.is_word_favorited
     activeNames.value = Object.keys(data.result).map((key) => key)
     console.log('lookup_keyword', keyword, data)
 }

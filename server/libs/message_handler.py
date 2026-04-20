@@ -67,6 +67,11 @@ class MessageHandler:
                 "keyword_options_search": MessageHandler._handle_keyword_options_search,
                 "lookup_keyword": MessageHandler._handle_lookup,
                 "session_config": MessageHandler._handle_session_config,
+                "create_folder": MessageHandler._handle_create_folder,
+                "delete_folder": MessageHandler._handle_delete_folder,
+                "update_folder": MessageHandler._handle_update_folder,
+                "system_config": MessageHandler._handle_system_config,
+                "toggle_favor": MessageHandler._handle_toggle_favor,
             }
 
             if message_type in handlers:
@@ -117,14 +122,19 @@ class MessageHandler:
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         keyword = message["data"]["keyword"]
+        folder_id = message["data"]["folder_id"]
         results = mdict_searcher.mdx_lookup(
             keyword, dict_names=message["data"]["dict_settings"]
         )
+        is_word_favorited = False
+        if folder_id:
+            is_word_favorited = Utils.db.is_word_favorited(keyword, folder_id)
         msg = {
             "type": "lookup_keyword",
             "data": {
                 "keyword": keyword,
                 "result": results,
+                "is_word_favorited": is_word_favorited,
             },
         }
         await SessionManager.send_msg_to_session_by_id(
@@ -138,3 +148,60 @@ class MessageHandler:
         logger.info(f"收到会话配置: {message['data']['config']}")
         Utils.db.update_session_config(session_id, message["data"]["config"])
         await SessionManager.broadcast_session(session_id, json.dumps(message))
+
+    @staticmethod
+    async def _handle_create_folder(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        folder_name = message["data"]["folder_name"]
+        folder_description = message["data"]["folder_description"]
+        Utils.db.create_folder(folder_name, folder_description)
+        await SessionManager.send_system_config_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_delete_folder(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        folder_id = message["data"]["folder_id"]
+        Utils.db.delete_folder(folder_id)
+        await SessionManager.send_system_config_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_update_folder(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        folder_id = message["data"]["folder_id"]
+        folder_name = message["data"]["folder_name"]
+        folder_description = message["data"]["folder_description"]
+        Utils.db.rename_folder(folder_id, folder_name)
+        Utils.db.update_folder_description(folder_id, folder_description)
+        await SessionManager.send_system_config_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_system_config(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        folder_info = Utils.db.get_all_folder_info()
+        await SessionManager.send_system_config_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_toggle_favor(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        keyword = message["data"]["keyword"]
+        folder_id = message["data"]["folder_id"]
+        is_word_favorited = not Utils.db.is_word_favorited(keyword, folder_id)
+        if is_word_favorited:
+            Utils.db.favorite_word(keyword, folder_id)
+        else:
+            Utils.db.unfavorite_word(keyword, folder_id)
+        msg = {
+            "type": "toggle_favor",
+            "data": {
+                "keyword": keyword,
+                "is_word_favorited": is_word_favorited,
+            },
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )

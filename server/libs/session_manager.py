@@ -10,6 +10,31 @@ class SessionManager:
     """会话管理器，负责会话的创建、删除、配置更新等操作"""
 
     @staticmethod
+    async def broadcast_all(message: str):
+        """向所有会话的所有WebSocket连接广播消息"""
+        for session_id in Utils.session_websockets:
+            await SessionManager.broadcast_session(session_id, message)
+
+    @staticmethod
+    async def broadcast_session(session_id: int, message: str):
+        """向特定会话的所有WebSocket连接广播消息"""
+        session_id = int(session_id)
+        if session_id not in Utils.session_websockets:
+            return
+
+        invalid_keys = []
+        for key, websocket in Utils.session_websockets[session_id].items():
+            try:
+                await websocket.send_text(message)
+            except Exception as e:
+                logger.error(f"会话广播错误: {e}")
+                invalid_keys.append(key)
+
+        # 移除无效连接
+        for key in invalid_keys:
+            del Utils.session_websockets[session_id][key]
+
+    @staticmethod
     async def send_msg_to_session_by_id(
         session_id: int, connection_id: int, message: str
     ):
@@ -39,11 +64,25 @@ class SessionManager:
         )
 
     @staticmethod
+    async def send_system_config_to_session(session_id: int, connection_id: int):
+        folder_info = Utils.db.get_all_folder_info()
+        """向特定会话的WebSocket连接发送文件夹信息"""
+        msg = {
+            "type": "system_config",
+            "data": {"folders": {"folder_info": folder_info}},
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
     async def send_session_config_to_session(session_id: int, connection_id: int):
         """向特定会话的WebSocket连接发送会话配置"""
         config = Utils.db.get_session_config(session_id)
         if config is None:
             return
+        if "default_folder" not in config.keys():
+            config["default_folder"] = {"id": None}
         msg = {
             "type": "session_config",
             "data": {"config": config},
@@ -51,22 +90,3 @@ class SessionManager:
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)
         )
-
-    @staticmethod
-    async def broadcast_session(session_id: int, message: str):
-        """向特定会话的所有WebSocket连接广播消息"""
-        session_id = int(session_id)
-        if session_id not in Utils.session_websockets:
-            return
-
-        invalid_keys = []
-        for key, websocket in Utils.session_websockets[session_id].items():
-            try:
-                await websocket.send_text(message)
-            except Exception as e:
-                logger.error(f"会话广播错误: {e}")
-                invalid_keys.append(key)
-
-        # 移除无效连接
-        for key in invalid_keys:
-            del Utils.session_websockets[session_id][key]

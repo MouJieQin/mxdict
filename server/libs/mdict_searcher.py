@@ -8,6 +8,7 @@ import heapq
 from libs.log_config import logger
 from libs.mdict_query.mdict_query import IndexBuilder
 from libs.config import UtilsBase
+from libs.common import Utils
 
 
 class MdictSearcher:
@@ -78,6 +79,8 @@ class MdictSearcher:
                 result = []
                 self._hand_link_word(result, indexBuilder, res, [keyword], ignorecase)
                 results[dict_name] = result
+        if results:
+            Utils.db.add_search_history(keyword)
         return results
 
     def _hand_link_word(

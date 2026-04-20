@@ -1,5 +1,5 @@
 import { WebSocketService } from '@/common/websocket-client'
-import type {SessionConfig } from '@/common/type-interface'
+import type { SessionConfig, SessiondefaultFolder } from '@/common/type-interface'
 
 class SessionWebSocketService extends WebSocketService {
     constructor(url: string) {
@@ -16,12 +16,60 @@ class SessionWebSocketService extends WebSocketService {
     }
 
     // 发送用户输入
-    sendLookupKeyword(keyword: string, dictSettings: string[] | null = null) {
+    sendLookupKeyword(keyword: string, folder_id: number | null, dictSettings: string[] | null = null) {
         this._send(
             'lookup_keyword',
             {
                 keyword: keyword,
+                folder_id: folder_id,
                 dict_settings: dictSettings,
+            }
+        )
+    }
+
+    sendSystemConfig() {
+        this._send(
+            'system_config',
+            {}
+        )
+    }
+
+    sendToggleFavor(keyword: string, folder_id: number | null) {
+        this._send(
+            'toggle_favor',
+            {
+                keyword: keyword,
+                folder_id: folder_id,
+            }
+        )
+    }
+
+    sendCreateFolder(folderName: string, folderDescription: string) {
+        this._send(
+            'create_folder',
+            {
+                folder_name: folderName,
+                folder_description: folderDescription,
+            }
+        )
+    }
+
+    sendDeleteFolder(folderId: number) {
+        this._send(
+            'delete_folder',
+            {
+                folder_id: folderId,
+            }
+        )
+    }
+
+    sendUpdateFolder(folderId: number, folderName: string, folderDescription: string) {
+        this._send(
+            'update_folder',
+            {
+                folder_id: folderId,
+                folder_name: folderName,
+                folder_description: folderDescription,
             }
         )
     }
