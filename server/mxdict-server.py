@@ -107,6 +107,7 @@ async def dictionary_session_websocket_endpoint(websocket: WebSocket, clientID: 
     try:
         await SessionManager.send_dict_info_to_session(session_id, connection_id)
         await SessionManager.send_session_config_to_session(session_id, connection_id)
+        await SessionManager.send_system_config_to_session(session_id, connection_id)
         while True:
             text = await websocket.receive_text()
             await MessageHandler.handle_session_message(

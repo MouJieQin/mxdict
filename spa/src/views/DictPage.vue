@@ -2,9 +2,15 @@
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
         :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
-        :hasResultLastSearch="hasResultLastSearch" :wordOptions="wordOptions" :redirectWord="redirectWord" />
+        :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
+        :redirectWord="redirectWord" />
     <div class="word-detail">
         <el-collapse expand-icon-position="left" v-model="activeNames">
+            <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
+                <el-divider style="margin:0 10px" />
+                <!-- 음식 -->
+                <div v-html="md.render(noteContent)"></div>
+            </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
                 <el-collapse-item :title="dictName" :name="dictName" :isActive="true"
                     style="font-weight:bold !important;">
@@ -29,7 +35,8 @@ import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
 import { type DictsInfo, type SessionConfig } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
-
+import MarkdownIt from 'markdown-it'
+const md = new MarkdownIt()
 
 
 // 路由与状态
@@ -53,7 +60,9 @@ const activeNames = ref<string[]>([])
 const isWordFavorited = ref<boolean>(false)
 const isFloatingWindowPinned = ref(true) // 默认固定
 const lastSearchKeyword = ref<string>('')
+const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
+
 
 
 const setupDicsSettingsInfo = () => {
@@ -120,6 +129,9 @@ const handleWebSocketMessage = (message: any) => {
             redirectWord.value = message.data.keyword
             console.log('lookup_keyword_request:', message.data)
             break
+        case 'word_note':
+            noteContent.value = message.data.note || ''
+            break
         case 'lookup_keyword':
             handleLookupKeyword(message.data)
             console.log('lookup_keyword:', message.data)
@@ -148,11 +160,13 @@ const handleLookupKeyword = (data: any) => {
     const keyword = data.keyword
     document.title = keyword || 'MxDict'
     lastSearchKeyword.value = keyword || ''
+    noteContent.value = data.note || ''
     lookupKeywordResult.value = data.result
     hasResultLastSearch.value = data.result !== null && data.result !== undefined && Object.keys(data.result).length !== 0
     console.log('Object.keys(data.result).length:', Object.keys(data.result).length)
     isWordFavorited.value = data.is_word_favorited
     activeNames.value = Object.keys(data.result).map((key) => key)
+    activeNames.value.push('我的笔记')
     console.log('lookup_keyword', keyword, data)
 }
 

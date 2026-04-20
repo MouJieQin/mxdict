@@ -15,6 +15,25 @@ class SessionWebSocketService extends WebSocketService {
         })
     }
 
+    sendSaveWordNote(keyword: string, note: string) {
+        this._send(
+            'save_word_note',
+            {
+                keyword: keyword,
+                note: note,
+            }
+        )
+    }
+
+    sendDeleteWordNote(keyword: string) {
+        this._send(
+            'delete_word_note',
+            {
+                keyword: keyword,
+            }
+        )
+    }
+
     // 发送用户输入
     sendLookupKeyword(keyword: string, folder_id: number | null, dictSettings: string[] | null = null) {
         this._send(

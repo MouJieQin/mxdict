@@ -20,14 +20,40 @@
                 <el-button v-if="!showFavorButtonTooltip" :icon="props.isWordFavorited ? BsHeartFill : BsHeart" text
                     @click="handleFavorClick" class="floating-window-titlebar-button" size="small"
                     :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
+
+                <el-button v-if="!showFavorButtonTooltip" :icon="Edit" text @click="noteDialogVisible = true"
+                    class="floating-window-titlebar-button" size="small"
+                    :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
+
                 <el-button :icon="ImBooks" text @click="dictSSDialogVisible = !dictSSDialogVisible"
-                    class="floating-window-titlebar-button" size="small" />
-                <el-button :icon="Setting" text @click="settingDialogVisible = !settingDialogVisible"
-                    class="floating-window-titlebar-button" size="small" />
+                    class="floating-window-titlebar-button" size="small" id="titlebar-dictss-button" />
+                <el-button :icon="Setting" text id="titlebar-setting-button"
+                    @click="settingDialogVisible = !settingDialogVisible" class="floating-window-titlebar-button"
+                    size="small" />
                 <el-button :icon="props.isPinned ? BsPinAngleFill : BsPin" text @click="handlePinClick"
                     class="floating-window-titlebar-button" size="small" />
             </el-button-group>
         </div>
+
+        <el-dialog v-model="noteDialogVisible" :title="'「' + lastSearchKeyword + '」' + '的笔记'" width="500" align-center>
+            <el-input v-model="noteContent" autocomplete="off" type="textarea" :autosize="{ minRows: 5, maxRows: 9 }" />
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-popconfirm confirm-button-text="删除" confirm-button-type="danger" cancel-button-text="取消"
+                        :icon="Delete" icon-color="#FF4949" title="确定删除笔记吗？" @confirm="handleDeleteNote">
+                        <template #reference>
+                            <el-button :icon="Delete" type="danger">Delete</el-button>
+                        </template>
+                    </el-popconfirm>
+
+                    <el-button @click="noteDialogVisible = false">Cancel</el-button>
+                    <el-button type="primary" @click="submitNote">
+                        Confirm
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog>
+
         <el-dialog v-model="settingDialogVisible" fullscreen>
             <Settings :webSocket="props.webSocket" :settingDialogVisible="settingDialogVisible"
                 :sessionConfig="props.sessionConfig"></Settings>
@@ -51,7 +77,7 @@ import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialo
 import Settings from '@/views/Settings.vue'
 import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
-import { Setting } from '@element-plus/icons-vue'
+import { Setting, Edit, Delete } from '@element-plus/icons-vue'
 import { useSystemConfigStore } from '@/stores/stores'
 
 
@@ -78,6 +104,11 @@ const props = defineProps({
         type: Boolean,
         required: true,
         default: false,
+    },
+    noteContent: {
+        type: String,
+        required: true,
+        default: '',
     },
     isWordFavorited: {
         type: Boolean,
@@ -107,6 +138,28 @@ const settingDialogVisible = ref(false)
 import type { ElAutocomplete } from 'element-plus'
 const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
 const systemConfigStore = useSystemConfigStore()
+const noteDialogVisible = ref(false)
+const noteContent = ref(props.noteContent)
+
+
+
+const handleDeleteNote = () => {
+    props.webSocket?.sendDeleteWordNote(props.lastSearchKeyword)
+    noteDialogVisible.value = false
+}
+
+const submitNote = () => {
+    if (!noteContent.value.trim()) {
+        return
+    }
+    props.webSocket?.sendSaveWordNote(props.lastSearchKeyword, noteContent.value)
+    noteDialogVisible.value = false
+}
+
+watch(() => props.noteContent, (newVal) => {
+    noteContent.value = newVal
+})
+
 
 // 用来存储定时器 ID（关键）
 let searchTimer: number | null = null

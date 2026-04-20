@@ -72,6 +72,8 @@ class MessageHandler:
                 "update_folder": MessageHandler._handle_update_folder,
                 "system_config": MessageHandler._handle_system_config,
                 "toggle_favor": MessageHandler._handle_toggle_favor,
+                "save_word_note": MessageHandler._handle_save_word_note,
+                "delete_word_note": MessageHandler._handle_delete_word_note,
             }
 
             if message_type in handlers:
@@ -129,11 +131,13 @@ class MessageHandler:
         is_word_favorited = False
         if folder_id:
             is_word_favorited = Utils.db.is_word_favorited(keyword, folder_id)
+        note = Utils.db.get_word_note(keyword)
         msg = {
             "type": "lookup_keyword",
             "data": {
                 "keyword": keyword,
                 "result": results,
+                "note": note,
                 "is_word_favorited": is_word_favorited,
             },
         }
@@ -200,6 +204,41 @@ class MessageHandler:
             "data": {
                 "keyword": keyword,
                 "is_word_favorited": is_word_favorited,
+            },
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
+    async def _handle_save_word_note(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        keyword = message["data"]["keyword"]
+        note = message["data"]["note"]
+        Utils.db.save_word_note(keyword, note)
+        msg = {
+            "type": "word_note",
+            "data": {
+                "keyword": keyword,
+                "note": note,
+            },
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
+    async def _handle_delete_word_note(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        keyword = message["data"]["keyword"]
+        Utils.db.delete_word_note(keyword)
+        msg = {
+            "type": "word_note",
+            "data": {
+                "keyword": keyword,
+                "note": "",
             },
         }
         await SessionManager.send_msg_to_session_by_id(

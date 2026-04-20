@@ -120,7 +120,6 @@ body::-webkit-scrollbar-thumb {
     font-size: 15px !important;
 }
 
-
 /*   */
 .dict-select-sort-dialog {
     margin-top: 40px;
@@ -189,21 +188,18 @@ body::-webkit-scrollbar-thumb {
     /* cursor: not-allowed; */
 }
 
-
-
 .dict-iframe {
-  width: 100%;
-  border: none;
+    width: 100%;
+    border: none;
 }
 
 /* element-plus 自定义样式 */
-.el-collapse-item__header{
-  font-size: 1.1em !important;    /* 字体大小 */
-  /* color: #333;     */
-  font-weight: bold !important;   /* 字体粗细 */
-  line-height: 1.5 !important;   /* 行高 */
+.el-collapse-item__header {
+    font-size: 1.1em !important; /* 字体大小 */
+    /* color: #333;     */
+    font-weight: bold !important; /* 字体粗细 */
+    line-height: 1.5 !important; /* 行高 */
 }
-
 
 /*  */
 /* setting */
@@ -294,4 +290,13 @@ body::-webkit-scrollbar-thumb {
 el-tabs__item {
     float: none;
     display: inline-block;
+}
+
+@media (max-width: 500px) {
+    #titlebar-setting-button {
+        display: none;
+    }
+    #titlebar-dictss-button {
+        display: none;
+    }
 }
