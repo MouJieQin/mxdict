@@ -38,9 +38,10 @@ async function renderIframe() {
 
   // 处理资源路径
   let content = props.html
+    .replace(/file:\//g, '')
     .replace(/src=\"/g, `src="${baseUrl.value}/`)
-    .replace(/file:\//g, baseUrl.value)
 
+  // console.log('content:', content)
 
   // 只在第一次加载 CSS/JS
   doc.body.innerHTML = ''

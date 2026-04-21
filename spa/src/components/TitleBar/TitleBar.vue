@@ -71,7 +71,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, onBeforeUnmount } from 'vue'
 import type { PropType } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import {
@@ -149,6 +149,7 @@ const dictSSDialogVisible = ref(false)
 const settingDialogVisible = ref(false)
 // 定义与ref同名的变量
 import type { ElAutocomplete } from 'element-plus'
+import { before } from 'node:test'
 const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
 const systemConfigStore = useSystemConfigStore()
 const noteDialogVisible = ref(false)
@@ -307,6 +308,10 @@ const handleKeydown = (e: KeyboardEvent) => {
 onMounted(() => {
     links.value = loadAll()
     window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeydown)
 })
 
 </script>
