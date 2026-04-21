@@ -182,6 +182,21 @@ class DictDatabase:
         return cursor.fetchone() is not None
 
     # ======================== 收藏夹操作 ========================
+    def get_default_folder_id(self, session_id: int) -> Optional[int]:
+        """获取会话的默认收藏夹ID"""
+        config = self.get_session_config(session_id)
+        if config is None:
+            return None
+        default_folder_id = config.get("default_folder", {}).get("id")
+        if default_folder_id is None:
+            return None
+        return default_folder_id
+
+    def is_folder_exist(self, folder_id: int) -> bool:
+        """检查收藏夹是否存在"""
+        cursor = self.conn.execute("SELECT 1 FROM folders WHERE id = ?", (folder_id,))
+        return cursor.fetchone() is not None
+
     def create_folder(self, name: str, description: str = "") -> int:
         """创建收藏夹"""
         with self.conn:
@@ -275,12 +290,12 @@ class DictDatabase:
         if folder_id is None:
             return []
         return self.get_folder_words(folder_id)
-    
+
     def get_folder_words_for_anki_by_name(self, folder_name: str) -> List[Dict]:
         """根据收藏夹名称获取收藏夹下的所有单词（Anki 格式）"""
-        words=self.get_folder_words_by_name(folder_name)
+        words = self.get_folder_words_by_name(folder_name)
         for word in words:
-            word["note"]=self.get_word_note(word["word"])
+            word["note"] = self.get_word_note(word["word"])
         return words
 
     def get_folder_words(self, folder_id: int) -> List[Dict]:

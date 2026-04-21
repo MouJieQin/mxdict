@@ -54,6 +54,11 @@
             </template>
         </el-dialog>
 
+        <el-dialog v-model="favoriteWordsDialogVisible" fullscreen>
+            <FavoriteWords :favoriteWordsDialogVisible="favoriteWordsDialogVisible" :webSocket="props.webSocket"
+                @update-visible="(visible) => favoriteWordsDialogVisible = visible" :favoriteWords="props.favoriteWords"
+                :sessionConfig="props.sessionConfig" />
+        </el-dialog>
         <el-dialog v-model="settingDialogVisible" fullscreen>
             <Settings :webSocket="props.webSocket" :settingDialogVisible="settingDialogVisible"
                 :sessionConfig="props.sessionConfig"></Settings>
@@ -67,6 +72,7 @@
 
 <script lang="ts" setup>
 import { ref, watch, onMounted, computed } from 'vue'
+import type { PropType } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import {
     BsPin, BsPinAngleFill, BsHeartFill, BsHeart,
@@ -75,11 +81,12 @@ import { ImBooks } from 'vue-icons-plus/im'
 import SearchMethodSelect from '@/components/TitleBar/SearchMethodSelect.vue'
 import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
 import Settings from '@/views/Settings.vue'
+import FavoriteWords from '@/components/Dialogs/FavoriteWords.vue'
 import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
 import { Setting, Edit, Delete } from '@element-plus/icons-vue'
 import { useSystemConfigStore } from '@/stores/stores'
-
+import type { WordInfo } from '@/common/type-interface'
 
 
 const props = defineProps({
@@ -95,6 +102,11 @@ const props = defineProps({
         type: Object as () => SessionConfig,
         required: true,
         default: () => ({})
+    },
+    favoriteWords: {
+        type: Array as PropType<WordInfo[]>,
+        required: true,
+        default: () => [],
     },
     lastSearchKeyword: {
         type: String,
@@ -132,6 +144,7 @@ const props = defineProps({
 
 const keyword = ref('')
 const searchMethod = ref('prefix_search') // 默认搜索方法
+const favoriteWordsDialogVisible = ref(false)
 const dictSSDialogVisible = ref(false)
 const settingDialogVisible = ref(false)
 // 定义与ref同名的变量
@@ -158,6 +171,12 @@ const submitNote = () => {
 
 watch(() => props.noteContent, (newVal) => {
     noteContent.value = newVal
+})
+
+watch(() => favoriteWordsDialogVisible.value, (newVal) => {
+    if (newVal) {
+        props.webSocket?.sendFavoriteWordsRequest()
+    }
 })
 
 
@@ -276,9 +295,18 @@ const handleFocus = (e: FocusEvent) => {
     (e.target as HTMLInputElement).select()
 }
 
+const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === '/' && e.metaKey) {
+        e.preventDefault();
+        favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value;
+        return;
+    }
+}
+
 
 onMounted(() => {
     links.value = loadAll()
+    window.addEventListener('keydown', handleKeydown)
 })
 
 </script>

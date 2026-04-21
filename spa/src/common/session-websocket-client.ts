@@ -53,6 +53,15 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendLookupKeywordRequest(keyword: string) {
+        this._send(
+            'lookup_keyword_request',
+            {
+                keyword: keyword,
+            }
+        )
+    }
+
     sendToggleFavor(keyword: string, folder_id: number | null) {
         this._send(
             'toggle_favor',
@@ -101,6 +110,14 @@ class SessionWebSocketService extends WebSocketService {
             }
         )
     }
+
+    sendFavoriteWordsRequest() {
+        this._send(
+            'favorite_words_request',
+            {}
+        )
+    }
+
 
     sendFloatingWindowPinClick(sessionId: number) {
         this._send(

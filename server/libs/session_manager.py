@@ -76,6 +76,23 @@ class SessionManager:
         )
 
     @staticmethod
+    async def send_favorite_words_to_session(
+        session_id: int, connection_id: int
+    ):
+        """向特定会话的WebSocket连接发送收藏的单词"""
+        folder_id = Utils.db.get_default_folder_id(session_id)
+        msg = {"type": "favorite_words", "data": {"words": []}}
+        if folder_id and Utils.db.is_folder_exist(folder_id):
+            words = Utils.db.get_folder_words(folder_id)
+            msg = {
+                "type": "favorite_words",
+                "data": {"words": words},
+            }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
     async def send_session_config_to_session(session_id: int, connection_id: int):
         """向特定会话的WebSocket连接发送会话配置"""
         config = Utils.db.get_session_config(session_id)

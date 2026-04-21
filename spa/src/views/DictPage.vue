@@ -1,7 +1,7 @@
 <template>
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
-        :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
+        :favoriteWords="favoriteWords" :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
         :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
         :redirectWord="redirectWord" />
     <div class="word-detail">
@@ -33,7 +33,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
-import { type DictsInfo, type SessionConfig } from '@/common/type-interface'
+import type { DictsInfo, SessionConfig, WordInfo } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
 import MarkdownIt from 'markdown-it'
 const md = new MarkdownIt()
@@ -62,7 +62,7 @@ const isFloatingWindowPinned = ref(true) // 默认固定
 const lastSearchKeyword = ref<string>('')
 const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
-
+const favoriteWords = ref<WordInfo[]>([])
 
 
 const setupDicsSettingsInfo = () => {
@@ -144,7 +144,12 @@ const handleWebSocketMessage = (message: any) => {
             isFloatingWindowPinned.value = message.data.is_pinned
             break
         case 'toggle_favor':
-            isWordFavorited.value = message.data.is_word_favorited
+            console.log('toggle_favor:', message.data)
+            handleToggleFavor(message.data)
+            break
+        case 'favorite_words':
+            favoriteWords.value = message.data.words
+            console.log('favorite_words:', favoriteWords.value)
             break
         case 'system_config':
             systemConfigStore.setSystemConfig(message.data)
@@ -175,7 +180,14 @@ const handleEntryClick = (entryPath: string) => {
     console.log('redirectWord.value:', redirectWord.value)
 }
 
+const handleToggleFavor = (data: any) => {
 
+    isWordFavorited.value = data.is_word_favorited
+    // add  word if it is not in favoriteWords.value or delete the word in favoriteWords.value
+    if (!isWordFavorited.value) {
+        favoriteWords.value = favoriteWords.value.filter((item: WordInfo) => item.word !== data.keyword)
+    }
+}
 
 const handleScroll = () => {
     // autoHideScrollbar()

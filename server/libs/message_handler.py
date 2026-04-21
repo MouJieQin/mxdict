@@ -92,6 +92,8 @@ class MessageHandler:
                 "toggle_favor": MessageHandler._handle_toggle_favor,
                 "save_word_note": MessageHandler._handle_save_word_note,
                 "delete_word_note": MessageHandler._handle_delete_word_note,
+                "lookup_keyword_request": MessageHandler._handle_lookup_keyword_request,
+                "favorite_words_request": MessageHandler._handle_favorite_words_request,
             }
 
             if message_type in handlers:
@@ -262,3 +264,24 @@ class MessageHandler:
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)
         )
+
+    @staticmethod
+    async def _handle_lookup_keyword_request(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        keyword = message["data"]["keyword"]
+        msg = {
+            "type": "lookup_keyword_request",
+            "data": {
+                "keyword": keyword,
+            },
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
+    async def _handle_favorite_words_request(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        await SessionManager.send_favorite_words_to_session(session_id, connection_id)
