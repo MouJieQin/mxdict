@@ -33,6 +33,17 @@ class MessageHandler:
             folder_name = data["folder_name"]
             words = Utils.db.get_folder_words_for_anki_by_name(folder_name)
             return {"success": True, "data": {"words": words}}
+        elif command_type == "favorite_words_to_folder":
+            folder_name = data["folder_name"]
+            folder_id = Utils.db.get_folder_id_by_name(folder_name)
+            if folder_id is None:
+                logger.error(f"文件夹 {folder_name} 不存在")
+                return {"success": False, "message": f"文件夹 {folder_name} 不存在"}
+            words = data["words"]
+            for word in words:
+                if not Utils.db.is_word_favorited(word, folder_id):
+                    Utils.db.favorite_word(word, folder_id)
+            return {"success": True}
         else:
             logger.warning(f"未知的命令类型: {command_type}")
             return {"success": False}
