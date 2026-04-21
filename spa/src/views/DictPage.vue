@@ -66,14 +66,29 @@ const favoriteWords = ref<WordInfo[]>([])
 
 
 const setupDicsSettingsInfo = () => {
-    for (const dictName in dictsInfo.value) {
-        const dict = dictsInfo.value[dictName]
-        sessionConfig.value?.dictsSettingInfo.push({
-            id: dictName,
-            name: dict.name,
-            cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
-            is_enabled: true
-        })
+    if (!sessionConfig.value?.dictsSettingInfo) {
+        for (const dictName in dictsInfo.value) {
+            const dict = dictsInfo.value[dictName]
+            sessionConfig.value?.dictsSettingInfo.push({
+                id: dictName,
+                name: dict.name,
+                cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
+                is_enabled: true
+            })
+        }
+    } else {
+        for (const dictName in dictsInfo.value) {
+            const dict = dictsInfo.value[dictName]
+            const dictSetting = sessionConfig.value?.dictsSettingInfo.find(item => item.id === dictName)
+            if (!dictSetting) {
+                sessionConfig.value?.dictsSettingInfo.push({
+                    id: dictName,
+                    name: dict.name,
+                    cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
+                    is_enabled: true
+                })
+            }
+        }
     }
 }
 
