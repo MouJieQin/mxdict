@@ -88,7 +88,7 @@ async def command_command(request: CommandRequest):
     logger.info(f"command command: {request.type}")
     logger.info(f"command data: {request.data}")
     res = await MessageHandler.handle_command_message(request.type, request.data)
-    return {"success": res}
+    return res
 
 
 @app.websocket("/ws/dictionary/session/{clientID}")

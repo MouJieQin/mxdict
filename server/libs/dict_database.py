@@ -199,7 +199,7 @@ class DictDatabase:
         """获取所有收藏夹"""
         cursor = self.conn.execute("SELECT * FROM folders ORDER BY created_at DESC")
         return [dict(row) for row in cursor.fetchall()]
-    
+
     def get_folder_words_count(self, folder_id: int) -> int:
         """获取某个收藏夹下的单词数量"""
         cursor = self.conn.execute(
@@ -210,14 +210,14 @@ class DictDatabase:
             (folder_id,),
         )
         return cursor.fetchone()[0]
-    
+
     def get_all_folder_info(self) -> List[Dict]:
         """获取所有收藏夹信息"""
         folders = self.get_all_folders()
         for folder in folders:
             folder["words_count"] = self.get_folder_words_count(folder["id"])
         return folders
-    
+
     # ======================== 收藏/取消收藏单词 ========================
     def favorite_word(self, word: str, folder_id: int) -> bool:
         """收藏单词到指定文件夹"""
@@ -260,6 +260,28 @@ class DictDatabase:
         return cursor.fetchone() is not None
 
     # ======================== 查询收藏列表、历史记录 ========================
+
+    def get_folder_id_by_name(self, folder_name: str) -> Optional[int]:
+        """根据收藏夹名称获取收藏夹ID"""
+        cursor = self.conn.execute(
+            "SELECT id FROM folders WHERE name = ?", (folder_name,)
+        )
+        folder = cursor.fetchone()
+        return None if not folder else folder[0]
+
+    def get_folder_words_by_name(self, folder_name: str) -> List[Dict]:
+        """根据收藏夹名称获取收藏夹下的所有单词"""
+        folder_id = self.get_folder_id_by_name(folder_name)
+        if folder_id is None:
+            return []
+        return self.get_folder_words(folder_id)
+    
+    def get_folder_words_for_anki_by_name(self, folder_name: str) -> List[Dict]:
+        """根据收藏夹名称获取收藏夹下的所有单词（Anki 格式）"""
+        words=self.get_folder_words_by_name(folder_name)
+        for word in words:
+            word["note"]=self.get_word_note(word["word"])
+        return words
 
     def get_folder_words(self, folder_id: int) -> List[Dict]:
         """获取某个收藏夹下的所有单词"""

@@ -2,10 +2,11 @@ import json
 import time
 import threading
 import asyncio
+from typing import Dict
 from websockets.asyncio.client import ClientConnection
-
-
 from fastapi import WebSocket
+
+
 from libs.log_config import logger
 from libs.common import Utils
 from libs.session_manager import SessionManager
@@ -20,15 +21,21 @@ class MessageHandler:
     """消息处理器，处理不同类型的WebSocket消息"""
 
     @staticmethod
-    async def handle_command_message(command_type: str, data: dict) -> None:
+    async def handle_command_message(command_type: str, data: dict) -> Dict:
         """处理命令消息"""
         if command_type == "lookup_keyword_request":
             session_id = data["session_id"]
             await SessionManager.broadcast_session(
                 session_id, json.dumps({"type": "lookup_keyword_request", "data": data})
             )
+            return {"success": True}
+        elif command_type == "acquire_words_from_folder":
+            folder_name = data["folder_name"]
+            words = Utils.db.get_folder_words_for_anki_by_name(folder_name)
+            return {"success": True, "data": {"words": words}}
         else:
             logger.warning(f"未知的命令类型: {command_type}")
+            return {"success": False}
 
     @staticmethod
     async def handle_iwin_message(ws: ClientConnection, data: str):
