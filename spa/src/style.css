@@ -292,6 +292,19 @@ el-tabs__item {
     display: inline-block;
 }
 
+/* favorite words table */
+.favorite-words-table-container{
+    /* 居中 */
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+.favorite-words-table {
+    max-height: 80%;
+}
+
+
+
 @media (max-width: 500px) {
     #titlebar-setting-button {
         display: none;

@@ -1,10 +1,8 @@
 <template>
-    <div>
-        <el-table v-if="localFavoriteWords" :data="localFavoriteWords" height="350" style="width: 100%" stripe>
-            <el-table-column fixed prop="word" label="Word" width="130" show-overflow-tooltip />
+    <div class="favorite-words-table-container">
+        <el-table v-if="localFavoriteWords" class="favorite-words-table" :data="localFavoriteWords" stripe>
             <!-- <el-table-column fixed prop="created_at" label="Favorite At" width="130" show-overflow-tooltip /> -->
-            <el-table-column fixed prop="query_count" label="Query Count" width="130" />
-            <el-table-column fixed="right" label="Operations" width="130">
+            <el-table-column fixed="left" label="Operations" width="130">
                 <template #default="scope">
                     <el-button-group>
                         <el-button :icon="BsHeartbreak" size="small"
@@ -13,6 +11,8 @@
                     </el-button-group>
                 </template>
             </el-table-column>
+            <el-table-column fixed prop="word" label="Word" show-overflow-tooltip />
+            <el-table-column prop="query_count" label="Query Count" />
         </el-table>
         <!-- make it show better -->
         Total: {{ localFavoriteWords.length }} words
