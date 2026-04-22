@@ -21,9 +21,9 @@
                     @click="handleFavorClick" class="floating-window-titlebar-button" size="small"
                     :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
 
-                <el-button v-if="!showFavorButtonTooltip" :icon="Edit" text @click="noteDialogVisible = true"
+                <el-button :icon="Edit" text @click="noteDialogVisible = true"
                     class="floating-window-titlebar-button" size="small"
-                    :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
+                    :disabled="!(lastSearchKeyword !== '')" />
 
                 <el-button :icon="ImBooks" text @click="dictSSDialogVisible = !dictSSDialogVisible"
                     class="floating-window-titlebar-button" size="small" id="titlebar-dictss-button" />
