@@ -3,7 +3,7 @@
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
         :favoriteWords="favoriteWords" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
-        :wordOptions="wordOptions" :redirectWord="redirectWord" />
+        :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword" />
     <div class="word-detail">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
@@ -23,9 +23,9 @@
                 </el-collapse-item>
             </div>
         </el-collapse>
-        <div v-if="!hasResultLastSearch">
+        <div v-show="!keyword && !hasResultLastSearch">
             <p class="dict-homepage-type-p">Type a word to look up in…</p>
-            <br/>
+            <br />
             <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
                 <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
                     dictSetting.name }}</p>
@@ -54,12 +54,14 @@ const router = useRouter()
 const systemConfigStore = useSystemConfigStore()
 const webSocket = ref<SessionWebSocketService | null>(null)
 // const bodyScrollTimeoutId = ref<number | null>(null)
+const keyword = ref('')
 const sessionId = ref(-1)
 const redirectWord = ref<string>('')
 const dictsInfo = ref<DictsInfo>({})
 const sessionConfig = ref<SessionConfig>({
     default_folder: { "id": null },
-    dictsSettingInfo: []
+    dictsSettingInfo: [],
+    default_search_method: { "method": "prefix_search" }
 })
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
@@ -133,6 +135,11 @@ router.beforeEach(async (__, _, next) => {
 onBeforeUnmount(() => {
     document.title = 'MxDict'
 })
+
+const handleChangeKeyword = (newKeyword: string) => {
+    keyword.value = newKeyword
+}
+
 
 // 处理WebSocket消息
 const handleWebSocketMessage = (message: any) => {

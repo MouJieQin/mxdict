@@ -125,8 +125,11 @@ function injectClickHandler(doc: Document) {
 function updateIframeHeight() {
   const iframe = iframeRef.value
   if (!iframe?.contentDocument) return
-  const h = iframe.contentDocument.body.scrollHeight
-  iframe.style.height = `${h + 30}px`
+  const doc = iframe.contentDocument
+  const realHeight = doc.getElementById(`${props.dictionaryRoot}-dict-tail`)?.getBoundingClientRect().bottom || 0
+  // 赋值给 iframe
+  iframe.style.height = `${realHeight + 10}px`
+
 }
 
 // ================ 监听变化 ================

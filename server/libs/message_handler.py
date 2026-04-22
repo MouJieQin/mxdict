@@ -161,6 +161,8 @@ class MessageHandler:
         if folder_id:
             is_word_favorited = Utils.db.is_word_favorited(keyword, folder_id)
         note = Utils.db.get_word_note(keyword)
+        if results or note:
+            Utils.db.add_search_history(keyword)
         msg = {
             "type": "lookup_keyword",
             "data": {

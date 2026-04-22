@@ -79,8 +79,6 @@ class MdictSearcher:
                 result = []
                 self._hand_link_word(result, indexBuilder, res, [keyword], ignorecase)
                 results[dict_name] = result
-        if results:
-            Utils.db.add_search_history(keyword)
         return results
 
     def _hand_link_word(

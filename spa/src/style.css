@@ -216,8 +216,6 @@ body::-webkit-scrollbar-thumb {
     opacity: 0.5;
 }
 
-
-
 /*  */
 /* setting */
 /*  */
@@ -310,7 +308,7 @@ el-tabs__item {
 }
 
 /* favorite words table */
-.favorite-words-table-container{
+.favorite-words-table-container {
     /* 居中 */
     margin: 0 auto;
     margin-top: 20px;
@@ -320,7 +318,49 @@ el-tabs__item {
     max-height: 80%;
 }
 
+/*  */
+/* search method select */
+/*  */
 
+/* 图标容器 */
+.icon-select-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* 图标样式 */
+.prefix-icon {
+    width: 16px;
+    color: #666;
+}
+
+.option-icon {
+    width: 16px;
+    color: #666;
+    text-align: center;
+    margin-right: 8px;
+    padding-top: 12px;
+}
+
+/* 隐藏原生下拉框，只保留弹出功能 */
+/* defined in vue */
+
+/* .hidden-select {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+} */
+
+/* 搜索框整体样式 */
+.floating-window-search {
+    width: 360px;
+}
 
 @media (max-width: 500px) {
     #titlebar-setting-button {

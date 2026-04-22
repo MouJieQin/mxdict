@@ -27,10 +27,15 @@ export interface SessiondefaultFolder {
     // name: string;
 }
 
+export interface SessionDefaultSearchMethod {
+    method: string;
+}
+
 
 export interface SessionConfig {
     dictsSettingInfo: DictsSettingInfo;
     default_folder: SessiondefaultFolder;
+    default_search_method: SessionDefaultSearchMethod;
 }
 
 export interface FolderInfo {

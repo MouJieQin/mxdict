@@ -8,7 +8,8 @@
                     @focus="handleFocus" clearable hide-loading>
                     <!-- 前缀插槽：动态图标 + 点击弹出下拉 -->
                     <template #prefix>
-                        <SearchMethodSelect :searchMethod="searchMethod"
+                        <SearchMethodSelect
+                            :searchMethod="props.sessionConfig.default_search_method?.method || 'prefix_search'"
                             @update-search-method="handleSearchMethodChange" />
                     </template>
                 </el-autocomplete>
@@ -146,8 +147,11 @@ const props = defineProps({
     }
 })
 
+const emits = defineEmits<{
+    (e: 'change:keyword', keyword: string): void
+}>()
+
 const keyword = ref('')
-const searchMethod = ref('prefix_search') // 默认搜索方法
 const favoriteWordsDialogVisible = ref(false)
 const dictSSDialogVisible = ref(false)
 const settingDialogVisible = ref(false)
@@ -171,6 +175,10 @@ const submitNote = () => {
     props.webSocket?.sendSaveWordNote(props.lastSearchKeyword, noteContent.value)
     noteDialogVisible.value = false
 }
+
+watch(() => keyword.value, (newVal) => {
+    emits('change:keyword', newVal)
+})
 
 watch(() => props.noteContent, (newVal) => {
     noteContent.value = newVal
@@ -200,7 +208,12 @@ const handleFavorClick = () => {
 }
 
 const handleSearchMethodChange = (newMethod: string) => {
-    searchMethod.value = newMethod
+    if (props.sessionConfig.default_search_method) {
+        props.sessionConfig.default_search_method.method = newMethod
+    } else {
+        props.sessionConfig.default_search_method = { method: newMethod }
+    }
+    props.webSocket?.sendSessionConfig(props.sessionConfig)
     // 重新触发搜索以应用新的搜索方法
     if (keyword.value.trim()) {
         querySearchAsync(keyword.value, () => { })
@@ -253,7 +266,7 @@ const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
         props.webSocket?.sendSearchHistoryRequest()
     } else {
         isOptionsLoading.value = true
-        props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
+        props.webSocket?.sendKeywordOptionsSearch(keyword.value, props.sessionConfig.default_search_method.method, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
     }
     // 1. 先清除上一次的定时器（核心！）
     if (searchTimer) {

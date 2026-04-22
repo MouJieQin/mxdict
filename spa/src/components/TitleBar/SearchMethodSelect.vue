@@ -65,7 +65,6 @@ const selectedType = ref(props.searchMethod) // 默认值
 import type { ElSelect } from 'element-plus'
 const selectRef = ref<InstanceType<typeof ElSelect> | null>(null)
 
-
 watch(selectedType, (newType) => {
     emits('update-search-method', newType)
 })
@@ -80,7 +79,7 @@ const currentIcon = computed(() => {
         fuzzy_contains_search: BsSearchHeart,   // 模糊包含
     }
     // Type assertion to fix TS error
-    return iconMap[selectedType.value as keyof typeof iconMap] || BsSearch
+    return iconMap[props.searchMethod as keyof typeof iconMap] || BsSearch
 })
 
 // 点击图标 → 打开下拉框
@@ -94,29 +93,6 @@ const openSelect = (e: MouseEvent | TouchEvent) => {
 
 
 <style scoped>
-/* 图标容器 */
-.icon-select-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 100%;
-    cursor: pointer;
-}
-
-/* 图标样式 */
-.prefix-icon {
-    width: 16px;
-    color: #666;
-}
-
-.option-icon {
-    width: 16px;
-    color: #666;
-    text-align: center;
-    margin-right: 8px;
-    padding-top: 12px;
-}
 
 /* 隐藏原生下拉框，只保留弹出功能 */
 :deep(.hidden-select) {
@@ -127,8 +103,4 @@ const openSelect = (e: MouseEvent | TouchEvent) => {
     pointer-events: none;
 }
 
-/* 搜索框整体样式 */
-.floating-window-search {
-    width: 360px;
-}
 </style>
