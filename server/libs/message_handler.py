@@ -102,6 +102,7 @@ class MessageHandler:
                 "delete_word_note": MessageHandler._handle_delete_word_note,
                 "lookup_keyword_request": MessageHandler._handle_lookup_keyword_request,
                 "favorite_words_request": MessageHandler._handle_favorite_words_request,
+                "search_history_request": MessageHandler._handle_search_history_request,
             }
 
             if message_type in handlers:
@@ -293,3 +294,9 @@ class MessageHandler:
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         await SessionManager.send_favorite_words_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_search_history_request(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        await SessionManager.send_search_history_to_session(session_id, connection_id)

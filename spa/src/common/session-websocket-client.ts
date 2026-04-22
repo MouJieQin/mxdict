@@ -118,6 +118,12 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendSearchHistoryRequest() {
+        this._send(
+            'search_history_request',
+            {}
+        )
+    }
 
     sendFloatingWindowPinClick(sessionId: number) {
         this._send(

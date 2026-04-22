@@ -76,9 +76,7 @@ class SessionManager:
         )
 
     @staticmethod
-    async def send_favorite_words_to_session(
-        session_id: int, connection_id: int
-    ):
+    async def send_favorite_words_to_session(session_id: int, connection_id: int):
         """向特定会话的WebSocket连接发送收藏的单词"""
         folder_id = Utils.db.get_default_folder_id(session_id)
         msg = {"type": "favorite_words", "data": {"words": []}}
@@ -88,6 +86,15 @@ class SessionManager:
                 "type": "favorite_words",
                 "data": {"words": words},
             }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+
+    @staticmethod
+    async def send_search_history_to_session(session_id: int, connection_id: int):
+        """向特定会话的WebSocket连接发送搜索历史"""
+        words_history = Utils.db.get_search_history()
+        msg = {"type": "search_history", "data": {"words": words_history}}
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)
         )

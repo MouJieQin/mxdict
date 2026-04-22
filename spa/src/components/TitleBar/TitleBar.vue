@@ -21,9 +21,8 @@
                     @click="handleFavorClick" class="floating-window-titlebar-button" size="small"
                     :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
 
-                <el-button :icon="Edit" text @click="noteDialogVisible = true"
-                    class="floating-window-titlebar-button" size="small"
-                    :disabled="!(lastSearchKeyword !== '')" />
+                <el-button :icon="Edit" text @click="noteDialogVisible = true" class="floating-window-titlebar-button"
+                    size="small" :disabled="!(lastSearchKeyword !== '')" />
 
                 <el-button :icon="ImBooks" text @click="dictSSDialogVisible = !dictSSDialogVisible"
                     class="floating-window-titlebar-button" size="small" id="titlebar-dictss-button" />
@@ -86,7 +85,7 @@ import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
 import { Setting, Edit, Delete } from '@element-plus/icons-vue'
 import { useSystemConfigStore } from '@/stores/stores'
-import type { WordInfo } from '@/common/type-interface'
+import type { WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
 
 
 const props = defineProps({
@@ -105,6 +104,11 @@ const props = defineProps({
     },
     favoriteWords: {
         type: Array as PropType<WordInfo[]>,
+        required: true,
+        default: () => [],
+    },
+    searchHistory: {
+        type: Array as PropType<WordInfoWithLastSearch[]>,
         required: true,
         default: () => [],
     },
@@ -147,9 +151,7 @@ const searchMethod = ref('prefix_search') // 默认搜索方法
 const favoriteWordsDialogVisible = ref(false)
 const dictSSDialogVisible = ref(false)
 const settingDialogVisible = ref(false)
-// 定义与ref同名的变量
 import type { ElAutocomplete } from 'element-plus'
-import { before } from 'node:test'
 const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
 const systemConfigStore = useSystemConfigStore()
 const noteDialogVisible = ref(false)
@@ -205,10 +207,12 @@ const handleSearchMethodChange = (newMethod: string) => {
     }
 }
 
-// watch(() => keyword.value, (newVal) => {
-// })
-
 watch(() => props.wordOptions, () => {
+    links.value = loadAll()
+    isOptionsLoading.value = false
+})
+
+watch(() => props.searchHistory, () => {
     links.value = loadAll()
     isOptionsLoading.value = false
 })
@@ -228,6 +232,12 @@ interface LinkItem {
 const links = ref<LinkItem[]>([])
 
 const loadAll = (): LinkItem[] => {
+    if (!keyword.value.trim()) {
+        return props.searchHistory.map(item => ({
+            value: String(item.word),
+            link: String(item.word),
+        }))
+    }
     return props.wordOptions.map(item => ({
         value: String(item),
         link: String(item),
@@ -239,11 +249,12 @@ let isOptionsLoading = ref(false)
 const querySearchAsync = (queryString: string, cb: (arg: any) => void) => {
     console.log("queryString", queryString)
     if (!keyword.value.trim()) {
-        return
+        isOptionsLoading.value = true
+        props.webSocket?.sendSearchHistoryRequest()
+    } else {
+        isOptionsLoading.value = true
+        props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
     }
-    isOptionsLoading.value = true
-    props.webSocket?.sendKeywordOptionsSearch(keyword.value, searchMethod.value, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []))
-
     // 1. 先清除上一次的定时器（核心！）
     if (searchTimer) {
         clearTimeout(searchTimer)

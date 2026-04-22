@@ -1,9 +1,9 @@
 <template>
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
-        :favoriteWords="favoriteWords" :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
-        :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
-        :redirectWord="redirectWord" />
+        :favoriteWords="favoriteWords" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
+        :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
+        :wordOptions="wordOptions" :redirectWord="redirectWord" />
     <div class="word-detail">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
@@ -33,7 +33,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
-import type { DictsInfo, SessionConfig, WordInfo } from '@/common/type-interface'
+import type { DictsInfo, SessionConfig, WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
 import MarkdownIt from 'markdown-it'
 const md = new MarkdownIt()
@@ -63,6 +63,7 @@ const lastSearchKeyword = ref<string>('')
 const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
 const favoriteWords = ref<WordInfo[]>([])
+const searchHistory = ref<WordInfoWithLastSearch[]>([])
 
 
 const setupDicsSettingsInfo = () => {
@@ -165,6 +166,10 @@ const handleWebSocketMessage = (message: any) => {
         case 'favorite_words':
             favoriteWords.value = message.data.words
             console.log('favorite_words:', favoriteWords.value)
+            break
+        case 'search_history':
+            searchHistory.value = message.data.words
+            console.log('search_history:', searchHistory.value)
             break
         case 'system_config':
             systemConfigStore.setSystemConfig(message.data)

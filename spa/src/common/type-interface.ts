@@ -49,9 +49,15 @@ export interface SystemConfig {
 
 export interface WordInfo {
     word: string;
-    created_at: string;
+    created_at: string | null;
     query_count: number;
 }
+
+
+export interface WordInfoWithLastSearch extends WordInfo {
+    last_searched: string | null;
+}
+
 export interface Message {
     message_id: number;
     raw_text: string;
