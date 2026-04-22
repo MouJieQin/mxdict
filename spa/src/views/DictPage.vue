@@ -23,6 +23,14 @@
                 </el-collapse-item>
             </div>
         </el-collapse>
+        <div v-if="!hasResultLastSearch">
+            <p class="dict-homepage-type-p">Type a word to look up in…</p>
+            <br/>
+            <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
+                <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
+                    dictSetting.name }}</p>
+            </div>
+        </div>
     </div>
 </template>
 

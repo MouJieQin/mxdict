@@ -70,7 +70,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted, computed, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, computed, onUnmounted } from 'vue'
 import type { PropType } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import {
@@ -321,7 +321,7 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
 })
 
-onBeforeUnmount(() => {
+onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
 })
 
