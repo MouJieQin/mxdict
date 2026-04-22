@@ -1,13 +1,15 @@
 from typing import Dict, Optional
 from libs.config import UtilsBase
 from libs.websocket_client import WsClient
+from libs.mxdict_database import MxDictDatabase
 from libs.dict_database import DictDatabase
 
 
 class Utils(UtilsBase):
     """通用工具类"""
 
-    db = DictDatabase(UtilsBase.DATABASE_PATH)
+    db = MxDictDatabase(UtilsBase.MXDICT_DATABASE_PATH)
+    dict_db = DictDatabase(UtilsBase.DICT_DATABASE_PATH)
     iwin_ws_client: WsClient
 
     # 初始化服务

@@ -19,7 +19,8 @@ class UtilsBase:
     DEFAULT_CONFIG_FILE = SERVER_SRC_ABS_PATH + "/config.json"
     DICTIONARYS_PATH = MXDICT_STORAGE_PATH + "/dictionaries"
     DATA_PATH = MXDICT_STORAGE_PATH + "/data"
-    DATABASE_PATH = DATA_PATH + "/mxdict.db"
+    MXDICT_DATABASE_PATH = DATA_PATH + "/mxdict.db"
+    DICT_DATABASE_PATH = DATA_PATH + "/dict.db"
 
     DEFAULT_CONFIG = {}
     CONFIG = {}

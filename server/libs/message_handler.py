@@ -2,7 +2,7 @@ import json
 import time
 import threading
 import asyncio
-from typing import Dict
+from typing import Dict, List, Optional, Any
 from websockets.asyncio.client import ClientConnection
 from fastapi import WebSocket
 
@@ -30,9 +30,7 @@ class MessageHandler:
             )
             return {"success": True}
         elif command_type == "acquire_words_from_folder":
-            folder_name = data["folder_name"]
-            words = Utils.db.get_folder_words_for_anki_by_name(folder_name)
-            return {"success": True, "data": {"words": words}}
+            return MessageHandler._handle_acquire_words_from_folder(data)
         elif command_type == "favorite_words_to_folder":
             folder_name = data["folder_name"]
             folder_id = Utils.db.get_folder_id_by_name(folder_name)
@@ -47,6 +45,16 @@ class MessageHandler:
         else:
             logger.warning(f"未知的命令类型: {command_type}")
             return {"success": False}
+
+    @staticmethod
+    def _handle_acquire_words_from_folder(data: dict) -> Dict:
+        """获取收藏夹下的所有单词（Anki 格式）"""
+        folder_name = data["folder_name"]
+        words = Utils.db.get_folder_words_by_name(folder_name)
+        for word in words:
+            word["note"] = Utils.db.get_word_note(word["word"])
+            word["definition"] = Utils.dict_db.query(word["word"])
+        return {"success": True, "data": {"words": words}}
 
     @staticmethod
     async def handle_iwin_message(ws: ClientConnection, data: str):
