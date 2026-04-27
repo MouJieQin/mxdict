@@ -4,7 +4,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 interface Props {
   html: string
@@ -79,7 +79,9 @@ async function renderIframe() {
   p.textContent = "tail"
   p.id = props.dictionaryRoot + '-dict-tail'
   doc.body.appendChild(p)
-  updateIframeHeight()
+  setTimeout(() => {
+    updateIframeHeight()
+  }, 100)
 }
 
 function injectKeydownHandler(doc: Document) {
@@ -141,6 +143,17 @@ function injectClickHandler(doc: Document) {
   `
   doc.body.appendChild(script)
 }
+
+//  ================ 监听窗口resize ================
+onMounted(() => {
+  window.addEventListener('resize', updateIframeHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateIframeHeight)
+})
+
+
 
 // ================ 高度自适应 ================
 function updateIframeHeight() {
