@@ -158,6 +158,7 @@ class MessageHandler:
     ):
         keyword = message["data"]["keyword"]
         folder_id = message["data"]["folder_id"]
+        left_history = message["data"]["left_history"]
         results = mdict_searcher.mdx_lookup(
             keyword, dict_names=message["data"]["dict_settings"]
         )
@@ -165,7 +166,7 @@ class MessageHandler:
         if folder_id:
             is_word_favorited = Utils.db.is_word_favorited(keyword, folder_id)
         note = Utils.db.get_word_note(keyword)
-        if results or note:
+        if left_history and (results or note):
             Utils.db.add_search_history(keyword)
         msg = {
             "type": "lookup_keyword",
@@ -174,6 +175,7 @@ class MessageHandler:
                 "result": results,
                 "note": note,
                 "is_word_favorited": is_word_favorited,
+                "left_history": left_history,
             },
         }
         await SessionManager.send_msg_to_session_by_id(

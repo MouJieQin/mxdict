@@ -1,7 +1,7 @@
 <template>
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :env="envFromRoute"
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
-        :favoriteWords="favoriteWords" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
+        :favoriteWords="favoriteWords" :leftHistory="leftHistory" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
         :iframeKeydownEvent="iframeKeydownEvent" />
@@ -88,6 +88,7 @@ const lastSearchKeyword = ref<string>('')
 const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
 const favoriteWords = ref<WordInfo[]>([])
+const leftHistory = ref<boolean>(false)
 const searchHistory = ref<WordInfoWithLastSearch[]>([])
 const iframeKeydownEvent = ref<any | null>(null)
 
@@ -234,6 +235,7 @@ const handleLookupKeyword = (data: any) => {
     document.title = keyword || 'MxDict'
     lastSearchKeyword.value = keyword || ''
     noteContent.value = data.note || ''
+    leftHistory.value = data.left_history
     lookupKeywordResult.value = data.result
     hasResultLastSearch.value = data.result !== null && data.result !== undefined && Object.keys(data.result).length !== 0
     console.log('Object.keys(data.result).length:', Object.keys(data.result).length)

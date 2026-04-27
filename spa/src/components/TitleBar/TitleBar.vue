@@ -15,6 +15,11 @@
                 </el-autocomplete>
             </div>
             <el-button-group class="floating-window-titlebar-button-container">
+                <el-button :icon="ArrowLeftBold" text @click="handleHistoryBack" class="floating-window-titlebar-button"
+                    size="small" :disabled="historyIndex >= searchHistory.length - 1" />
+                <el-button :icon="ArrowRightBold" text @click="handleHistoryForward"
+                    class="floating-window-titlebar-button" size="small"
+                    :disabled="historyIndex === -1 || historyIndex === 0" />
                 <el-tooltip v-if="showFavorButtonTooltip" content="请先设置默认收藏夹" trigger="hover">
                     <el-button :icon="BsHeart" text class="floating-window-titlebar-button" size="small" disabled />
                 </el-tooltip>
@@ -85,7 +90,7 @@ import Settings from '@/views/Settings.vue'
 import FavoriteWords from '@/components/Dialogs/FavoriteWords.vue'
 import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
-import { Setting, Edit, Delete } from '@element-plus/icons-vue'
+import { Setting, Edit, Delete, ArrowLeftBold, ArrowRightBold } from '@element-plus/icons-vue'
 import { useSystemConfigStore } from '@/stores/stores'
 import type { WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
 
@@ -113,6 +118,11 @@ const props = defineProps({
         type: Array as PropType<WordInfo[]>,
         required: true,
         default: () => [],
+    },
+    leftHistory: {
+        type: Boolean,
+        required: true,
+        default: false,
     },
     searchHistory: {
         type: Array as PropType<WordInfoWithLastSearch[]>,
@@ -170,7 +180,8 @@ const autoCompleteRef = ref<InstanceType<typeof ElAutocomplete> | null>(null)
 const systemConfigStore = useSystemConfigStore()
 const noteDialogVisible = ref(false)
 const noteContent = ref(props.noteContent)
-
+const historyIndex = ref(-1)
+const isHistoryTriggered = ref(false)
 
 
 const handleDeleteNote = () => {
@@ -241,9 +252,23 @@ watch(() => props.wordOptions, () => {
     isOptionsLoading.value = false
 })
 
+watch(() => props.leftHistory, (newVal) => {
+    if (newVal) {
+        isHistoryTriggered.value = false
+        setTimeout(() => {
+            historyIndex.value = props.hasResultLastSearch ? 0 : -1
+        }, 100)
+    }
+})
+
 watch(() => props.searchHistory, () => {
     links.value = loadAll()
     isOptionsLoading.value = false
+    if (isHistoryTriggered.value) {
+        isHistoryTriggered.value = false
+        keyword.value = props.searchHistory[historyIndex.value].word
+        props.webSocket?.sendLookupKeyword(keyword.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []), false)
+    }
 })
 
 watch(() => props.redirectWord, (newVal) => {
@@ -331,6 +356,25 @@ const handleSelect = (item: Record<string, any>) => {
     console.log("handleSelect:", item.value)
 }
 
+const handleHistoryBack = () => {
+    if (historyIndex.value < history.length - 1) {
+        historyIndex.value += 1
+        isHistoryTriggered.value = true
+        props.webSocket?.sendSearchHistoryRequest()
+    }
+
+}
+
+const handleHistoryForward = () => {
+    if (historyIndex.value > 0) {
+        historyIndex.value -= 1
+        isHistoryTriggered.value = true
+        props.webSocket?.sendSearchHistoryRequest()
+    }
+}
+
+
+
 const handleFocus = (_: FocusEvent) => {
     // 拿到原生 input 元素并全选
     // (e.target as HTMLInputElement).select()
@@ -338,8 +382,8 @@ const handleFocus = (_: FocusEvent) => {
 
 // const handleKeydown = ref((_: KeyboardEvent) => {})
 
-const handleKeydownData =(keyboardEventData: any) => {
-        if (keyboardEventData.key === '/' && keyboardEventData.metaKey) {
+const handleKeydownData = (keyboardEventData: any) => {
+    if (keyboardEventData.key === '/' && keyboardEventData.metaKey) {
         favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value
     }
 }

@@ -35,13 +35,14 @@ class SessionWebSocketService extends WebSocketService {
     }
 
     // 发送用户输入
-    sendLookupKeyword(keyword: string, folder_id: number | null, dictSettings: string[] | null = null) {
+    sendLookupKeyword(keyword: string, folder_id: number | null, dictSettings: string[] | null = null, leftHistory: boolean = true) {
         this._send(
             'lookup_keyword',
             {
                 keyword: keyword,
                 folder_id: folder_id,
                 dict_settings: dictSettings,
+                left_history: leftHistory,
             }
         )
     }
