@@ -100,7 +100,9 @@ class SessionManager:
         )
 
     @staticmethod
-    async def send_session_config_to_session(session_id: int, connection_id: int):
+    async def send_session_config_to_session(
+        session_id: int, connection_id: int, is_right_after_connection: bool = False
+    ):
         """向特定会话的WebSocket连接发送会话配置"""
         config = Utils.db.get_session_config(session_id)
         if config is None:
@@ -109,7 +111,10 @@ class SessionManager:
             config["default_folder"] = {"id": None}
         msg = {
             "type": "session_config",
-            "data": {"config": config},
+            "data": {
+                "config": config,
+                "is_right_after_connection": is_right_after_connection,
+            },
         }
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)

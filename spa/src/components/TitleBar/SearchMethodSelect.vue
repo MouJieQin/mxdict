@@ -66,7 +66,13 @@ import type { ElSelect } from 'element-plus'
 const selectRef = ref<InstanceType<typeof ElSelect> | null>(null)
 
 watch(selectedType, (newType) => {
-    emits('update-search-method', newType)
+    if (newType != props.searchMethod) {
+        emits('update-search-method', newType)
+    }
+})
+
+watch(() => props.searchMethod, (newMethod) => {
+    selectedType.value = newMethod
 })
 
 
@@ -93,7 +99,6 @@ const openSelect = (e: MouseEvent | TouchEvent) => {
 
 
 <style scoped>
-
 /* 隐藏原生下拉框，只保留弹出功能 */
 :deep(.hidden-select) {
     position: absolute;
@@ -102,5 +107,4 @@ const openSelect = (e: MouseEvent | TouchEvent) => {
     height: 0;
     pointer-events: none;
 }
-
 </style>

@@ -125,11 +125,12 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
-    sendFloatingWindowPinClick(sessionId: number) {
+    sendFloatingWindowPinClick(sessionId: number, is_pinned: boolean) {
         this._send(
             'toggle_floating_pin',
             {
-                session_id: sessionId
+                session_id: sessionId,
+                is_pinned: is_pinned,
             }
         )
     }

@@ -74,6 +74,9 @@ class MessageHandler:
                     "data": {"is_pinned": message["data"]["is_pinned"]},
                 }
                 await SessionManager.broadcast_session(session_id, json.dumps(msg))
+            elif command_type == "close_fixed_window":
+                session_id = message["data"]["session_id"]
+                await SessionManager.broadcast_session(session_id, data)
             else:
                 logger.warning(f"未知的iWin命令类型: {command_type}")
         except Exception as e:
@@ -124,6 +127,7 @@ class MessageHandler:
             "data": {
                 "session_id": session_id,
                 "connection_id": connection_id,
+                "is_pinned": message["data"]["is_pinned"],
             },
         }
         await Utils.iwin_ws_client.send(msg)

@@ -31,11 +31,16 @@ export interface SessionDefaultSearchMethod {
     method: string;
 }
 
+export interface SessionPin {
+    is_pinned: boolean;
+}
+
 
 export interface SessionConfig {
     dictsSettingInfo: DictsSettingInfo;
     default_folder: SessiondefaultFolder;
     default_search_method: SessionDefaultSearchMethod;
+    pin?: SessionPin;
 }
 
 export interface FolderInfo {

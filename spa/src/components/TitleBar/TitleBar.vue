@@ -36,7 +36,7 @@
         </div>
 
         <el-dialog v-model="noteDialogVisible" :title="'「' + lastSearchKeyword + '」' + '的笔记'" width="500" align-center>
-            <el-input v-model="noteContent" autocomplete="off" type="textarea" :autosize="{ minRows: 5, maxRows: 9 }" />
+            <el-input class="note-content-input" v-model="noteContent" autocomplete="off" type="textarea" :autosize="{ minRows: 5, maxRows: 9 }" />
             <template #footer>
                 <div class="dialog-footer">
                     <el-popconfirm confirm-button-text="删除" confirm-button-type="danger" cancel-button-text="取消"
@@ -200,7 +200,7 @@ const showFavorButtonTooltip = computed(() => {
 })
 
 const handlePinClick = () => {
-    props.webSocket?.sendFloatingWindowPinClick(props.sessionId)
+    props.webSocket?.sendFloatingWindowPinClick(props.sessionId, !props.isPinned)
 }
 
 const handleFavorClick = () => {
@@ -315,27 +315,34 @@ const handleSelect = (item: Record<string, any>) => {
     console.log("handleSelect:", item.value)
 }
 
-const handleFocus = (e: FocusEvent) => {
+const handleFocus = (_: FocusEvent) => {
     // 拿到原生 input 元素并全选
-    (e.target as HTMLInputElement).select()
+    // (e.target as HTMLInputElement).select()
 }
 
-const handleKeydown = (e: KeyboardEvent) => {
+// const handleKeydown = (e: KeyboardEvent) => {
+//     if (e.key === '/' && e.metaKey) {
+//         e.preventDefault();
+//         favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value;
+//         return;
+//     }
+// }
+
+const handleKeydown = ref((_: KeyboardEvent) => {})
+
+handleKeydown.value = (e: KeyboardEvent) => {
     if (e.key === '/' && e.metaKey) {
-        e.preventDefault();
-        favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value;
-        return;
+        e.preventDefault()
+        favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value
     }
 }
-
-
 onMounted(() => {
     links.value = loadAll()
-    window.addEventListener('keydown', handleKeydown)
+    window.addEventListener('keydown', handleKeydown.value)
 })
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown)
+    window.removeEventListener('keydown', handleKeydown.value)
 })
 
 </script>

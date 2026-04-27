@@ -9,7 +9,7 @@
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
                 <el-divider style="margin:0 10px" />
                 <!-- 음식 -->
-                <div v-html="md.render(noteContent)"></div>
+                <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
             </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
                 <el-collapse-item :title="dictName" :name="dictName" :isActive="true"
@@ -31,6 +31,14 @@
                     dictSetting.name }}</p>
             </div>
         </div>
+        <div v-show="keyword && lastSearchKeyword && !hasResultLastSearch">
+            <p class="dict-homepage-type-p">No results found for 「{{ lastSearchKeyword }}」 in…</p>
+            <br />
+            <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
+                <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
+                    dictSetting.name }}</p>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -44,7 +52,12 @@ import DictIframe from '@/components/DictIframe.vue';
 import type { DictsInfo, SessionConfig, WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
 import MarkdownIt from 'markdown-it'
-const md = new MarkdownIt()
+const md = new MarkdownIt(
+    {
+        breaks: true,    // 单行换行 → <br>
+        xhtmlOut: true   // 闭合<br>标签，兼容更好
+    }
+)
 
 
 // 路由与状态
@@ -61,19 +74,22 @@ const dictsInfo = ref<DictsInfo>({})
 const sessionConfig = ref<SessionConfig>({
     default_folder: { "id": null },
     dictsSettingInfo: [],
-    default_search_method: { "method": "prefix_search" }
+    default_search_method: { "method": "prefix_search" },
+    pin: { "is_pinned": true }
 })
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
 
 const activeNames = ref<string[]>([])
 const isWordFavorited = ref<boolean>(false)
-const isFloatingWindowPinned = ref(true) // 默认固定
 const lastSearchKeyword = ref<string>('')
 const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
 const favoriteWords = ref<WordInfo[]>([])
 const searchHistory = ref<WordInfoWithLastSearch[]>([])
+
+
+const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
 
 
 const setupDicsSettingsInfo = () => {
@@ -168,11 +184,11 @@ const handleWebSocketMessage = (message: any) => {
             console.log('lookup_keyword:', message.data)
             break
         case 'session_config':
-            sessionConfig.value = message.data.config
+            handleSessionConfig(message)
             console.log('session_config:', sessionConfig.value)
             break
         case 'toggle_floating_pin':
-            isFloatingWindowPinned.value = message.data.is_pinned
+            handleToggleFloatPin(message)
             break
         case 'toggle_favor':
             console.log('toggle_favor:', message.data)
@@ -189,6 +205,9 @@ const handleWebSocketMessage = (message: any) => {
         case 'system_config':
             systemConfigStore.setSystemConfig(message.data)
             console.log('system_config:', message.data)
+            break
+        case 'close_fixed_window':
+            handleCloseFixedWindow(message)
             break
         case 'error_session_not_exist':
             router.push('/')
@@ -214,6 +233,31 @@ const handleEntryClick = (entryPath: string) => {
     redirectWord.value = entryPath
     console.log('redirectWord.value:', redirectWord.value)
 }
+
+const handleSessionConfig = (message: any) => {
+    sessionConfig.value = message.data.config
+    if (message.data.is_right_after_connection) {
+        webSocket.value?.sendFloatingWindowPinClick(sessionId.value, sessionConfig.value?.pin?.is_pinned || false)
+    }
+}
+
+const handleToggleFloatPin = (message: any) => {
+    isFloatingWindowPinned.value = message.data.is_pinned
+    if (sessionConfig.value?.pin) {
+        if (sessionConfig.value.pin.is_pinned === message.data.is_pinned) {
+            return
+        }
+        sessionConfig.value.pin.is_pinned = message.data.is_pinned
+    } else {
+        sessionConfig.value.pin = { "is_pinned": message.data.is_pinned }
+    }
+    webSocket.value?.sendSessionConfig(sessionConfig.value)
+}
+
+const handleCloseFixedWindow = (message: any) => {
+    console.log('close_fixed_window:', message.data)
+}
+
 
 const handleToggleFavor = (data: any) => {
 
