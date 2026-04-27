@@ -30,7 +30,7 @@
                 <el-button :icon="Setting" text id="titlebar-setting-button"
                     @click="settingDialogVisible = !settingDialogVisible" class="floating-window-titlebar-button"
                     size="small" />
-                <el-button :icon="props.isPinned ? BsPinAngleFill : BsPin" text @click="handlePinClick"
+                <el-button v-if="props.env === 'iwin'" :icon="props.isPinned ? BsPinAngleFill : BsPin" text @click="handlePinClick"
                     class="floating-window-titlebar-button" size="small" />
             </el-button-group>
         </div>
@@ -97,6 +97,11 @@ const props = defineProps({
     sessionId: {
         type: Number,
         required: true
+    },
+    env: {
+        type: String,
+        required: true,
+        default: '',
     },
     sessionConfig: {
         type: Object as () => SessionConfig,

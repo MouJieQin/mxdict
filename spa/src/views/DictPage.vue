@@ -1,14 +1,13 @@
 <template>
-    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId"
+    <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :env="envFromRoute"
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
         :favoriteWords="favoriteWords" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword" />
-    <div class="word-detail">
+    <div class="word-detail" :style="wordDetailDynamicStyle">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
                 <el-divider style="margin:0 10px" />
-                <!-- 음식 -->
                 <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
             </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
@@ -43,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onUnmounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
@@ -69,6 +68,8 @@ const webSocket = ref<SessionWebSocketService | null>(null)
 // const bodyScrollTimeoutId = ref<number | null>(null)
 const keyword = ref('')
 const sessionId = ref(-1)
+const keywordFromRoute = route.query.keyword as string || ''
+const envFromRoute = route.query.env as string || ''
 const redirectWord = ref<string>('')
 const dictsInfo = ref<DictsInfo>({})
 const sessionConfig = ref<SessionConfig>({
@@ -90,6 +91,18 @@ const searchHistory = ref<WordInfoWithLastSearch[]>([])
 
 
 const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
+
+const wordDetailDynamicStyle = computed(() => {
+    if (envFromRoute === 'anki') {
+        return {
+            'max-width': '800px',
+            'margin': '0 auto',
+        }
+    } else {
+        return {
+        }
+    }
+})
 
 
 const setupDicsSettingsInfo = () => {
@@ -237,7 +250,12 @@ const handleEntryClick = (entryPath: string) => {
 const handleSessionConfig = (message: any) => {
     sessionConfig.value = message.data.config
     if (message.data.is_right_after_connection) {
-        webSocket.value?.sendFloatingWindowPinClick(sessionId.value, sessionConfig.value?.pin?.is_pinned || false)
+        if (envFromRoute === 'iwin') {
+            webSocket.value?.sendFloatingWindowPinClick(sessionId.value, sessionConfig.value?.pin?.is_pinned || false)
+        }
+        if (keywordFromRoute) {
+            webSocket.value?.sendLookupKeywordRequest(keywordFromRoute)
+        }
     }
 }
 
