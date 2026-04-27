@@ -3,7 +3,8 @@
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
         :favoriteWords="favoriteWords" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
-        :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword" />
+        :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
+        :iframeKeydownEvent="iframeKeydownEvent" />
     <div class="word-detail" :style="wordDetailDynamicStyle">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
@@ -17,7 +18,7 @@
                         <el-divider style="margin:0 10px" />
                         <DictIframe :html="html" :css-urls="dictsInfo[dictName].css" :js-urls="dictsInfo[dictName].js"
                             :base-path="dictsInfo[dictName].data" :dictionary-root="dictsInfo[dictName].root"
-                            @entry-click="handleEntryClick" />
+                            @entry-click="handleEntryClick" @keydown="handleIframeKeydown" />
                     </div>
                 </el-collapse-item>
             </div>
@@ -88,7 +89,7 @@ const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
 const favoriteWords = ref<WordInfo[]>([])
 const searchHistory = ref<WordInfoWithLastSearch[]>([])
-
+const iframeKeydownEvent = ref<any | null>(null)
 
 const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
 
@@ -246,6 +247,12 @@ const handleEntryClick = (entryPath: string) => {
     redirectWord.value = entryPath
     console.log('redirectWord.value:', redirectWord.value)
 }
+
+const handleIframeKeydown = (e: any) => {
+    console.log('键盘按下:', e.key)
+    iframeKeydownEvent.value = e
+}
+
 
 const handleSessionConfig = (message: any) => {
     sessionConfig.value = message.data.config

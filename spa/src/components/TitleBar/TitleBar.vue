@@ -30,13 +30,14 @@
                 <el-button :icon="Setting" text id="titlebar-setting-button"
                     @click="settingDialogVisible = !settingDialogVisible" class="floating-window-titlebar-button"
                     size="small" />
-                <el-button v-if="props.env === 'iwin'" :icon="props.isPinned ? BsPinAngleFill : BsPin" text @click="handlePinClick"
-                    class="floating-window-titlebar-button" size="small" />
+                <el-button v-if="props.env === 'iwin'" :icon="props.isPinned ? BsPinAngleFill : BsPin" text
+                    @click="handlePinClick" class="floating-window-titlebar-button" size="small" />
             </el-button-group>
         </div>
 
         <el-dialog v-model="noteDialogVisible" :title="'「' + lastSearchKeyword + '」' + '的笔记'" width="500" align-center>
-            <el-input class="note-content-input" v-model="noteContent" autocomplete="off" type="textarea" :autosize="{ minRows: 5, maxRows: 9 }" />
+            <el-input class="note-content-input" v-model="noteContent" autocomplete="off" type="textarea"
+                :autosize="{ minRows: 5, maxRows: 9 }" />
             <template #footer>
                 <div class="dialog-footer">
                     <el-popconfirm confirm-button-text="删除" confirm-button-type="danger" cancel-button-text="取消"
@@ -149,7 +150,11 @@ const props = defineProps({
     isPinned: {
         type: Boolean,
         default: true
-    }
+    },
+    iframeKeydownEvent: {
+        type: Object as PropType<any | null>,
+        default: () => null,
+    },
 })
 
 const emits = defineEmits<{
@@ -192,6 +197,12 @@ watch(() => props.noteContent, (newVal) => {
 watch(() => favoriteWordsDialogVisible.value, (newVal) => {
     if (newVal) {
         props.webSocket?.sendFavoriteWordsRequest()
+    }
+})
+
+watch(() => props.iframeKeydownEvent, (newVal) => {
+    if (newVal) {
+        handleKeydown(newVal)
     }
 })
 
@@ -325,29 +336,25 @@ const handleFocus = (_: FocusEvent) => {
     // (e.target as HTMLInputElement).select()
 }
 
-// const handleKeydown = (e: KeyboardEvent) => {
-//     if (e.key === '/' && e.metaKey) {
-//         e.preventDefault();
-//         favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value;
-//         return;
-//     }
-// }
+// const handleKeydown = ref((_: KeyboardEvent) => {})
 
-const handleKeydown = ref((_: KeyboardEvent) => {})
-
-handleKeydown.value = (e: KeyboardEvent) => {
-    if (e.key === '/' && e.metaKey) {
-        e.preventDefault()
+const handleKeydownData =(keyboardEventData: any) => {
+        if (keyboardEventData.key === '/' && keyboardEventData.metaKey) {
         favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value
     }
 }
+
+const handleKeydown = (e: KeyboardEvent) => {
+    handleKeydownData(e)
+}
+
 onMounted(() => {
     links.value = loadAll()
-    window.addEventListener('keydown', handleKeydown.value)
+    window.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown.value)
+    window.removeEventListener('keydown', handleKeydown)
 })
 
 </script>

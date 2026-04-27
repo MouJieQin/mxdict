@@ -15,7 +15,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emits = defineEmits(['entry-click'])
+const emits = defineEmits(['entry-click', 'keydown'])
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 const API_PREFIX = 'http://localhost:5959/api/download?path='
@@ -68,6 +68,8 @@ async function renderIframe() {
 
   // 注入一次全局点击监听
   injectClickHandler(doc)
+  // 注入一次全局键盘监听
+  injectKeydownHandler(doc)
 
   await nextTick()
 
@@ -78,6 +80,25 @@ async function renderIframe() {
   p.id = props.dictionaryRoot + '-dict-tail'
   doc.body.appendChild(p)
   updateIframeHeight()
+}
+
+function injectKeydownHandler(doc: Document) {
+  const script = doc.createElement('script')
+  script.textContent = `
+    document.addEventListener('keydown', (e) => {
+      window.parent.postMessage({
+        type: 'KEYDOWN',
+        key: e.key,           // 按键名，比如 "Enter" "Escape"
+        code: e.code,         // 按键码
+        ctrlKey: e.ctrlKey,   // 组合键
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        metaKey: e.metaKey,
+        iframeId: '${iframeId.value}'
+      }, '*');
+    });
+  `
+  doc.body.appendChild(script)
 }
 
 // ================ 点击事件只注入一次 ================
@@ -209,6 +230,9 @@ const messageListener = (e: MessageEvent) => {
     const audio = new Audio(soundUrl)
     audio.currentTime = 0
     audio.play().catch(err => console.warn('播放失败', err))
+  }
+  else if (e.data?.type === 'KEYDOWN') {
+    emits('keydown', e.data)
   }
 }
 
