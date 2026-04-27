@@ -210,7 +210,7 @@ body::-webkit-scrollbar-thumb {
 
 .markdown-note-content strong {
     font-weight: bold;
-    color: #F56C6C;
+    color: #f56c6c;
 }
 
 .note-content-input {
@@ -396,6 +396,12 @@ el-tabs__item {
         display: none;
     }
     #titlebar-dictss-button {
+        display: none;
+    }
+    #titlebar-history-back-button {
+        display: none;
+    }
+    #titlebar-history-forward-button {
         display: none;
     }
 }

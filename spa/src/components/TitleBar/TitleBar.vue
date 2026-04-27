@@ -16,10 +16,10 @@
             </div>
             <el-button-group class="floating-window-titlebar-button-container">
                 <el-button :icon="ArrowLeftBold" text @click="handleHistoryBack" class="floating-window-titlebar-button"
-                    size="small" :disabled="historyIndex >= searchHistory.length - 1" />
+                    size="small" :disabled="historyIndex >= searchHistory.length - 1" id="titlebar-history-back-button" />
                 <el-button :icon="ArrowRightBold" text @click="handleHistoryForward"
                     class="floating-window-titlebar-button" size="small"
-                    :disabled="historyIndex === -1 || historyIndex === 0" />
+                    :disabled="historyIndex === -1 || historyIndex === 0" id="titlebar-history-forward-button" />
                 <el-tooltip v-if="showFavorButtonTooltip" content="请先设置默认收藏夹" trigger="hover">
                     <el-button :icon="BsHeart" text class="floating-window-titlebar-button" size="small" disabled />
                 </el-tooltip>
@@ -357,7 +357,7 @@ const handleSelect = (item: Record<string, any>) => {
 }
 
 const handleHistoryBack = () => {
-    if (historyIndex.value < history.length - 1) {
+    if (historyIndex.value < props.searchHistory.length - 1) {
         historyIndex.value += 1
         isHistoryTriggered.value = true
         props.webSocket?.sendSearchHistoryRequest()
@@ -385,6 +385,12 @@ const handleFocus = (_: FocusEvent) => {
 const handleKeydownData = (keyboardEventData: any) => {
     if (keyboardEventData.key === '/' && keyboardEventData.metaKey) {
         favoriteWordsDialogVisible.value = !favoriteWordsDialogVisible.value
+    } else if (keyboardEventData.key === 'ArrowLeft' && keyboardEventData.altKey) {
+        // arrow left
+        handleHistoryBack()
+    } else if (keyboardEventData.key === 'ArrowRight' && keyboardEventData.altKey) {
+        // arrow right
+        handleHistoryForward()
     }
 }
 
