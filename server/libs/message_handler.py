@@ -42,6 +42,8 @@ class MessageHandler:
                 if not Utils.db.is_word_favorited(word, folder_id):
                     Utils.db.favorite_word(word, folder_id)
             return {"success": True}
+        elif command_type == "check_running":
+            return {"success": True}
         else:
             logger.warning(f"未知的命令类型: {command_type}")
             return {"success": False}

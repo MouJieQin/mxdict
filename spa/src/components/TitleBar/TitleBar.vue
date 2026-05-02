@@ -16,7 +16,8 @@
             </div>
             <el-button-group class="floating-window-titlebar-button-container">
                 <el-button :icon="ArrowLeftBold" text @click="handleHistoryBack" class="floating-window-titlebar-button"
-                    size="small" :disabled="historyIndex >= searchHistory.length - 1" id="titlebar-history-back-button" />
+                    size="small" :disabled="historyIndex >= searchHistory.length - 1"
+                    id="titlebar-history-back-button" />
                 <el-button :icon="ArrowRightBold" text @click="handleHistoryForward"
                     class="floating-window-titlebar-button" size="small"
                     :disabled="historyIndex === -1 || historyIndex === 0" id="titlebar-history-forward-button" />
@@ -25,7 +26,7 @@
                 </el-tooltip>
                 <el-button v-if="!showFavorButtonTooltip" :icon="props.isWordFavorited ? BsHeartFill : BsHeart" text
                     @click="handleFavorClick" class="floating-window-titlebar-button" size="small"
-                    :disabled="!(lastSearchKeyword !== '' && props.hasResultLastSearch)" />
+                    :disabled="!(lastSearchKeyword !== '' && (props.isWordFavorited || props.hasResultLastSearch || props.noteContent !== ''))" />
 
                 <el-button :icon="Edit" text @click="noteDialogVisible = true" class="floating-window-titlebar-button"
                     size="small" :disabled="!(lastSearchKeyword !== '')" />
@@ -392,6 +393,15 @@ const handleKeydownData = (keyboardEventData: any) => {
         // arrow right
         handleHistoryForward()
     }
+    // else if (keyboardEventData.key === 'p' && keyboardEventData.altKey) {
+    //     if (props.env === 'iwin') {
+    //         handlePinClick()
+    //     }
+    // } else if (keyboardEventData.key === 'b' && keyboardEventData.altKey) {
+    //     noteDialogVisible.value = !noteDialogVisible.value
+    // } else if (keyboardEventData.key === 'f' && keyboardEventData.altKey) {
+    //     handleFavorClick()
+    // }
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
