@@ -5,7 +5,7 @@
   "identifier": "com.qinmoujie.mxdict",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:9595/#/dict/95",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
