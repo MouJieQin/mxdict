@@ -128,16 +128,41 @@ pub fn run() {
             // let dist_dir: PathBuf = resource_dir.join("dist");
 
             // 启动 Python
-            let python_child = std::process::Command::new("python3.11")
+            info!("准备启动 Python 服务器");
+            let python_child = match std::process::Command::new("python3.11")
+                .env(
+        "PATH",
+        "/opt/homebrew/bin:/usr/local/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/usr/bin:/bin"
+    )
+
                 .arg(python_script)
                 .spawn()
-                .map_err(|e| format!("启动 Python 失败: {}", e))?;
+            {
+                Ok(child) => {
+                    info!("Python 服务器启动成功");
+                    child
+                },
+                Err(e) => {
+                    // 先打印错误日志
+                    error!("启动 Python 服务器失败: {}", e);
+
+                    // 再返回错误（让函数退出）
+                    return Err(format!("启动 Python 服务器失败: {}", e).into());
+                }
+            };
 
             *PYTHON_PROCESS.lock().unwrap() = Some(python_child);
 
             if is_app_mode() {
                 let dist_dir: PathBuf = resource_dir.join("dist");
-                let node_child = std::process::Command::new("npx")
+
+                info!("准备启动 Node 服务器");
+                let node_child = match std::process::Command::new("npx")
+        // 把常用 Python 路径优先加进去，兼容所有 macOS
+               .env(
+        "PATH",
+        "/opt/homebrew/bin:/usr/local/bin::/usr/bin:/bin"
+    )
                     .arg("vite")
                     .arg("preview")
                     .arg("--port")
@@ -146,7 +171,18 @@ pub fn run() {
                     .arg("--outDir")
                     .arg(dist_dir)
                     .spawn()
-                    .map_err(|e| format!("启动 Node 失败: {}", e))?;
+                {
+                    Ok(child) => {
+                        info!("Node 服务器启动成功");
+                        child
+                    },
+                    Err(e) => {
+                        // 先打印错误日志
+                        error!("启动 Node 服务器失败: {}", e);
+                        // 再返回错误（让函数退出）
+                        return Err(format!("启动 Node 服务器失败: {}", e).into());
+                    }
+                };
                 *NODE_PROCESS.lock().unwrap() = Some(node_child);
             }
             Ok(())
