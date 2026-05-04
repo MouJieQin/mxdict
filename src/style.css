@@ -9,7 +9,8 @@ html {
 
 body {
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: hidden;
+    margin-right: 2px;
 }
 
 body::-webkit-scrollbar-thumb {
@@ -68,6 +69,28 @@ body::-webkit-scrollbar-thumb {
 .dict-iframe {
     width: 100%;
     border: none;
+}
+
+.word-detail {
+    height: 100vh;
+    overflow-y: auto; /* 只在这里滚动 */
+    overflow-x: hidden;
+}
+/* 滚动条：顶部空出 40px，刚好被标题栏盖住 */
+#app::-webkit-scrollbar,
+.word-detail::-webkit-scrollbar {
+    width: 7px;
+}
+
+#app::-webkit-scrollbar-track,
+.word-detail::-webkit-scrollbar-track {
+    /* margin-top: 40px; */
+}
+
+#app::-webkit-scrollbar-thumb,
+.word-detail::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-background);
+    border-radius: 5px;
 }
 
 .floating-window-titlebar {
