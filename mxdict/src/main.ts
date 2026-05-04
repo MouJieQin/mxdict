@@ -14,4 +14,3 @@ import 'element-plus/dist/index.css'
 const app = createApp(App)
 const pinia = createPinia()
 app.use(router).use(ElementPlus).use(pinia).mount('#app')
-router.push('/dict/1')

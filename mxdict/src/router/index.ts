@@ -28,4 +28,13 @@ const router = createRouter({
     routes
 })
 
+// 👇 加上这个：默认打开 /dict/95
+router.beforeEach((to, _, next) => {
+    if (to.path === '/') {
+        next('/dict/95')
+    } else {
+        next()
+    }
+})
+
 export default router
