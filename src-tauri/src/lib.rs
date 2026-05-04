@@ -1,10 +1,79 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+use chrono::Local;
+use env_logger::{Builder, Env};
+use log::{debug, error, info, trace, warn};
+use log::{Level, LevelFilter};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::Child;
 use std::sync::Mutex;
 use tauri::utils::platform::current_exe;
 use tauri::{App, RunEvent};
+
+/// 初始化日志：控制台彩色 + 文件输出 + 按天切割（Tauri 2.x 专用）
+pub fn init_logging() {
+    // 基础配置
+    let env = Env::default().filter_or("RUST_LOG", "info");
+    let mut builder = Builder::from_env(env);
+
+    // 屏蔽第三方库噪音
+    builder
+        .filter_module("reqwest", LevelFilter::Warn)
+        .filter_module("hyper", LevelFilter::Warn)
+        .filter_module("hyper_util", LevelFilter::Warn)
+        .filter_module("tauri_plugin_updater", LevelFilter::Warn);
+
+    let exe_path = std::env::current_exe().unwrap();
+    let exe_dir = exe_path.parent().expect("无法获取可执行文件目录");
+    let log_dir = exe_dir.join("logs");
+    println!("log_dir: {:?}", log_dir);
+    let _ = fs::create_dir_all(&log_dir);
+
+    // 自定义格式
+    builder.format(move |buf, record| {
+        let now = Local::now();
+        let time_str = now.format("%H:%M:%S%.3f").to_string();
+        let level = record.level();
+
+        // 颜色 ANSI 码
+        let (level_char, color, reset) = match level {
+            Level::Error => ("e", "\x1B[31m", "\x1B[0m"), // 红
+            Level::Warn => ("w", "\x1B[33m", "\x1B[0m"),  // 黄
+            Level::Info => ("i", "\x1B[32m", "\x1B[0m"),  // 绿
+            Level::Debug => ("d", "\x1B[36m", "\x1B[0m"), // 青
+            Level::Trace => ("t", "\x1B[37m", "\x1B[0m"), // 白
+        };
+
+        // 控制台输出（彩色）
+        let console_line = format!("{time_str} [{color}{level_char}{reset}] {}", record.args());
+        let _ = writeln!(buf, "{}", console_line);
+
+        // 文件输出（无颜色、按天切割）
+        if let Ok(mut file) = daily_log_file(&log_dir) {
+            let file_line = format!("{time_str} [{level_char}] {}", record.args());
+            let _ = writeln!(file, "{}", file_line);
+            let _ = file.flush();
+        }
+        Ok(())
+    });
+
+    // 忽略重复初始化错误
+    let _ = builder.try_init();
+}
+
+/// 获取每日日志文件句柄
+fn daily_log_file(log_dir: &PathBuf) -> std::io::Result<fs::File> {
+    let today = Local::now().format("%Y-%m-%d").to_string();
+    let log_file = log_dir.join(format!("{today}.log"));
+
+    OpenOptions::new()
+        .create(true)
+        .append(true)
+        .write(true)
+        .open(log_file)
+}
 
 static PYTHON_PROCESS: Mutex<Option<Child>> = Mutex::new(None);
 static NODE_PROCESS: Mutex<Option<Child>> = Mutex::new(None);
@@ -45,15 +114,17 @@ fn get_resource_dir() -> Result<PathBuf, &'static str> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    init_logging();
+
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet])
         .setup(|_app: &mut App| {
             let resource_dir: PathBuf = get_resource_dir().map_err(|_| "无法获取资源目录")?;
-            println!("资源目录: {:?}", resource_dir);
+            info!("资源目录: {:?}", resource_dir);
 
             let python_script: PathBuf = resource_dir.join("src-python/mxdict-server.py");
-            println!("Python 脚本路径: {:?}", python_script);
+            info!("Python 脚本路径: {:?}", python_script);
             // let dist_dir: PathBuf = resource_dir.join("dist");
 
             // 启动 Python
