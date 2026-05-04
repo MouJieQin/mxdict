@@ -24,6 +24,7 @@ from starlette.responses import FileResponse
 from pathlib import Path
 from urllib.parse import unquote
 
+os.chdir(os.path.dirname(__file__))
 # from libs.mdict_query.mdict_query import IndexBuilder
 from libs.log_config import logger
 from libs.common import Utils
@@ -143,14 +144,11 @@ signal.signal(signal.SIGTERM, signal_handler)
 # 启动应用
 # ==============================================
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(__file__))
-    # 初始化会话
-    # SessionManager.initialize_sessions()
 
     # 启动服务器
     uvicorn.run(
-        app="mxdict-server:app",
-        host="localhost",
+        app,
+        host="127.0.0.1",
         port=5959,
         reload=False,
     )
