@@ -157,13 +157,13 @@ pub fn run() {
                 let dist_dir: PathBuf = resource_dir.join("dist");
 
                 info!("准备启动 Node 服务器");
-                let node_child = match std::process::Command::new("npx")
+                let node_child = match std::process::Command::new("node")
         // 把常用 Python 路径优先加进去，兼容所有 macOS
                .env(
         "PATH",
-        "/opt/homebrew/bin:/usr/local/bin::/usr/bin:/bin"
+        "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
     )
-                    .arg("vite")
+                    .arg("/usr/local/bin/vite")
                     .arg("preview")
                     .arg("--port")
                     .arg("9595")
