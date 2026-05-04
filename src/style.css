@@ -75,6 +75,7 @@ body::-webkit-scrollbar-thumb {
     height: 100vh;
     overflow-y: auto; /* 只在这里滚动 */
     overflow-x: hidden;
+    padding-bottom: 40px;
 }
 /* 滚动条：顶部空出 40px，刚好被标题栏盖住 */
 #app::-webkit-scrollbar,

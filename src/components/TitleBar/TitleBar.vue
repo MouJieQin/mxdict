@@ -5,7 +5,7 @@
             <div class="floating-window-search-container">
                 <el-autocomplete class="floating-window-search" v-model="keyword" :fetch-suggestions="querySearchAsync"
                     placeholder="Search" @select="handleSelect" ref="autoCompleteRef" @keyup.enter="handleEnter"
-                    @focus="handleFocus" clearable hide-loading>
+                    @focus="handleFocus" clearable hide-loading style="font-size: 1rem;">
                     <!-- 前缀插槽：动态图标 + 点击弹出下拉 -->
                     <template #prefix>
                         <SearchMethodSelect

@@ -1,14 +1,14 @@
 <template>
     <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :env="envFromRoute"
         :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
-        :favoriteWords="favoriteWords" :leftHistory="leftHistory" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
-        :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
-        :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
-        :iframeKeydownEvent="iframeKeydownEvent" />
+        :favoriteWords="favoriteWords" :leftHistory="leftHistory" :searchHistory="searchHistory"
+        :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
+        :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
+        :redirectWord="redirectWord" @change:keyword="handleChangeKeyword" :iframeKeydownEvent="iframeKeydownEvent" />
     <div class="word-detail" :style="wordDetailDynamicStyle">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
-                <el-divider style="margin:0 10px" />
+                <el-divider style="margin:0 10px;" />
                 <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
             </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
@@ -49,6 +49,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
+import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
 import type { DictsInfo, SessionConfig, WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
 import MarkdownIt from 'markdown-it'

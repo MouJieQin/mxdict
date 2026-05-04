@@ -1,6 +1,7 @@
 <template>
     <div class="favorite-words-table-container">
-        <el-table v-if="localFavoriteWords" class="favorite-words-table" :data="localFavoriteWords" stripe>
+        Total: {{ localFavoriteWords.length }} words
+        <el-table v-if="localFavoriteWords" class="favorite-words-table" :data="localFavoriteWords" stripe style="font-size: 1rem;">
             <!-- <el-table-column fixed prop="created_at" label="Favorite At" width="130" show-overflow-tooltip /> -->
             <el-table-column fixed="left" label="Operations" width="130">
                 <template #default="scope">
@@ -15,7 +16,6 @@
             <el-table-column prop="query_count" label="Query Count" />
         </el-table>
         <!-- make it show better -->
-        Total: {{ localFavoriteWords.length }} words
     </div>
 </template>
 
