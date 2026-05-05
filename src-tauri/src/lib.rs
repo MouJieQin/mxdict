@@ -2,7 +2,7 @@
 
 use chrono::Local;
 use env_logger::{Builder, Env};
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, warn};
 use log::{Level, LevelFilter};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
@@ -193,14 +193,16 @@ pub fn run() {
     app.run(|_, event: RunEvent| {
         if let RunEvent::Exit = event {
             if let Some(mut proc) = PYTHON_PROCESS.lock().unwrap().take() {
+                info!("准备关闭 Python 服务器");
                 let _ = proc.kill();
                 let _ = proc.wait();
-                println!("🛑 Python 服务器已关闭");
+                info!("Python 服务器已关闭");
             }
             if let Some(mut proc) = NODE_PROCESS.lock().unwrap().take() {
+                info!("准备关闭 Node 服务器");
                 let _ = proc.kill();
                 let _ = proc.wait();
-                println!("🛑 Node 服务器已关闭");
+                info!("Node 服务器已关闭");
             }
         }
     });

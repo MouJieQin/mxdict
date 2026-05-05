@@ -49,7 +49,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
-import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
 import type { DictsInfo, SessionConfig, WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
 import MarkdownIt from 'markdown-it'

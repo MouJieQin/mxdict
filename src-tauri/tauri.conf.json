@@ -5,7 +5,7 @@
   "identifier": "com.qinmoujie.mxdict",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:9595/#/dict/95",
+    "devUrl": "http://localhost:9595",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -14,7 +14,8 @@
       {
         "title": "MxDict",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "dragDropEnabled": false
       }
     ],
     "security": {
