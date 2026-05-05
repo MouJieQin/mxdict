@@ -12,7 +12,7 @@ class UtilsBase:
     # 路径配置
     SERVER_SRC_ABS_PATH = os.path.abspath(os.getcwd())
     APP_SUPPORT_PATH = appdirs.user_data_dir()[0:-1]
-    MXDICT_SUPPORT_PATH = f"{APP_SUPPORT_PATH}/mxdict"
+    MXDICT_SUPPORT_PATH = f"{APP_SUPPORT_PATH}/com.qinmoujie.mxdict"
     MXDICT_STORAGE_PATH = f"{MXDICT_SUPPORT_PATH}/MxDict-Storage"
     USER_CONFIG_DIR = MXDICT_STORAGE_PATH + "/config"
     CONFIG_FILE = USER_CONFIG_DIR + "/config.json"

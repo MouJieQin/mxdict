@@ -10,7 +10,8 @@ use std::path::PathBuf;
 use std::process::Child;
 use std::sync::Mutex;
 use tauri::utils::platform::current_exe;
-use tauri::{App, RunEvent};
+use tauri::{App, Manager, RunEvent};
+
 
 /// 初始化日志：控制台彩色 + 文件输出 + 按天切割（Tauri 2.x 专用）
 pub fn init_logging() {
@@ -119,7 +120,15 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet])
-        .setup(|_app: &mut App| {
+        .setup(|app: &mut App | {
+        // ✅ 获取 Application Support/包名
+            // Get the app data directory
+            let app_data_dir = app.path().app_data_dir()?;
+            
+            info!("App Data Dir: {:?}", app_data_dir);
+            fs::create_dir_all(app_data_dir)?;
+            
+
             let resource_dir: PathBuf = get_resource_dir().map_err(|_| "无法获取资源目录")?;
             info!("资源目录: {:?}", resource_dir);
 
