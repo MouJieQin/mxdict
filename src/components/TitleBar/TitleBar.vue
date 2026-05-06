@@ -95,7 +95,7 @@ import { type SessionConfig } from '@/common/type-interface'
 import { getDictSettingsForLookup } from '@/common/utility'
 import { Setting, Edit, Delete, ArrowLeftBold, ArrowRightBold } from '@element-plus/icons-vue'
 import { useSystemConfigStore } from '@/stores/stores'
-import type { WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
+import type { WordInfoWithFavoriteAt, WordInfoWithLastSearch } from '@/common/type-interface'
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const props = defineProps({
@@ -118,7 +118,7 @@ const props = defineProps({
         default: () => ({})
     },
     favoriteWords: {
-        type: Array as PropType<WordInfo[]>,
+        type: Array as PropType<WordInfoWithFavoriteAt[]>,
         required: true,
         default: () => [],
     },

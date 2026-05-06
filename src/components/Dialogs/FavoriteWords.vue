@@ -12,6 +12,7 @@
                     </el-button-group>
                 </template>
             </el-table-column>
+            <el-table-column fixed prop="favorited_at" label="Favorite At" show-overflow-tooltip sortable />
             <el-table-column fixed prop="word" label="Word" show-overflow-tooltip sortable/>
             <el-table-column prop="query_count" label="Query Count" sortable/>
         </el-table>
@@ -23,7 +24,7 @@
 import { ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
-import type { WordInfo, SessionConfig } from '@/common/type-interface'
+import type { WordInfoWithFavoriteAt, SessionConfig } from '@/common/type-interface'
 import { BsHeartbreak, BsSearch } from 'vue-icons-plus/bs'
 
 const props = defineProps({
@@ -36,7 +37,7 @@ const props = defineProps({
         required: true
     },
     favoriteWords: {
-        type: Array as PropType<WordInfo[]>,
+        type: Array as PropType<WordInfoWithFavoriteAt[]>,
         required: true
     },
     sessionConfig: {
@@ -50,16 +51,16 @@ const emits = defineEmits<{
     (e: 'update-visible', visible: boolean): void
 }>()
 
-const localFavoriteWords = ref<WordInfo[]>([...props.favoriteWords])
+const localFavoriteWords = ref<WordInfoWithFavoriteAt[]>([...props.favoriteWords])
 watch(() => props.favoriteWords, (newVal) => {
     localFavoriteWords.value = [...newVal]
 })
 
-const handleUnFavorite = (_: number, row: WordInfo) => {
+const handleUnFavorite = (_: number, row: WordInfoWithFavoriteAt) => {
     props.webSocket?.sendToggleFavor(row.word, props.sessionConfig.default_folder.id)
 }
 
-const handleSearch = (_: number, row: WordInfo) => {
+const handleSearch = (_: number, row: WordInfoWithFavoriteAt) => {
     props.webSocket?.sendLookupKeywordRequest(row.word)
     emits('update-visible', false)
 }

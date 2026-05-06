@@ -131,7 +131,7 @@ class AnkiApi:
 # ------------------- 测试示例 -------------------
 
 # -------------------------- 配置项（修改这里）--------------------------
-DECK_NAME = "Test-Folder"  # 替换成你要查询的卡组名，必须完全一致
+DECK_NAME = "Yonsei Korean Word 3"  # 替换成你要查询的卡组名，必须完全一致
 # ---------------------------------------------------------------------
 
 
@@ -145,6 +145,22 @@ if __name__ == "__main__":
         print(f"反面：{c['back']}")
         print(f"笔记ID：{c['noteId']}")
         print("-"*30)
+
+
+    #为之前的卡片添加front id
+    # import hashlib
+    
+    # for c in cards[:]:
+    #     noteId = c['noteId']
+    #     front = c['front']
+    #     keyword = front.replace("<p>", "").replace("</p>", "").strip()
+    #     front_id= hashlib.md5(keyword.encode("utf-8")).hexdigest()
+    #     front = f"<div id=\"{front_id}\">{front}</div>"
+    #     back = c['back']
+    #     print(f"正面：{front}", f"反面：{back}", f"笔记ID：{noteId}")
+    #     AnkiApi.upsert_note_to_deck(DECK_NAME, noteId, front, back)
+
+
 
 #     # 测试2：更新已有笔记（不会改变学习记录）
 #     print("\n===== 更新笔记 =====")

@@ -63,6 +63,9 @@ export interface WordInfo {
     query_count: number;
 }
 
+export interface WordInfoWithFavoriteAt extends WordInfo {
+    favorited_at: string | null;
+}
 
 export interface WordInfoWithLastSearch extends WordInfo {
     last_searched: string | null;

@@ -49,7 +49,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import DictIframe from '@/components/DictIframe.vue';
-import type { DictsInfo, SessionConfig, WordInfo, WordInfoWithLastSearch } from '@/common/type-interface'
+import type { DictsInfo, SessionConfig, WordInfoWithFavoriteAt, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'
 import MarkdownIt from 'markdown-it'
 const md = new MarkdownIt(
@@ -87,7 +87,7 @@ const isWordFavorited = ref<boolean>(false)
 const lastSearchKeyword = ref<string>('')
 const noteContent = ref<string>('')
 const hasResultLastSearch = ref<boolean>(false)
-const favoriteWords = ref<WordInfo[]>([])
+const favoriteWords = ref<WordInfoWithFavoriteAt[]>([])
 const leftHistory = ref<boolean>(false)
 const searchHistory = ref<WordInfoWithLastSearch[]>([])
 const iframeKeydownEvent = ref<any | null>(null)
@@ -291,7 +291,7 @@ const handleToggleFavor = (data: any) => {
     isWordFavorited.value = data.is_word_favorited
     // add  word if it is not in favoriteWords.value or delete the word in favoriteWords.value
     if (!isWordFavorited.value) {
-        favoriteWords.value = favoriteWords.value.filter((item: WordInfo) => item.word !== data.keyword)
+        favoriteWords.value = favoriteWords.value.filter((item: WordInfoWithFavoriteAt) => item.word !== data.keyword)
     }
 }
 
