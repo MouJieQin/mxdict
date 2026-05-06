@@ -12,8 +12,8 @@
                     </el-button-group>
                 </template>
             </el-table-column>
-            <el-table-column fixed prop="word" label="Word" show-overflow-tooltip />
-            <el-table-column prop="query_count" label="Query Count" />
+            <el-table-column fixed prop="word" label="Word" show-overflow-tooltip sortable/>
+            <el-table-column prop="query_count" label="Query Count" sortable/>
         </el-table>
         <!-- make it show better -->
     </div>

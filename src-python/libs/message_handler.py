@@ -12,9 +12,11 @@ from libs.common import Utils
 from libs.session_manager import SessionManager
 from libs.mdict_searcher import MdictSearcher
 from libs.websocket_client import WsClient
+from libs.anki.anki_manager import AnkiManager
 
 
 mdict_searcher = MdictSearcher()
+anki_manager = AnkiManager()
 
 
 class MessageHandler:
@@ -100,6 +102,7 @@ class MessageHandler:
                 "session_config": MessageHandler._handle_session_config,
                 "create_folder": MessageHandler._handle_create_folder,
                 "delete_folder": MessageHandler._handle_delete_folder,
+                "update_to_anki": MessageHandler._handle_update_to_anki,
                 "update_folder": MessageHandler._handle_update_folder,
                 "system_config": MessageHandler._handle_system_config,
                 "toggle_favor": MessageHandler._handle_toggle_favor,
@@ -208,6 +211,16 @@ class MessageHandler:
         folder_id = message["data"]["folder_id"]
         Utils.db.delete_folder(folder_id)
         await SessionManager.send_system_config_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_update_to_anki(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        deck_name = message["data"]["deck_name"]
+        folder_id = message["data"]["folder_id"]
+        words = Utils.db.get_folder_words(folder_id)
+        anki_manager.update_words_to_anki(str(session_id), deck_name, words)
+
 
     @staticmethod
     async def _handle_update_folder(

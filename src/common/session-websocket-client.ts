@@ -92,6 +92,17 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendUpdateToAnki(deck_name: string, folderId: number) {
+        this._send(
+            'update_to_anki',
+            {
+                folder_id: folderId,
+                deck_name: deck_name,
+            }
+        )
+    }
+
+
     sendUpdateFolder(folderId: number, folderName: string, folderDescription: string) {
         this._send(
             'update_folder',

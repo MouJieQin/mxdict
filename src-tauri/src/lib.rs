@@ -136,6 +136,8 @@ pub fn run() {
             info!("Python 脚本路径: {:?}", python_script);
             // let dist_dir: PathBuf = resource_dir.join("dist");
 
+            if is_app_mode() {
+
             // 启动 Python
             info!("准备启动 Python 服务器");
             let python_child = match std::process::Command::new("python3.11")
@@ -161,7 +163,7 @@ pub fn run() {
             };
 
             *PYTHON_PROCESS.lock().unwrap() = Some(python_child);
-
+        }
             if is_app_mode() {
                 let dist_dir: PathBuf = resource_dir.join("dist");
 

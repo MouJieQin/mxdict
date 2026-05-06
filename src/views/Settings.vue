@@ -9,10 +9,10 @@
                 <el-table v-if="localSystemConfig" :data="localSystemConfig.folders.folder_info" height="350"
                     style="width: 100%" @selection-change="handleSelectionChange" stripe>
                     <el-table-column type="selection" width="55" />
-                    <el-table-column fixed prop="name" label="Name" width="130" show-overflow-tooltip />
+                    <el-table-column fixed prop="name" label="Name" width="130" show-overflow-tooltip sortable />
+                    <el-table-column prop="words_count" label="Total" sortable />
+                    <el-table-column prop="created_at" label="Created" width="110" show-overflow-tooltip sortable />
                     <el-table-column prop="description" label="Description" width="180" show-overflow-tooltip />
-                    <el-table-column prop="words_count" label="Words Count" />
-                    <el-table-column prop="created_at" label="Date Created" width="110" show-overflow-tooltip />
                     <el-table-column fixed="right" label="Operations" width="130">
                         <template #default="scope">
                             <el-button-group>
@@ -32,9 +32,13 @@
                     </el-table-column>
                 </el-table>
                 <div style="margin-top: 20px">
-                    <el-button type="primary" :icon="Plus" @click="handleCreateFolder">创建新收藏夹</el-button>
-                    <el-button type="danger" :icon="Minus" @click="deleteDialogVisible = true"
-                        :disabled="disableDeleteButton">删除收藏夹</el-button>
+                    <el-button type="primary" :icon="Plus" @click="handleCreateFolder"></el-button>
+                    <el-button type="danger" :icon="Delete" @click="deleteDialogVisible = true"
+                        :disabled="disableDeleteButton"></el-button>
+                    <el-button @click="handleUpdateToAnki" :disabled="disableAnkiButton">
+                        <AnkiIcon :size="24" style="margin-right: 8px;" />
+                        Update to Anki
+                    </el-button>
                     <el-select v-if="localSystemConfig" v-model="localSessionConfig.default_folder.id" filterable
                         placeholder="Select Default Folder" style="margin-left: 20px;max-width: 240px">
                         <el-option v-for="item in defaultFolderOptions" :key="item.id" :label="item.name"
@@ -84,8 +88,9 @@ import { reactive, ref, onBeforeMount, watch, computed } from 'vue'
 import type { PropType } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useSystemConfigStore } from '@/stores/stores'
-import { Edit, Delete, Document, Plus, Minus } from '@element-plus/icons-vue'
+import { Edit, Delete, Document, Plus } from '@element-plus/icons-vue'
 
+import AnkiIcon from '@/components/Icons/AnkiIcon.vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import type { SessionConfig, SystemConfig, FolderInfo } from '@/common/type-interface'
 
@@ -138,6 +143,11 @@ const defaultFolderOptions = computed(() => {
 const disableDeleteButton = computed(() => {
     return multipleSelection.value.length === 0
 })
+
+const disableAnkiButton = computed(() => {
+    return multipleSelection.value.length === 0
+})
+
 
 onBeforeMount(() => {
     props.webSocket?.sendSystemConfig()
@@ -227,6 +237,14 @@ const handleDeleteSelected = () => {
     deleteDialogVisible.value = false
     multipleSelection.value = []
 }
+
+const handleUpdateToAnki = () => {
+    multipleSelection.value.forEach((item: FolderInfo) => {
+        props.webSocket?.sendUpdateToAnki(item.name, item.id)
+    })
+}
+
+
 
 const handleSelectionChange = (val: FolderInfo[]) => {
     multipleSelection.value = val

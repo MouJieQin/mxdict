@@ -16,6 +16,7 @@ class UtilsBase:
     MXDICT_STORAGE_PATH = f"{MXDICT_SUPPORT_PATH}/MxDict-Storage"
     USER_CONFIG_DIR = MXDICT_STORAGE_PATH + "/config"
     CONFIG_FILE = USER_CONFIG_DIR + "/config.json"
+    ANKI_CONFIG_FILE = USER_CONFIG_DIR + "/anki_config.json"
     DEFAULT_CONFIG_FILE = SERVER_SRC_ABS_PATH + "/config.json"
     DICTIONARYS_PATH = MXDICT_STORAGE_PATH + "/dictionaries"
     DATA_PATH = MXDICT_STORAGE_PATH + "/data"
