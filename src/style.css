@@ -13,6 +13,18 @@ body {
     margin-right: 2px;
 }
 
+/* ANKI 模式：自动滚动 + 隐藏滚动条 */
+body.anki-mode {
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE */
+}
+
+body.anki-mode::-webkit-scrollbar {
+  display: none;
+}
+
 body::-webkit-scrollbar-thumb {
     background: var(--body-scrollbar-backgroqund);
 }
@@ -77,6 +89,18 @@ body::-webkit-scrollbar-thumb {
     overflow-x: hidden;
     padding-bottom: 40px;
 }
+
+.word-detail.anki-mode {
+    max-width: 800px;
+    margin: 0 auto;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+.word-detail.anki-mode::-webkit-scrollbar {
+    display: none;
+}
+
 /* 滚动条：顶部空出 40px，刚好被标题栏盖住 */
 #app::-webkit-scrollbar,
 .word-detail::-webkit-scrollbar {
@@ -222,7 +246,8 @@ body::-webkit-scrollbar-thumb {
 .markdown-note-content {
     font-size: 1.1rem;
     /* margin: 0 auto; */
-    /* max-width: clamp(300px, 80vw, 800px); */
+    margin-right: 10px;
+    max-width: clamp(300px, 100vw, 800px);
     padding: 10px;
     border: 1px solid #909399;
     border-radius: 10px;
@@ -372,7 +397,6 @@ el-tabs__item {
     font-weight: bold;
     margin-bottom: 10px;
     text-align: center;
-
 }
 
 .favorite-words-table {

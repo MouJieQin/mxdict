@@ -5,7 +5,7 @@
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
         :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" />
-    <div class="word-detail" :style="wordDetailDynamicStyle">
+    <div class="word-detail" :class="{ 'anki-mode': envFromRoute === 'anki' }">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
                 <el-divider style="margin:0 10px;" />
@@ -70,7 +70,7 @@ const webSocket = ref<SessionWebSocketService | null>(null)
 const keyword = ref('')
 const sessionId = ref(-1)
 const keywordFromRoute = route.query.keyword as string || ''
-const envFromRoute = route.query.env as string || ''
+const envFromRoute = ref<string>(route.query.env as string || '')
 const redirectWord = ref<string>('')
 const dictsInfo = ref<DictsInfo>({})
 const sessionConfig = ref<SessionConfig>({
@@ -94,19 +94,6 @@ const iframeKeydownEvent = ref<any | null>(null)
 const ankiProgress = ref<any>({})
 
 const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
-
-const wordDetailDynamicStyle = computed(() => {
-    if (envFromRoute === 'anki') {
-        return {
-            'max-width': '800px',
-            'margin': '0 auto',
-        }
-    } else {
-        return {
-        }
-    }
-})
-
 
 const setupDicsSettingsInfo = () => {
     if (!sessionConfig.value?.dictsSettingInfo) {
@@ -148,6 +135,12 @@ const setupWebSocket = () => {
 
 // 初始化
 onMounted(() => {
+    if (envFromRoute.value === 'anki') {
+        document.body.classList.add('anki-mode')
+    } else {
+        document.body.classList.remove('anki-mode')
+    }
+
     setupWebSocket()
     // window.addEventListener('keydown', handleKeydown)
     window.addEventListener('scroll', handleScroll)

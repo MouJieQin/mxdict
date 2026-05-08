@@ -167,7 +167,7 @@ const isAllAnkiDone = computed(() => {
         if (!ankiProgresses.value[item.name]) {
             return false
         }
-        if (ankiProgresses.value[item.name].type !== 'done' && ankiProgresses.value[item.name].type !== 'canceled') {
+        if (ankiProgresses.value[item.name].type !== 'done' && ankiProgresses.value[item.name].type !== 'canceled' && ankiProgresses.value[item.name].type !== 'error') {
             return false
         }
     }
@@ -185,9 +185,7 @@ const ankiBeforeClose = (done: any) => {
             type: 'warning',
             appendTo: '.anki-dialog'
         }).then(() => {
-            console.log("用户确认取消更新发送取消更新消息")
             props.webSocket?.sendCancelAnkiUpdate()
-            console.log("用户确认取消更新发送取消更新消息完成")
         }).catch(() => {
         })
     }

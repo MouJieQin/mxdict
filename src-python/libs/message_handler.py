@@ -236,7 +236,6 @@ class MessageHandler:
         words = Utils.db.get_folder_words(folder_id)
 
         await anki_manager.update_words_to_anki(str(session_id), deck_name, words,send_progress)
-        logger.info("@@@@@@@@@@@@@@@@@@@@@@@@exit _handle_update_to_anki")
 
 
     @staticmethod

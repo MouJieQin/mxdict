@@ -21,11 +21,11 @@ import { SessionWebSocketService } from '@/common/session-websocket-client'
 import { watch, computed, ref } from 'vue'
 
 
-const status = ref('success')
-const indeterminate = ref(true)
-const showInfo = ref(true)
-const errorMessage = ref('')
-const info = ref('Waiting...')
+const status = ref<string>('success')
+const indeterminate = ref<boolean>(true)
+const showInfo = ref<boolean>(true)
+const errorMessage = ref<string>('')
+const info = ref<string>('Waiting...')
 
 const props = defineProps({
     webSocket: {
@@ -70,38 +70,39 @@ watch(() => props.ankiProgress?.data?.count, (newVal) => {
 watch(() => props.ankiProgress?.type, (newVal) => {
     errorMessage.value = ''
     try {
-        if (newVal === "trying_acquiring_cards_from_anki") {
-            status.value = 'success'
-            indeterminate.value = true
-            showInfo.value = true
-            info.value = 'Trying acquiring cards from Anki...'
-        }
-        else if (newVal === "updating_cards") {
-            status.value = 'success'
-            indeterminate.value = false
-            showInfo.value = true
-        }
-        else if (newVal === "done") {
-            status.value = 'success'
-            indeterminate.value = false
-            showInfo.value = false
-            info.value = ''
-        }
-        else if (newVal === "error") {
-            status.value = 'exception'
-            indeterminate.value = false
-            showInfo.value = false
-            info.value = ''
-            errorMessage.value = props.ankiProgress?.data?.error_message || 'Unknown error'
-        }
-        else if (newVal === "canceled") {
-            status.value = 'warning'
-            indeterminate.value = false
-            showInfo.value = false
-            info.value = ''
-            errorMessage.value = 'Operation canceled'
-        }
-        else {
+        switch (newVal) {
+            case "trying_acquiring_cards_from_anki":
+                status.value = 'success'
+                indeterminate.value = true
+                showInfo.value = true
+                info.value = 'Trying acquiring cards from Anki...'
+                break
+            case "progress":
+                status.value = 'success'
+                indeterminate.value = false
+                showInfo.value = true
+                break
+            case "done":
+                status.value = 'success'
+                indeterminate.value = false
+                showInfo.value = false
+                info.value = ''
+                break
+            case "error":
+                status.value = 'exception'
+                indeterminate.value = false
+                showInfo.value = false
+                info.value = ''
+                errorMessage.value = props.ankiProgress?.data?.error_message || 'Unknown error'
+                break
+            case "canceled":
+                status.value = 'warning'
+                indeterminate.value = false
+                showInfo.value = false
+                info.value = ''
+                break
+            default:
+                break
         }
     } catch (error) {
         console.error(error)

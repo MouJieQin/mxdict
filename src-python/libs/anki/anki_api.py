@@ -5,8 +5,8 @@ import urllib.request
 class AnkiApi:
 
     @staticmethod
-    def invoke_anki(action, **params):
-        """调用 AnkiConnect API 的通用函数"""
+    def invoke_anki_timeout(timeout: float | None, action: str, **params):
+        """调用 AnkiConnect API 的通用函数，超时 10 秒"""
         request_data = json.dumps(
             {"action": action, "version": 6, "params": params}
         ).encode("utf-8")
@@ -17,12 +17,16 @@ class AnkiApi:
             headers={"Content-Type": "application/json"},
         )
 
-        with urllib.request.urlopen(request) as response:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             result = json.load(response)
             if result.get("error"):
                 raise Exception(f"Anki 错误：{result['error']}")
             return result.get("result")
 
+    @staticmethod
+    def invoke_anki(action, **params):
+        """调用 AnkiConnect API 的通用函数"""
+        return AnkiApi.invoke_anki_timeout(timeout=None, action=action, **params)
 
     @staticmethod
     def get_deck_cards_info(deck_name):
@@ -47,20 +51,29 @@ class AnkiApi:
         result = []
         for card, note in zip(cards_info, notes_info):
             front = note["fields"].get("Front", {}).get("value", "无正面内容")
-            back = note["fields"].get("Back", {}).get("value", "无反面内容")  # 新增获取反面
+            back = (
+                note["fields"].get("Back", {}).get("value", "无反面内容")
+            )  # 新增获取反面
 
-            result.append({
-                "cardId": card["cardId"],
-                "noteId": note["noteId"],
-                "front": front,
-                "back": back    # 新增返回反面
-            })
+            result.append(
+                {
+                    "cardId": card["cardId"],
+                    "noteId": note["noteId"],
+                    "front": front,
+                    "back": back,  # 新增返回反面
+                }
+            )
 
         return result
 
-
     @staticmethod
-    def update_note_to_deck(deck_name: str, noteId=None, front: str = "", back: str = ""):
+    def update_note_to_deck(
+        deck_name: str,
+        noteId=None,
+        front: str = "",
+        back: str = "",
+        timeout: float | None = None,
+    ):
         """
         【新增函数】智能更新/插入卡片（笔记）
         - 有 noteId → 更新该笔记的 front/back（不改变学习记录）
@@ -76,16 +89,29 @@ class AnkiApi:
             (成功标识, 消息/ID)
         """
         # 1. 卡组不存在则自动创建
-        existing_decks = AnkiApi.invoke_anki("deckNames")
+        try:
+            existing_decks = AnkiApi.invoke_anki_timeout(
+                timeout=timeout, action="deckNames"
+            )
+        except Exception as e:
+            return False, f"❌ 获取卡组列表失败：{str(e)}"
+
         if deck_name not in existing_decks:
-            AnkiApi.invoke_anki("createDeck", deck=deck_name)
-            print(f"✅ 自动创建卡组：{deck_name}")
+            try:
+                AnkiApi.invoke_anki_timeout(
+                    timeout=timeout, action="createDeck", deck=deck_name
+                )
+                print(f"✅ 自动创建卡组：{deck_name}")
+            except Exception as e:
+                return False, f"❌ 创建卡组失败：{str(e)}"
 
         # 2. 更新已有笔记（有 noteId）
         if noteId:
             # 先获取原笔记，对比是否需要更新
             try:
-                note_info = AnkiApi.invoke_anki("notesInfo", notes=[noteId])[0]
+                note_info = AnkiApi.invoke_anki_timeout(
+                    timeout=timeout, action="notesInfo", notes=[noteId]
+                )[0]
                 old_front = note_info["fields"].get("Front", {}).get("value", "")
                 old_back = note_info["fields"].get("Back", {}).get("value", "")
 
@@ -93,13 +119,11 @@ class AnkiApi:
                     return True, f"✅ 笔记 {noteId} 内容无变化，无需更新"
 
                 # 执行更新（只改内容，不影响学习进度）
-                AnkiApi.invoke_anki("updateNoteFields", note={
-                    "id": noteId,
-                    "fields": {
-                        "Front": front,
-                        "Back": back
-                    }
-                })
+                AnkiApi.invoke_anki_timeout(
+                    timeout=timeout,
+                    action="updateNoteFields",
+                    note={"id": noteId, "fields": {"Front": front, "Back": back}},
+                )
                 return True, f"✅ 成功更新笔记 {noteId}"
             except Exception as e:
                 return False, f"❌ 更新失败：{str(e)}"
@@ -111,18 +135,17 @@ class AnkiApi:
                 note = {
                     "deckName": deck_name,
                     "modelName": "Basic",
-                    "fields": {
-                        "Front": front,
-                        "Back": back
-                    },
+                    "fields": {"Front": front, "Back": back},
                     "options": {
                         "allowDuplicate": False,
                         "duplicateScope": "deck",
-                        "duplicateScopeDeckName": deck_name
+                        "duplicateScopeDeckName": deck_name,
                     },
-                    "tags": []  # 可加标签
+                    "tags": [],  # 可加标签
                 }
-                new_note_id = AnkiApi.invoke_anki("addNote", note=note)
+                new_note_id = AnkiApi.invoke_anki_timeout(
+                    timeout=timeout, action="addNote", note=note
+                )
                 return True, f"✅ 成功新建卡片，笔记ID：{new_note_id}"
             except Exception as e:
                 return False, f"❌ 新建失败：{str(e)}"
@@ -144,12 +167,11 @@ if __name__ == "__main__":
         print(f"正面：{c['front']}")
         print(f"反面：{c['back']}")
         print(f"笔记ID：{c['noteId']}")
-        print("-"*30)
+        print("-" * 30)
 
-
-    #为之前的卡片添加front id
+    # 为之前的卡片添加front id
     # import hashlib
-    
+
     # for c in cards[:]:
     #     noteId = c['noteId']
     #     front = c['front']
@@ -159,7 +181,6 @@ if __name__ == "__main__":
     #     back = c['back']
     #     print(f"正面：{front}", f"反面：{back}", f"笔记ID：{noteId}")
     #     AnkiApi.upsert_note_to_deck(DECK_NAME, noteId, front, back)
-
 
 
 #     # 测试2：更新已有笔记（不会改变学习记录）

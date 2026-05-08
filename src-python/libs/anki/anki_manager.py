@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import queue
 import asyncio
 from typing import Callable
 
@@ -9,9 +10,8 @@ from libs.config import UtilsBase
 from libs.anki.anki_api import AnkiApi
 from libs.log_config import logger
 
+
 class AnkiManager:
-
-
     html_back_content_prefix = """
     <!DOCTYPE html>
     <html>
@@ -27,8 +27,8 @@ class AnkiManager:
 
     def __init__(self):
         self.anki_api = AnkiApi()
-        self.prefix_div='<div id="'
-        self.suffix_div='</div>'
+        self.prefix_div = '<div id="'
+        self.suffix_div = "</div>"
         self.__reload_anki_config()
 
     def _sync_anki_config(self):
@@ -41,9 +41,9 @@ class AnkiManager:
                 self.anki_config = json.load(f)
         else:
             self.anki_config = {
-                "format":{
-                    "default":{
-                        "front":'<p style="font-size: 32px; font-weight: bold;">{keyword}</p>',
+                "format": {
+                    "default": {
+                        "front": '<p style="font-size: 32px; font-weight: bold;">{keyword}</p>',
                     }
                 }
             }
@@ -52,14 +52,14 @@ class AnkiManager:
     @staticmethod
     def get_str_unique_id(text: str) -> str:
         return hashlib.md5(text.strip().encode("utf-8")).hexdigest()
-    
+
     def get_unique_id_from_front(self, front: str) -> str:
-        start_index=front.find(self.prefix_div)
-        end_index=front.find('">', start_index)
-        if start_index==-1 or end_index==-1:
+        start_index = front.find(self.prefix_div)
+        end_index = front.find('">', start_index)
+        if start_index == -1 or end_index == -1:
             return ""
-        return front[start_index+len(self.prefix_div):end_index]
-        
+        return front[start_index + len(self.prefix_div) : end_index]
+
     def get_deck_cards_indexed_by_unique_id(self, deck_name: str) -> dict:
         cards = self.anki_api.get_deck_cards_info(deck_name)
         result = {}
@@ -67,14 +67,16 @@ class AnkiManager:
             unique_id = self.get_unique_id_from_front(card["front"])
             result[unique_id] = card
         return result
-    
+
     def set_cancel_flag(self, cancel: bool):
         self.cancel_flag = cancel
 
     def is_cancel_flag(self) -> bool:
         return self.cancel_flag
 
-    async def update_words_to_anki(self, session_id: str, deck_name: str, words: list, send_progress: Callable):
+    async def update_words_to_anki(
+        self, session_id: str, deck_name: str, words: list, send_progress: Callable
+    ):
         """
         更新 Anki 中的单词
         :param deck_name: Anki 牌名
@@ -84,18 +86,19 @@ class AnkiManager:
             msg = {"type": "canceled"}
             await send_progress(msg)
             return
-        
+
         self.__reload_anki_config()
         deck_format_config = self.anki_config["format"].get(deck_name, {})
         deck_front_format_config = deck_format_config.get("front", "")
-        front_format_str =  deck_front_format_config or self.anki_config["format"]["default"]["front"]
+        front_format_str = (
+            deck_front_format_config or self.anki_config["format"]["default"]["front"]
+        )
         msg = {"type": "trying_acquiring_cards_from_anki"}
         await send_progress(msg)
 
-
-        # ✅ 异步队列：线程往里扔进度，async 往外发消息
-        import queue
+        # ✅ 队列：线程往里扔进度，async 往外发消息
         q = queue.Queue()
+
         def sync_task():
             logger.debug("sync_task 开始")
             deck_cards = {}
@@ -103,29 +106,52 @@ class AnkiManager:
                 deck_cards = self.get_deck_cards_indexed_by_unique_id(deck_name)
                 logger.debug(f"获取到 {len(deck_cards)} 张 Anki 卡片")
             except Exception as e:
-                q.put(("error","获取 Anki 卡片失败！请先运行Anki并确认安装AnkiConnect插件！"))
+                q.put(
+                    (
+                        "error",
+                        "获取 Anki 卡片失败！请先运行Anki并确认安装AnkiConnect插件！",
+                    )
+                )
                 logger.error(e)
                 return
-            count = total_count = updated_count = update_error_count = created_count = create_error_count = 0
+            count = total_count = updated_count = update_error_count = created_count = (
+                create_error_count
+            ) = 0
             total_count = len(words)
             try:
                 for word in words:
                     if self.is_cancel_flag():
-                        q.put(("cancel",))
-                        break
+                        q.put(
+                            (
+                                "canceled",
+                                count,
+                                total_count,
+                                updated_count,
+                                created_count,
+                                update_error_count,
+                                create_error_count,
+                            )
+                        )
+                        return
                     logger.debug(f"处理单词：{word['word']}")
-                    unique_id = self.get_str_unique_id(word['word'])
-                    front_first_line=self.prefix_div + unique_id +'">'
-                    front_last_line =self.suffix_div
-                    front_content= front_format_str.format(keyword=word['word'])
-                    front=f"{front_first_line}\n{front_content}\n{front_last_line}"
+                    unique_id = self.get_str_unique_id(word["word"])
+                    front_first_line = self.prefix_div + unique_id + '">'
+                    front_last_line = self.suffix_div
+                    front_content = front_format_str.format(keyword=word["word"])
+                    front = f"{front_first_line}\n{front_content}\n{front_last_line}"
 
                     back = self.html_back_content_prefix
                     back += f"<iframe src=\"http://localhost:9595/#/dict/{session_id}?keyword={word['word']}&env=anki\"></iframe>\n"
                     back += "</body>\n</html>"
 
-                    note_id = deck_cards[unique_id]["noteId"] if unique_id in deck_cards else None
-                    success, res_msg = self.anki_api.update_note_to_deck(deck_name, note_id, front, back)
+                    note_id = (
+                        deck_cards[unique_id]["noteId"]
+                        if unique_id in deck_cards
+                        else None
+                    )
+                    success, res_msg = self.anki_api.update_note_to_deck(
+                        deck_name, note_id, front, back, timeout=5.0
+                    )
 
                     count += 1
                     if success:
@@ -140,65 +166,68 @@ class AnkiManager:
                             create_error_count += 1
 
                     if count % 10 == 0:
-                        q.put(("progress", count, total_count, updated_count, created_count, update_error_count, create_error_count))
-                q.put(("done", count, total_count, updated_count, created_count, update_error_count, create_error_count))
+                        q.put(
+                            (
+                                "progress",
+                                count,
+                                total_count,
+                                updated_count,
+                                created_count,
+                                update_error_count,
+                                create_error_count,
+                            )
+                        )
+                q.put(
+                    (
+                        "done",
+                        count,
+                        total_count,
+                        updated_count,
+                        created_count,
+                        update_error_count,
+                        create_error_count,
+                    )
+                )
             except Exception as e:
                 q.put(("error", "更新 Anki 卡片失败!"))
                 logger.error(e)
                 return
 
-        logger.debug(f"开始task处理")
-        # task_update = asyncio.create_task(asyncio.to_thread(sync_task))
-        import threading
-        task_update = threading.Thread(
-            target=sync_task,
-            args=(),
-            daemon=True,
-        )
-        task_update.start()
-        logger.debug(f"task处理开始")
+        logger.debug(f"task_update 开始处理")
+        task_update = asyncio.create_task(asyncio.to_thread(sync_task), name=deck_name)
+        logger.debug(f"task_update 处理开始")
 
         # ✅ 异步循环：实时发进度（不阻塞）
         async def process_messages():
             while True:
-                try:
-                    await asyncio.sleep(0.05)
-                    msg = q.get(block=False)
-                    logger.debug(msg)
-                except:
-                    if not task_update.is_alive():
+                if q.empty():
+                    if task_update.done():
+                        logger.debug(f"{task_update.get_name()} 处理完成")
                         break
-                    continue
+                    else:
+                        await asyncio.sleep(0.05)
+                        continue
+                else:
+                    msg = q.get_nowait()
+                    logger.debug(msg)
+                    if msg[0] == "canceled" or msg[0] == "progress" or msg[0] == "done":
+                        await send_progress(
+                            {
+                                "type": msg[0],
+                                "data": {
+                                    "count": msg[1],
+                                    "total_count": msg[2],
+                                    "updated_count": msg[3],
+                                    "created_count": msg[4],
+                                    "update_error_count": msg[5],
+                                    "create_error_count": msg[6],
+                                },
+                            }
+                        )
+                    elif msg[0] == "error":
+                        await send_progress(
+                            {"type": "error", "data": {"error_message": msg[1]}}
+                        )
+                        break
 
-                if msg[0] == "cancel":
-                    await send_progress({"type": "canceled"})
-                    return
-                elif msg[0] == "progress":
-                    await send_progress({
-                        "type": "updating_cards",
-                        "data": {
-                            "count": msg[1],
-                            "total_count": msg[2],
-                            "updated_count": msg[3],
-                            "created_count": msg[4],
-                            "update_error_count": msg[5],
-                            "create_error_count": msg[6],
-                        }
-                    })
-                elif msg[0] == "done":
-                    await send_progress({
-                        "type": "done",
-                        "data": {
-                            "count": msg[1],
-                            "total_count": msg[2],
-                            "updated_count": msg[3],
-                            "created_count": msg[4],
-                            "update_error_count": msg[5],
-                            "create_error_count": msg[6],
-                        }
-                    })
-                    break
-                elif msg[0] == "error":
-                    await send_progress({"type": "error","data":{"error_message":msg[1]}})
-                    break
         task_messages = asyncio.create_task(process_messages())
