@@ -10,7 +10,10 @@ html {
 body {
     overflow-x: hidden;
     overflow-y: hidden;
-    margin-right: 2px;
+    /* margin-right: 2px; */
+    margin: 0;
+    padding: 0;
+    /* padding-left: 1rem; */
 }
 
 /* ANKI 模式：自动滚动 + 隐藏滚动条 */
@@ -22,7 +25,7 @@ body.anki-mode {
 }
 
 body.anki-mode::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 body::-webkit-scrollbar-thumb {
@@ -45,10 +48,10 @@ body::-webkit-scrollbar-thumb {
     --scrollbar-background: rgba(107, 107, 107, 1);
 }
 
-::-webkit-scrollbar {
-    /* width: 7px; */
-    /* margin: 0 auto; */
-}
+/* ::-webkit-scrollbar {
+    width: 7px;
+    margin: 0 auto;
+} */
 
 ::-webkit-scrollbar-thumb {
     border-radius: 5px;
@@ -74,27 +77,37 @@ body::-webkit-scrollbar-thumb {
         #cce4fb 0%,
         #eef5fc 25%,
         #fafbfc 55%
-    );
-    min-height: 100vh; */
+    ); */
+    min-height: 100vh;
 }
 
 .dict-iframe {
+    /* 左边框（你可以改颜色/粗细） */
+    border-left: 2px solid #000;
+
+    /* 内容距离左边框 1rem（核心！） */
+    padding-left: 1rem;
+
+    /* 让 div 贴紧 body 左边 */
+    margin-left: 0;
+
     width: 100%;
     border: none;
 }
 
 .word-detail {
     height: 100vh;
-    overflow-y: auto; /* 只在这里滚动 */
-    overflow-x: hidden;
     padding-bottom: 40px;
+}
+
+.word-detail.not-anki-mode {
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .word-detail.anki-mode {
     max-width: 800px;
     margin: 0 auto;
-    overflow-x: hidden;
-    overflow-y: hidden;
 }
 
 .word-detail.anki-mode::-webkit-scrollbar {
@@ -277,6 +290,7 @@ body::-webkit-scrollbar-thumb {
     /* color: #333;     */
     font-weight: bold !important; /* 字体粗细 */
     line-height: 1.5 !important; /* 行高 */
+    padding-left: 1rem !important;
 }
 
 /*  */

@@ -5,15 +5,15 @@
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
         :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" />
-    <div class="word-detail" :class="{ 'anki-mode': envFromRoute === 'anki' }">
+    <div class="word-detail"
+        :class="{ 'anki-mode': envFromRoute === 'anki', 'not-anki-mode': envFromRoute !== 'anki' }">
         <el-collapse expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
                 <el-divider style="margin:0 10px;" />
                 <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
             </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-                <el-collapse-item :title="dictName" :name="dictName" :isActive="true"
-                    style="font-weight:bold !important;">
+                <el-collapse-item :title="dictName" :name="dictName" :isActive="true">
                     <div v-for="html in result" :key="html">
                         <el-divider style="margin:0 10px" />
                         <DictIframe :html="html" :css-urls="dictsInfo[dictName].css" :js-urls="dictsInfo[dictName].js"

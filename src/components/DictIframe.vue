@@ -41,6 +41,21 @@ async function renderIframe() {
     .replace(/file:\//g, '')
     .replace(/src=\"/g, `src="${baseUrl.value}/`)
 
+  const style = doc.createElement('style')
+  style.textContent = `
+      // body {
+      //  padding-left: 1rem !important;
+      //  padding-right: 1rem !important;
+      // }
+      // @media (max-width: 500px) {
+      //   body {
+      //     padding-left: 0 !important;
+      //     padding-right: 0 !important;
+      //   }
+      // }
+    `
+  doc.head.appendChild(style)
+
   // console.log('content:', content)
 
   // 只在第一次加载 CSS/JS

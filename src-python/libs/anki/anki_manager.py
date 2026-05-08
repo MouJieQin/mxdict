@@ -13,15 +13,14 @@ from libs.log_config import logger
 
 class AnkiManager:
     html_back_content_prefix = """
-    <!DOCTYPE html>
-    <html>
-        <head>
             <meta charset="utf-8">
             <style>
                 body { margin: 0; padding: 0; }
+                body::-webkit-scrollbar {
+                    display: none;
+                }
                 iframe { width: 100%; height: 85vh; border: none;  }
             </style>
-        </head>
         <body>
     """
 
