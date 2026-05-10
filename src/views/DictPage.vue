@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, onBeforeUnmount, computed } from 'vue'
+import { ref, onMounted, onUnmounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
@@ -94,6 +94,10 @@ const iframeKeydownEvent = ref<any | null>(null)
 const ankiProgress = ref<any>({})
 
 const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
+
+watch(() => sessionConfig.value?.pin?.is_pinned, (newVal) => {
+    isFloatingWindowPinned.value = newVal
+})
 
 const setupDicsSettingsInfo = () => {
     if (!sessionConfig.value?.dictsSettingInfo) {
@@ -258,11 +262,11 @@ const handleIframeKeydown = (e: any) => {
 const handleSessionConfig = (message: any) => {
     sessionConfig.value = message.data.config
     if (message.data.is_right_after_connection) {
-        if (envFromRoute === 'iwin') {
+        if (envFromRoute.value === 'iwin') {
             webSocket.value?.sendFloatingWindowPinClick(sessionId.value, sessionConfig.value?.pin?.is_pinned || false)
         }
-        if (keywordFromRoute) {
-            webSocket.value?.sendLookupKeywordRequest(keywordFromRoute)
+        if (keywordFromRoute.value) {
+            webSocket.value?.sendLookupKeywordRequest(keywordFromRoute.value)
         }
     }
 }
