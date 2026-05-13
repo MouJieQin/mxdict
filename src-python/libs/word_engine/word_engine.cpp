@@ -54,8 +54,7 @@ int levenshtein(const char *a, const char *b)
 struct WordEntry
 {
     string word;
-    unordered_set<string> dict_names;
-
+    vector<const string *> dict_names; // 归属词典列表（指针，避免复制）
     WordEntry(string w) : word(std::move(w)) {}
 };
 
@@ -71,6 +70,8 @@ private:
 
     // 视图缓存：词典组合key -> 去重排序后的单词视图
     unordered_map<string, vector<const WordEntry *>> _view_cache;
+
+    unordered_map<string, unique_ptr<string>> _dict_names;
 
 private:
     // 禁止拷贝/移动
@@ -123,6 +124,9 @@ public:
     // 添加词典：自动去重单词、记录归属词典
     void add_dict(const string &dict_name, const vector<string> &words)
     {
+        if (_dict_names.count(dict_name))
+            return; // 已存在同名词典，忽略
+        _dict_names[dict_name] = make_unique<string>(dict_name);
         auto &word_list = _dict_words[dict_name];
         word_list.reserve(words.size());
 
@@ -135,7 +139,7 @@ public:
             }
             WordEntry *entry = _word_pool[word].get();
             // 记录归属
-            entry->dict_names.insert(dict_name);
+            entry->dict_names.push_back(_dict_names[dict_name].get());
             word_list.push_back(entry);
         }
 
