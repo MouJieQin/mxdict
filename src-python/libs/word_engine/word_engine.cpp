@@ -3,8 +3,9 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
-#include <queue>
+#include <cstring>
 #include <cctype>
 
 namespace py = pybind11;
@@ -20,7 +21,7 @@ string to_lower(const string &s)
     return res;
 }
 
-// 极简 Levenshtein 距离（C 版超快）
+// 极简 Levenshtein 距离
 int levenshtein(const char *a, const char *b)
 {
     int m = 0, n = 0;
@@ -49,131 +50,194 @@ int levenshtein(const char *a, const char *b)
     return dp[n];
 }
 
+// 单词实体：存储真实字符串 + 归属词典
+struct WordEntry
+{
+    string word;
+    unordered_set<string> dict_names;
+
+    WordEntry(string w) : word(std::move(w)) {}
+};
+
 // ====================== 核心类 ======================
 class WordStorage
 {
 private:
-    // 所有词典：dict_name => 单词数组
-    unordered_map<string, vector<string>> _dict_words;
+    // 全局唯一单词池：单词字符串 -> 单词实体
+    unordered_map<string, unique_ptr<WordEntry>> _word_pool;
 
-    // 激活的单词视图（不复制数据，只是指针/引用合集）
-    vector<const string *> _active_view;
+    // 词典：词典名 -> 单词列表（指针）
+    unordered_map<string, vector<const WordEntry *>> _dict_words;
+
+    // 视图缓存：词典组合key -> 去重排序后的单词视图
+    unordered_map<string, vector<const WordEntry *>> _view_cache;
+
+private:
+    // 禁止拷贝/移动
+    WordStorage(const WordStorage &) = delete;
+    WordStorage &operator=(const WordStorage &) = delete;
+    WordStorage(WordStorage &&) = delete;
+    WordStorage &operator=(WordStorage &&) = delete;
+
+    // 生成视图唯一key
+    string get_view_key(const vector<string> &dicts) const
+    {
+        vector<string> sorted = dicts;
+        sort(sorted.begin(), sorted.end());
+        string key;
+        for (const auto &d : sorted)
+            key += d + "|";
+        return key;
+    }
+
+    // 获取/创建去重排序的视图
+    vector<const WordEntry *> get_view(const vector<string> &dicts)
+    {
+        string key = get_view_key(dicts);
+        auto it = _view_cache.find(key);
+        if (it != _view_cache.end())
+            return it->second;
+
+        unordered_set<const WordEntry *> temp_set;
+        for (const auto &dict : dicts)
+        {
+            auto dict_it = _dict_words.find(dict);
+            if (dict_it == _dict_words.end())
+                continue;
+            for (const auto *entry : dict_it->second)
+                temp_set.insert(entry);
+        }
+
+        vector<const WordEntry *> view(temp_set.begin(), temp_set.end());
+        sort(view.begin(), view.end(), [](const WordEntry *a, const WordEntry *b)
+             { return a->word < b->word; });
+
+        _view_cache[key] = std::move(view);
+        return _view_cache[key];
+    }
 
 public:
-    // 1. 添加词典单词（Python 只调用一次）
+    WordStorage() = default;
+    ~WordStorage() = default;
+
+    // 添加词典：自动去重单词、记录归属词典
     void add_dict(const string &dict_name, const vector<string> &words)
     {
-        _dict_words[dict_name] = words;
-    }
+        auto &word_list = _dict_words[dict_name];
+        word_list.reserve(words.size());
 
-    // 2. 设置当前激活的词典（用户切换词典时调用）
-    // 关键：瞬间完成，不复制任何单词！
-    void set_active_dicts(const vector<string> &dict_names)
-    {
-        _active_view.clear();
-        for (const auto &name : dict_names)
+        for (const string &word : words)
         {
-            auto it = _dict_words.find(name);
-            if (it != _dict_words.end())
+            // 单词不存在则创建
+            if (!_word_pool.count(word))
             {
-                for (const auto &word : it->second)
-                {
-                    _active_view.push_back(&word);
-                }
+                _word_pool[word] = make_unique<WordEntry>(word);
             }
+            WordEntry *entry = _word_pool[word].get();
+            // 记录归属
+            entry->dict_names.insert(dict_name);
+            word_list.push_back(entry);
         }
-        // 排序（只排一次，视图排序，极快）
-        sort(_active_view.begin(), _active_view.end(),
-             [](const string *a, const string *b)
-             { return *a < *b; });
+
+        // 添加新词典后清空视图缓存（避免脏数据）
+        _view_cache.clear();
     }
 
-    // 3. 前缀搜索
-    vector<string> prefix_search(const string &keyword, size_t limit)
+    // 前缀搜索
+    vector<string> prefix_search(const string &keyword, vector<string> use_dicts, size_t limit)
     {
         vector<string> res;
-        string key = keyword;
-        for (const auto *word : _active_view)
+        auto view = get_view(use_dicts);
+        size_t kw_len = keyword.size();
+
+        for (const auto *entry : view)
         {
             if (res.size() >= limit)
                 break;
-            if (word->substr(0, key.size()) == key)
+            const string &w = entry->word;
+            if (w.size() >= kw_len && w.compare(0, kw_len, keyword) == 0)
             {
-                res.push_back(*word);
+                res.push_back(w);
             }
         }
         return res;
     }
 
-    // 4. 包含搜索
-    vector<string> contains_search(const string &keyword, size_t limit)
+    // 包含搜索
+    vector<string> contains_search(const string &keyword, vector<string> use_dicts, size_t limit)
     {
         vector<string> res;
-        string key = to_lower(keyword);
-        for (const auto *word : _active_view)
+        auto view = get_view(use_dicts);
+
+        for (const auto *entry : view)
         {
             if (res.size() >= limit)
                 break;
-            if (to_lower(*word).find(key) != string::npos)
+            if (entry->word.find(keyword) != string::npos)
             {
-                res.push_back(*word);
+                res.push_back(entry->word);
             }
         }
         return res;
     }
 
-    // 5. 模糊搜索
-    vector<string> fuzzy_search(const string &keyword, size_t limit)
+    // 模糊搜索（已修复，可启用）
+    vector<string> fuzzy_search(const string &keyword, vector<string> use_dicts, size_t limit)
     {
         string key = to_lower(keyword);
-        priority_queue<pair<int, string>> heap;
+        vector<pair<int, string>> candidates;
+        auto view = get_view(use_dicts);
 
-        for (const auto *word : _active_view)
+        for (const auto *entry : view)
         {
-            int d = levenshtein(key.c_str(), to_lower(*word).c_str());
-            heap.emplace(-d, *word);
+            int d = levenshtein(key.c_str(), to_lower(entry->word).c_str());
+            candidates.emplace_back(d, entry->word);
         }
 
+        // 按距离升序排序
+        sort(candidates.begin(), candidates.end());
+
         vector<string> res;
-        while (!heap.empty() && res.size() < limit)
+        for (size_t i = 0; i < min(limit, candidates.size()); i++)
         {
-            res.push_back(heap.top().second);
-            heap.pop();
+            res.push_back(candidates[i].second);
         }
         return res;
     }
 
-    vector<string> fuzzy_contains_search(const string &keyword, size_t limit)
+    // 模糊包含搜索（已修复，可启用）
+    vector<string> fuzzy_contains_search(const string &keyword, vector<string> use_dicts, size_t limit)
     {
         string key = to_lower(keyword);
-        priority_queue<pair<int, string>> heap;
+        vector<pair<int, string>> candidates;
+        auto view = get_view(use_dicts);
 
-        for (const auto *word : _active_view)
+        for (const auto *entry : view)
         {
-            if (to_lower(*word).find(key) != string::npos)
-            {
-                int d = levenshtein(key.c_str(), to_lower(*word).c_str());
-                heap.emplace(-d, *word);
-            }
+            string lower_w = to_lower(entry->word);
+            if (lower_w.find(key) == string::npos)
+                continue;
+            int d = levenshtein(key.c_str(), lower_w.c_str());
+            candidates.emplace_back(d, entry->word);
         }
 
+        sort(candidates.begin(), candidates.end());
+
         vector<string> res;
-        while (!heap.empty() && res.size() < limit)
+        for (size_t i = 0; i < min(limit, candidates.size()); i++)
         {
-            res.push_back(heap.top().second);
-            heap.pop();
+            res.push_back(candidates[i].second);
         }
         return res;
     }
 };
 
-// ====================== 绑定 ======================
+// ====================== Pybind 绑定 ======================
 PYBIND11_MODULE(word_engine, m)
 {
     py::class_<WordStorage>(m, "WordStorage")
         .def(py::init<>())
         .def("add_dict", &WordStorage::add_dict)
-        .def("set_active_dicts", &WordStorage::set_active_dicts)
         .def("prefix_search", &WordStorage::prefix_search)
         .def("contains_search", &WordStorage::contains_search)
         .def("fuzzy_search", &WordStorage::fuzzy_search)

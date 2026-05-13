@@ -30,10 +30,10 @@ class MdictSearcher:
 
             # ====================== 关键 ======================
             # 单词直接传给 C++，Python 不保存！
+            logger.info(f"开始导入 {dict_name} 到 C++ 引擎...")
             self._word_engine.add_dict(dict_name, words)
-
-            self._all_dict_names.append(dict_name)
             logger.info(f"{dict_name} 导入 C++ 完成：{len(words)} 个单词")
+            self._all_dict_names.append(dict_name)
 
     def mdx_lookup(
         self,
@@ -90,20 +90,20 @@ class MdictSearcher:
         """
         # 1. 切换用户选择的词典（瞬间完成，不复制数据）
         use_dicts = dict_names or self._all_dict_names
-        self._word_engine.set_active_dicts(use_dicts)
+        # self._word_engine.set_active_dicts(use_dicts)
 
         # 2. 直接调用 C++ 搜索
         if search_method == "prefix_search":
-            return self._word_engine.prefix_search(keyword, limit)
+            return self._word_engine.prefix_search(keyword, use_dicts, limit)
 
         elif search_method == "contains_search":
-            return self._word_engine.contains_search(keyword, limit)
+            return self._word_engine.contains_search(keyword, use_dicts, limit)
 
         elif search_method == "fuzzy_search":
-            return self._word_engine.fuzzy_search(keyword, limit)
+            return self._word_engine.fuzzy_search(keyword, use_dicts, limit)
 
         elif search_method == "fuzzy_contains_search":
-            return self._word_engine.fuzzy_contains_search(keyword, limit)
+            return self._word_engine.fuzzy_contains_search(keyword, use_dicts, limit)
 
         else:
             logger.error("无效搜索方式")
