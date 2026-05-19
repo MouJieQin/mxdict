@@ -7,14 +7,14 @@
         :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" />
     <div class="word-detail"
         :class="{ 'anki-mode': envFromRoute === 'anki', 'not-anki-mode': envFromRoute !== 'anki' }">
-        <el-collapse expand-icon-position="left" v-model="activeNames">
+        <el-collapse class="sticky-collapse" expand-icon-position="left" v-model="activeNames">
             <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true">
                 <el-divider style="margin:0 10px;" />
                 <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
             </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-                <el-collapse-item :title="dictName" :name="dictName" :isActive="true">
-                    <div class="dict-iframe-container" v-for="html in result" :key="html">
+                <el-collapse-item class="dict-iframe-container":title="dictName" :name="dictName" :isActive="true">
+                    <div v-for="html in result" :key="html">
                         <el-divider style="margin:0 10px" />
                         <DictIframe :html="html" :css-urls="dictsInfo[dictName].css" :js-urls="dictsInfo[dictName].js"
                             :base-path="dictsInfo[dictName].data" :dictionary-root="dictsInfo[dictName].root"
@@ -310,3 +310,29 @@ const handleScroll = () => {
 }
 
 </script>
+
+<style scoped>
+/* 必须用 :deep() 深度选择器，因为 el-collapse-item__header 是Element Plus内部元素 */
+:deep(.sticky-collapse .el-collapse-item__header) {
+  /* 核心：粘性定位 */
+  position: sticky;
+  top: 0; /* 悬浮在距离顶部0px的位置 */
+  
+  /* 必须设置背景色，否则会透明看到下面的内容 */
+  background-color: var(--el-bg-color); /* 使用Element Plus主题变量，自动适配深色模式 */
+  
+  /* 确保悬浮在所有内容（包括iframe）的最上层 */
+  z-index: 100;
+  
+  /* 可选：添加阴影，增强悬浮层次感 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  /* 可选：调整内边距，让标题更美观 */
+  padding-right: 20px;
+}
+
+/* 可选：去掉第一个折叠项的顶部边框，更美观 */
+:deep(.sticky-collapse .el-collapse-item:first-child .el-collapse-item__header) {
+  border-top: none;
+}
+</style>
