@@ -195,8 +195,6 @@ watch(
   async () => {
     await nextTick()
     renderIframe()
-    await nextTick()
-    window.scrollTo(0, 0)
   },
   { deep: true, immediate: true }
 )

@@ -280,6 +280,17 @@ body::-webkit-scrollbar-thumb {
     font-size: 1.1rem !important;
 }
 
+.dict-iframe-container {
+    margin-left: 3px;
+    margin-right: 5px;
+    margin: 10px;
+    /* margin-top:0; */
+    /* padding-bottom: 5px; */
+    border: 1px solid #f56c6c;
+    border-radius: var(--el-border-radius-base);
+    box-shadow: var(--el-box-shadow);
+}
+
 .dict-iframe {
     width: 100%;
     border: none;

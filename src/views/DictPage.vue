@@ -13,7 +13,21 @@
                 <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
             </el-collapse-item>
             <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-                <el-collapse-item class="dict-iframe-container":title="dictName" :name="dictName" :isActive="true">
+                <el-collapse-item class="dict-iframe-container" :title="dictName" :name="dictName" :isActive="true">
+                    <template #icon="{ isActive }">
+                        <el-icon v-show="!isActive" class="el-collapse-item__arrow">
+                            <CaretRight />
+                        </el-icon>
+                        <el-icon v-show="isActive" class="el-collapse-item__arrow">
+                            <CaretBottom />
+                        </el-icon>
+                        <el-image :src="getDictIcon(dictName)" class="collapse-custom-icon">
+                            <template #error>
+                                <BiSolidBookBookmark size="35" />
+                            </template>
+                        </el-image>
+                    </template>
+
                     <div v-for="html in result" :key="html">
                         <el-divider style="margin:0 10px" />
                         <DictIframe :html="html" :css-urls="dictsInfo[dictName].css" :js-urls="dictsInfo[dictName].js"
@@ -45,6 +59,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
+import { CaretRight, CaretBottom } from '@element-plus/icons-vue'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
@@ -235,6 +251,11 @@ const handleWebSocketMessage = (message: any) => {
     }
 }
 
+const getDictIcon = (dictName: string) => {
+    const item = sessionConfig.value?.dictsSettingInfo.find((item: any) => item.name === dictName)
+    return item ? item.cover_url : ''
+}
+
 const handleLookupKeyword = (data: any) => {
     if (envFromRoute.value === 'anki') {
         window.scrollTo(0, 0)
@@ -312,27 +333,43 @@ const handleScroll = () => {
 </script>
 
 <style scoped>
+/* 自定义图标样式 */
+:deep(.collapse-custom-icon) {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 8px;
+    /* 图标和文字之间的间距 */
+    vertical-align: middle;
+}
+
+:deep(.el-collapse-item__arrow) {
+    width: 2rem;
+    height: 2rem;
+}
+
 /* 必须用 :deep() 深度选择器，因为 el-collapse-item__header 是Element Plus内部元素 */
 :deep(.sticky-collapse .el-collapse-item__header) {
-  /* 核心：粘性定位 */
-  position: sticky;
-  top: 0; /* 悬浮在距离顶部0px的位置 */
-  
-  /* 必须设置背景色，否则会透明看到下面的内容 */
-  background-color: var(--el-bg-color); /* 使用Element Plus主题变量，自动适配深色模式 */
-  
-  /* 确保悬浮在所有内容（包括iframe）的最上层 */
-  z-index: 100;
-  
-  /* 可选：添加阴影，增强悬浮层次感 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  
-  /* 可选：调整内边距，让标题更美观 */
-  padding-right: 20px;
+    /* 核心：粘性定位 */
+    position: sticky;
+    top: 0;
+    /* 悬浮在距离顶部0px的位置 */
+
+    /* 必须设置背景色，否则会透明看到下面的内容 */
+    background-color: var(--el-bg-color);
+    /* 使用Element Plus主题变量，自动适配深色模式 */
+
+    /* 确保悬浮在所有内容（包括iframe）的最上层 */
+    z-index: 100;
+
+    /* 可选：添加阴影，增强悬浮层次感 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    /* 可选：调整内边距，让标题更美观 */
+    padding-right: 20px;
 }
 
 /* 可选：去掉第一个折叠项的顶部边框，更美观 */
 :deep(.sticky-collapse .el-collapse-item:first-child .el-collapse-item__header) {
-  border-top: none;
+    border-top: none;
 }
 </style>
