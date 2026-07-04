@@ -57,7 +57,7 @@ class MdictSearcher:
         if dict_names is None:
             dict_names = self._all_dict_names
         for dict_name in dict_names:
-            res = self._fstd_engine.single_exact_match_search(keyword, dict_name)
+            res = self._fstd_engine.exact_match_search(keyword, dict_name)
             if res:
                 result = []
                 self._hand_link_word(result, res, dict_name, [keyword], ignorecase)
@@ -81,7 +81,7 @@ class MdictSearcher:
                 redirect_word = item.split("@@@LINK=")[1].strip()
                 if redirect_word not in words_show:
                     words_show.append(redirect_word)
-                    res_redirect = self._fstd_engine.single_exact_match_search(redirect_word, dict_name)
+                    res_redirect = self._fstd_engine.exact_match_search(redirect_word, dict_name)
                     if res_redirect:
                         self._hand_link_word(
                             result, res_redirect, dict_name, words_show, ignorecase
