@@ -81,6 +81,7 @@ class UtilsBase:
 
 def init_config():
     """初始化配置目录和文件"""
+    logger.info(f"fstdict support path: {UtilsBase.FSTDICT_SUPPORT_PATH}")
     UtilsBase.createDirIfnotExists(UtilsBase.USER_CONFIG_DIR)
     UtilsBase.createDirIfnotExists(UtilsBase.DATA_PATH)
     UtilsBase.createDirIfnotExists(UtilsBase.DICTIONARYS_PATH)
