@@ -213,7 +213,7 @@ router.beforeEach(async (__, _, next) => {
 })
 
 onBeforeUnmount(() => {
-    document.title = 'MxDict'
+    document.title = 'FstDict'
 })
 
 const handleChangeKeyword = (newKeyword: string) => {
@@ -296,7 +296,7 @@ const handleLookupKeyword = (data: any) => {
         document.querySelector('.word-detail').scrollTo(0, 0)
     }
     const keyword = data.keyword
-    document.title = keyword || 'MxDict'
+    document.title = keyword || 'FstDict'
     lastSearchKeyword.value = keyword || ''
     noteContent.value = data.note || ''
     leftHistory.value = data.left_history

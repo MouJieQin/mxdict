@@ -13,24 +13,24 @@ class UtilsBase:
     # 路径配置
     SERVER_SRC_ABS_PATH = os.path.abspath(os.getcwd())
     APP_SUPPORT_PATH = appdirs.user_data_dir()[0:-1]
-    MXDICT_SUPPORT_PATH = f"{APP_SUPPORT_PATH}/com.qinmoujie.mxdict"
-    MXDICT_STORAGE_PATH = f"{MXDICT_SUPPORT_PATH}/MxDict-Storage"
-    USER_CONFIG_DIR = MXDICT_STORAGE_PATH + "/config"
+    FSTDICT_SUPPORT_PATH = f"{APP_SUPPORT_PATH}/com.qinmoujie.fstdict"
+    FSTDICT_STORAGE_PATH = f"{FSTDICT_SUPPORT_PATH}/FstDict-Storage"
+    USER_CONFIG_DIR = FSTDICT_STORAGE_PATH + "/config"
     CONFIG_FILE = USER_CONFIG_DIR + "/config.json"
     ANKI_CONFIG_FILE = USER_CONFIG_DIR + "/anki_config.json"
     DEFAULT_CONFIG_FILE = SERVER_SRC_ABS_PATH + "/config.json"
-    DICTIONARYS_PATH = MXDICT_STORAGE_PATH + "/dictionaries"
+    DICTIONARYS_PATH = FSTDICT_STORAGE_PATH + "/dictionaries"
     FSTD_SEARCHER_META_PATH = DICTIONARYS_PATH + "/fstd_searcher_meta.json"
     FSTDX_INDEX_PATH = DICTIONARYS_PATH + "/fstd_indexes.fstdxidx"
-    DATA_PATH = MXDICT_STORAGE_PATH + "/data"
-    MXDICT_DATABASE_PATH = DATA_PATH + "/mxdict.db"
+    DATA_PATH = FSTDICT_STORAGE_PATH + "/data"
+    FSTDICT_DATABASE_PATH = DATA_PATH + "/fstdict.db"
     DICT_DATABASE_PATH = DATA_PATH + "/dict.db"
 
     fstd_engine = fstd.FstdxSearcher()
 
     DEFAULT_CONFIG = {}
     CONFIG = {}
-    MXDICT_CONFIG = {}
+    FSTDICT_CONFIG = {}
     DICT_INFO = {}
 
     # WebSocket 连接管理
@@ -100,12 +100,12 @@ def init_config():
         for file in dict_path.iterdir():
             if file.is_dir():
                 mdx_path = file.absolute() / f"{file.name}.fstdx"
-                mdict_info_json = file.absolute() / "mxdict_info.json"
+                fstdict_info_json = file.absolute() / "fstdict_info.json"
                 if mdx_path.is_file():
-                    if mdict_info_json.is_file():
-                        with open(mdict_info_json, mode="r", encoding="utf-8") as f:
-                            mdict_info = json.load(f)
-                            UtilsBase.DICT_INFO[file.name] = mdict_info
+                    if fstdict_info_json.is_file():
+                        with open(fstdict_info_json, mode="r", encoding="utf-8") as f:
+                            fstdict_info = json.load(f)
+                            UtilsBase.DICT_INFO[file.name] = fstdict_info
                     else:
                         UtilsBase.DICT_INFO[file.name] = {}
                         UtilsBase.DICT_INFO[file.name]["name"] = file.name
@@ -135,8 +135,8 @@ def init_config():
                             ]:
                                 UtilsBase.DICT_INFO[file.name]["cover"] = "/".join([file.name, img_file.name])
                                 break
-                        # save dict info into mxdict_info.json
-                        with open(mdict_info_json, mode="w", encoding="utf-8") as f:
+                        # save dict info into fstdict_info.json
+                        with open(fstdict_info_json, mode="w", encoding="utf-8") as f:
                             json.dump(
                                 UtilsBase.DICT_INFO[file.name],
                                 f,

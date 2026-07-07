@@ -5,7 +5,7 @@ from datetime import datetime
 from libs.log_config import logger
 
 
-class MxDictDatabase:
+class FstDictDatabase:
     def __init__(self, db_path: str):
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row  # 使用字典形式返回结果

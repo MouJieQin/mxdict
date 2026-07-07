@@ -132,7 +132,7 @@ pub fn run() {
             let resource_dir: PathBuf = get_resource_dir().map_err(|_| "无法获取资源目录")?;
             info!("资源目录: {:?}", resource_dir);
 
-            let python_script: PathBuf = resource_dir.join("src-python/mxdict-server.py");
+            let python_script: PathBuf = resource_dir.join("src-python/fstdict-server.py");
             info!("Python 脚本路径: {:?}", python_script);
             // let dist_dir: PathBuf = resource_dir.join("dist");
 

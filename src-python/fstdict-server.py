@@ -79,7 +79,7 @@ async def download(path: str):
 # ==============================================
 # 全局单例（整个程序共用一个连接）
 Utils.iwin_ws_client = WsClient(
-    "ws://localhost:9999/ws/mxdict", MessageHandler.handle_iwin_message
+    "ws://localhost:9999/ws/fstdict", MessageHandler.handle_iwin_message
 )
 
 

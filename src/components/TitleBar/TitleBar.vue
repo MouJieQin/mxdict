@@ -1,6 +1,6 @@
 <template>
     <!-- 自定义 macOS 标题栏（仅 macOS 显示，包含 Pin 置顶按钮） -->
-    <div id="mxdict-titlebar" class="mxdict-titlebar">
+    <div id="fstdict-titlebar" class="fstdict-titlebar">
         <div v-show="showTitleBar" class="floating-window-titlebar">
             <div class="floating-window-search-container" @mousedown="preventDrag = true"
                 @mouseup="preventDrag = false">
@@ -459,14 +459,14 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
     if (props.env === '') {
         tauriAppWindow.value = getCurrentWindow();
-        document.getElementById('mxdict-titlebar')?.addEventListener('mousedown', handleTitlebarMouseDown)
+        document.getElementById('fstdict-titlebar')?.addEventListener('mousedown', handleTitlebarMouseDown)
     }
 })
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown)
     if (props.env === '') {
-        document.getElementById('mxdict-titlebar')?.removeEventListener('mousedown', handleTitlebarMouseDown)
+        document.getElementById('fstdict-titlebar')?.removeEventListener('mousedown', handleTitlebarMouseDown)
     }
 })
 
