@@ -1,7 +1,6 @@
 import os
 from typing import Dict, Optional
 from libs.log_config import logger
-from libs.mdict_query.mdict_query import IndexBuilder
 from libs.config import UtilsBase
 
 import fstd
