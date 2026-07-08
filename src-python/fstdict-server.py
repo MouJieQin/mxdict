@@ -59,7 +59,7 @@ async def download(path: str):
             data_path = "/".join([Utils.DICTIONARYS_PATH, dict_name, "data"])
             Utils.fstd_engine.extract(dict_name, file_key, data_path)
             if not os.path.isfile(file_path):
-                Utils.fstd_engine.extract(dict_name, '/' + file_key, data_path)
+                Utils.fstd_engine.extract(dict_name, "/" + file_key, data_path)
         except Exception as e:
             logger.error(f"Failed to parse download path: {e}", exc_info=False)
             raise HTTPException(status_code=400, detail="Is not a file or does not exist")
@@ -165,4 +165,6 @@ if __name__ == "__main__":
         host="127.0.0.1",
         port=5959,
         reload=False,
+        access_log=False,
+        # log_level="critical",
     )

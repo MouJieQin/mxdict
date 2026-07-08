@@ -2,13 +2,36 @@ import sys
 import io
 import os
 import logging
+import platformdirs
+from pathlib import Path
 from logging.handlers import TimedRotatingFileHandler
 from colorama import init, Fore, Style
 
 init(autoreset=True)
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# Detect PyInstaller frozen packaged binary
+IS_FROZEN = getattr(sys, "frozen", False)
+
+
+def get_log_path() -> Path:
+    app_name = "FstDict"
+    log_path = Path(platformdirs.user_log_dir(app_name))
+    log_path.mkdir(exist_ok=True, parents=True)
+    return log_path / "server.log"
+
+
+# Fix Windows --noconsole None stdout crash
+if IS_FROZEN:
+    # Mock dummy text stream to avoid isatty() / buffer errors for uvicorn
+    dummy_buffer = io.BytesIO()
+    sys.stdout = io.TextIOWrapper(dummy_buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(dummy_buffer, encoding="utf-8", errors="replace")
+else:
+    # Only rewrite stdout encoding in development environment
+    if sys.stdout is not None and hasattr(sys.stdout, "buffer"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    if sys.stderr is not None and hasattr(sys.stderr, "buffer"):
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 class CustomFormatter(logging.Formatter):
@@ -17,7 +40,7 @@ class CustomFormatter(logging.Formatter):
         logging.INFO: Fore.GREEN,
         logging.WARNING: Fore.YELLOW,
         logging.ERROR: Fore.RED,
-        logging.CRITICAL: Fore.LIGHTRED_EX
+        logging.CRITICAL: Fore.LIGHTRED_EX,
     }
     RESET = Style.RESET_ALL
 
@@ -37,30 +60,27 @@ def setup_logger():
     logger = logging.getLogger()
     logger.handlers.clear()
 
-    if not os.path.exists("logs"):
-        os.makedirs("logs")
-
     log_level_name = os.getenv("LOG_LEVEL", "INFO")
     log_level = getattr(logging, log_level_name, logging.INFO)
     logger.setLevel(log_level)
 
+    # File handler: Timed daily rotation, store in system Logs folder
     file_formatter = logging.Formatter(
         fmt="%(asctime)s [%(levelname)s] [thread %(thread)s] [%(filename)s:%(lineno)d] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     file_handler = TimedRotatingFileHandler(
-        filename="logs/run.log",
-        when="D",
-        interval=1,
-        backupCount=30,
-        encoding="utf-8"
+        filename=get_log_path(), when="D", interval=1, backupCount=30, encoding="utf-8"
     )
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
 
-    console_handler = logging.StreamHandler(stream=sys.stdout)
-    console_handler.setFormatter(CustomFormatter())
-    logger.addHandler(console_handler)
+    # Only attach console StreamHandler if NOT frozen
+    # Frozen Windows --noconsole uses dummy stream, skip colored console output
+    if not IS_FROZEN:
+        console_handler = logging.StreamHandler(stream=sys.stdout)
+        console_handler.setFormatter(CustomFormatter())
+        logger.addHandler(console_handler)
 
     return logger
 
