@@ -1,3 +1,4 @@
+import time
 import os
 from typing import Dict, Optional
 from libs.log_config import logger
@@ -93,33 +94,30 @@ class MdictSearcher:
         dict_names: Optional[list[str]] = None,
         limit=20,
     ):
-        """
-        🔥🔥🔥 所有搜索全部在 C++ 完成
-        0 数据拷贝、0 Python 遍历
-        """
-        # 1. 切换用户选择的词典（瞬间完成，不复制数据）
         use_dicts = dict_names or self._all_dict_names
-        # self._word_engine.set_active_dicts(use_dicts)
-
-        # 2. 直接调用 C++ 搜索
         if search_method == "prefix_search":
-            # return self._fstd_engine.predictive_search(keyword, use_dicts, limit)
-            return self._fstd_engine.prefix_distance_search(keyword, use_dicts, 3)
-            # result = []
-            # prefix = keyword
+            # calculate the time cost of predictive_search
+            start_time = time.time()
+            result = []
+            prefix = keyword
             # while prefix:
-            #     result = self._fstd_engine.predictive_search(prefix, use_dicts, limit)
+            #     result = self._fstd_engine.predictive_search(prefix, use_dicts)
             #     if result:
             #         return result
             #     prefix = prefix[:-1]
-            # return result
+            result = self._fstd_engine.predictive_search(prefix, use_dicts)
+            end_time = time.time()
+            logger.info(f"predictive_search time cost: {end_time - start_time}")
+            return result
 
         elif search_method == "contains_search":
             regex_result = self._fstd_engine.regex_search(keyword, use_dicts)
             return regex_result[0]
 
         elif search_method == "fuzzy_search":
-            return self._fstd_engine.edit_distance_search(keyword, use_dicts, 2)
+            return self._fstd_engine.prefix_distance_search(keyword, use_dicts, 3)
+
+            # return self._fstd_engine.edit_distance_search(keyword, use_dicts, 2)
 
         elif search_method == "fuzzy_contains_search":
             return self._fstd_engine.suggest(keyword, use_dicts)
