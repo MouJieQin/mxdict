@@ -95,6 +95,12 @@ body::-webkit-scrollbar-thumb {
     border: none;
 }
 
+.word-options {
+    height: 100vh;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
 .word-detail {
     height: 100vh;
     padding-top: 40px;

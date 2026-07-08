@@ -5,88 +5,97 @@
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
         :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" />
-    <div class="word-detail"
-        :class="{ 'anki-mode': envFromRoute === 'anki', 'not-anki-mode': envFromRoute !== 'anki' }">
-        <el-collapse class="sticky-collapse" expand-icon-position="left" v-model="activeNames">
-            <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true"
-                class="dict-iframe-container">
-                <template #icon="{ isActive }">
-                    <el-icon v-show="!isActive" class="el-collapse-item__arrow">
-                        <CaretRight />
-                    </el-icon>
-                    <el-icon v-show="isActive" class="el-collapse-item__arrow">
-                        <CaretBottom />
-                    </el-icon>
-                    <BiSolidBookBookmark size="35" />
-                </template>
-                <!-- <el-divider style="margin:0 10px;" /> -->
-                <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
-            </el-collapse-item>
-            <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-                <el-collapse-item :id="`dict-iframe-container-${dictName}`" class="dict-iframe-container"
-                    :title="dictName" :name="dictName" :isActive="true">
-                    <template #icon="{ isActive }">
-                        <el-icon v-show="!isActive" class="el-collapse-item__arrow">
-                            <CaretRight />
-                        </el-icon>
-                        <el-icon v-show="isActive" class="el-collapse-item__arrow">
-                            <CaretBottom />
-                        </el-icon>
-                        <el-image :src="getDictIcon(dictName)" class="collapse-custom-icon">
-                            <template #error>
-                                <BiSolidBookBookmark size="35" />
+    <el-splitter>
+        <el-splitter-panel size="30%">
+            <div class="word-options">
+                <WordOptions :webSocket="webSocket as SessionWebSocketService" :wordOptions="wordOptions" />
+            </div>
+        </el-splitter-panel>
+        <el-splitter-panel :min="200">
+            <div class="word-detail"
+                :class="{ 'anki-mode': envFromRoute === 'anki', 'not-anki-mode': envFromRoute !== 'anki' }">
+                <el-collapse class="sticky-collapse" expand-icon-position="left" v-model="activeNames">
+                    <el-collapse-item v-if="noteContent" title="我的笔记" name="我的笔记" :isActive="true"
+                        class="dict-iframe-container">
+                        <template #icon="{ isActive }">
+                            <el-icon v-show="!isActive" class="el-collapse-item__arrow">
+                                <CaretRight />
+                            </el-icon>
+                            <el-icon v-show="isActive" class="el-collapse-item__arrow">
+                                <CaretBottom />
+                            </el-icon>
+                            <BiSolidBookBookmark size="35" />
+                        </template>
+                        <!-- <el-divider style="margin:0 10px;" /> -->
+                        <div class="markdown-note-content" v-html="md.render(noteContent)"></div>
+                    </el-collapse-item>
+                    <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
+                        <el-collapse-item :id="`dict-iframe-container-${dictName}`" class="dict-iframe-container"
+                            :title="dictName" :name="dictName" :isActive="true">
+                            <template #icon="{ isActive }">
+                                <el-icon v-show="!isActive" class="el-collapse-item__arrow">
+                                    <CaretRight />
+                                </el-icon>
+                                <el-icon v-show="isActive" class="el-collapse-item__arrow">
+                                    <CaretBottom />
+                                </el-icon>
+                                <el-image :src="getDictIcon(dictName)" class="collapse-custom-icon">
+                                    <template #error>
+                                        <BiSolidBookBookmark size="35" />
+                                    </template>
+                                </el-image>
                             </template>
-                        </el-image>
-                    </template>
 
-                    <div v-for="html in result" :key="html">
-                        <el-divider style="margin:0 10px" />
-                        <DictIframe :dictionary-name="dictName" :html="html" :css-urls="dictsInfo[dictName].css"
-                            :js-urls="dictsInfo[dictName].js" :base-path="dictsInfo[dictName].data"
-                            :dictionary-root="dictsInfo[dictName].root" @entry-click="handleEntryClick"
-                            @keydown="handleIframeKeydown" />
+                            <div v-for="html in result" :key="html">
+                                <el-divider style="margin:0 10px" />
+                                <DictIframe :dictionary-name="dictName" :html="html" :css-urls="dictsInfo[dictName].css"
+                                    :js-urls="dictsInfo[dictName].js" :base-path="dictsInfo[dictName].data"
+                                    :dictionary-root="dictsInfo[dictName].root" @entry-click="handleEntryClick"
+                                    @keydown="handleIframeKeydown" />
+                            </div>
+                        </el-collapse-item>
                     </div>
-                </el-collapse-item>
-            </div>
-        </el-collapse>
-        <div v-show="!keyword && !hasResultLastSearch">
-            <p class="dict-homepage-type-p">Type a word to look up in…</p>
-            <br />
-            <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
-                <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
-                    dictSetting.name }}</p>
-            </div>
-        </div>
-        <div v-show="keyword && lastSearchKeyword && !hasResultLastSearch">
-            <p class="dict-homepage-type-p">No results found for 「{{ lastSearchKeyword }}」 in…</p>
-            <br />
-            <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
-                <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
-                    dictSetting.name }}</p>
-            </div>
-        </div>
-    </div>
-    <el-dropdown placement="bottom-end" @command="handleDropdownCommand">
-        <el-button text class="locate-dict-button" circle bg>
-            <el-icon class="el-icon--right">
-                <MoreFilled />
-            </el-icon>
-        </el-button>
-        <template #dropdown>
-            <el-dropdown-menu>
-                <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
-                    <el-dropdown-item :command="dictName">
-                        <el-image :src="getDictIcon(dictName)" class="dropdown-custom-icon">
-                            <template #error>
-                                <BiSolidBookBookmark :size="25" />
-                            </template>
-                        </el-image>
-                        {{ dictName }}
-                    </el-dropdown-item>
+                </el-collapse>
+                <div v-show="!keyword && !hasResultLastSearch">
+                    <p class="dict-homepage-type-p">Type a word to look up in…</p>
+                    <br />
+                    <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
+                        <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
+                            dictSetting.name }}</p>
+                    </div>
                 </div>
-            </el-dropdown-menu>
-        </template>
-    </el-dropdown>
+                <div v-show="keyword && lastSearchKeyword && !hasResultLastSearch">
+                    <p class="dict-homepage-type-p">No results found for 「{{ lastSearchKeyword }}」 in…</p>
+                    <br />
+                    <div v-for="dictSetting in sessionConfig.dictsSettingInfo" :key="dictSetting.id">
+                        <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
+                            dictSetting.name }}</p>
+                    </div>
+                </div>
+            </div>
+            <el-dropdown placement="bottom-end" @command="handleDropdownCommand">
+                <el-button text class="locate-dict-button" circle bg>
+                    <el-icon class="el-icon--right">
+                        <MoreFilled />
+                    </el-icon>
+                </el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <div v-for="(result, dictName) in lookupKeywordResult" :key="dictName">
+                            <el-dropdown-item :command="dictName">
+                                <el-image :src="getDictIcon(dictName)" class="dropdown-custom-icon">
+                                    <template #error>
+                                        <BiSolidBookBookmark :size="25" />
+                                    </template>
+                                </el-image>
+                                {{ dictName }}
+                            </el-dropdown-item>
+                        </div>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
+        </el-splitter-panel>
+    </el-splitter>
 </template>
 
 <script setup lang="ts">
@@ -97,6 +106,7 @@ import { CaretRight, CaretBottom, MoreFilled } from '@element-plus/icons-vue'
 
 import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-websocket-client'
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
+import WordOptions from '@/components/WordOptions.vue'
 import DictIframe from '@/components/DictIframe.vue';
 import type { DictsInfo, SessionConfig, WordInfoWithFavoriteAt, FolderWords, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useSystemConfigStore } from '@/stores/stores'

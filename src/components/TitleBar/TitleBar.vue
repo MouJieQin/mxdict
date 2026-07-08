@@ -315,16 +315,20 @@ interface LinkItem {
 const links = ref<LinkItem[]>([])
 
 const loadAll = (): LinkItem[] => {
-    if (!keyword.value.trim()) {
-        return props.searchHistory.map(item => ({
-            value: String(item.word),
-            link: String(item.word),
-        }))
-    }
-    return props.wordOptions.map(item => ({
+    // if (!keyword.value.trim()) {
+    //     return props.searchHistory.map(item => ({
+    //         value: String(item.word),
+    //         link: String(item.word),
+    //     }))
+    // }
+    return [].map(item => ({
         value: String(item),
         link: String(item),
     }))
+    // return props.wordOptions.map(item => ({
+    //     value: String(item),
+    //     link: String(item),
+    // }))
 }
 
 let isOptionsLoading = ref(false)
