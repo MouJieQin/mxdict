@@ -14,8 +14,9 @@ IS_FROZEN = getattr(sys, "frozen", False)
 
 
 def get_log_path() -> Path:
-    app_name = "FstDict"
-    log_path = Path(platformdirs.user_log_dir(app_name))
+    APP_NAME = "FstDict"
+    APP_AUTHOR = "qinmoujie"
+    log_path = Path(platformdirs.user_log_dir(APP_NAME, APP_AUTHOR))
     log_path.mkdir(exist_ok=True, parents=True)
     return log_path / "server.log"
 

@@ -11,14 +11,14 @@ import fstd
 
 class UtilsBase:
     # 路径配置
-    APP_NAME = "fstdict"
-    APP_IDENTIFIER = "com.qinmoujie.fstdict"
+    APP_NAME = "FstDict"
+    APP_AUTHOR = "qinmoujie"
     SERVER_SRC_ABS_PATH = os.path.abspath(os.getcwd())
-    APP_SUPPORT_PATH = platformdirs.user_data_dir(APP_IDENTIFIER)
-    APP_LOG_PATH = platformdirs.user_log_dir(APP_NAME)
-    APP_CACHE_PATH = platformdirs.user_cache_dir(APP_IDENTIFIER)
+    APP_SUPPORT_PATH = platformdirs.user_data_dir(APP_NAME, APP_AUTHOR)
+    APP_LOG_PATH = platformdirs.user_log_dir(APP_NAME, APP_AUTHOR)
+    APP_CACHE_PATH = platformdirs.user_cache_dir(APP_NAME, APP_AUTHOR)
     FSTDICT_SUPPORT_PATH = f"{APP_SUPPORT_PATH}"
-    FSTDICT_STORAGE_PATH = f"{FSTDICT_SUPPORT_PATH}/FstDict-Storage"
+    FSTDICT_STORAGE_PATH = f"{FSTDICT_SUPPORT_PATH}/Storage"
     USER_CONFIG_DIR = FSTDICT_STORAGE_PATH + "/config"
     CONFIG_FILE = USER_CONFIG_DIR + "/config.json"
     ANKI_CONFIG_FILE = USER_CONFIG_DIR + "/anki_config.json"
