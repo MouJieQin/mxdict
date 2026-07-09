@@ -97,6 +97,8 @@ class FstDictSearcher:
 
         elif search_method == "regex_search":
             regex_result = self._fstd_engine.regex_search(keyword, use_dicts)
+            if regex_result[1]:
+                return [f"FSTD_ERROR{regex_result[1]}"]
             return regex_result[0]
 
         elif search_method == "prefix_distance_search":

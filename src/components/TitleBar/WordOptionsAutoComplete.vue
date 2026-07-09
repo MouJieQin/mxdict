@@ -21,6 +21,10 @@
                 <div v-if="links.length === 0" class="empty-suggestions">
                     No suggestions found
                 </div>
+                <div v-else-if="(links.length === 1 && links[0].value.startsWith('FSTD_ERROR'))"
+                    class="error-suggestions">
+                    {{ links[0].value.replace('FSTD_ERROR', '') || 'No error message' }}
+                </div>
                 <UseVirtualList v-else ref="virtualListRef" :list="links" :options="{ itemHeight: 35, overscan: 10 }"
                     height="250px">
                     <template #default="{ data, index }">
@@ -101,26 +105,26 @@ onBeforeUnmount(() => {
 
 // Automatically grabs focus if user begins raw typing while app layer is focused
 const handleGlobalKeydown = (e: KeyboardEvent) => {
-  const activeEl = document.activeElement
-  if (
-    activeEl && 
-    (activeEl.tagName === 'INPUT' || 
-     activeEl.tagName === 'TEXTAREA' || 
-     (activeEl as HTMLElement).isContentEditable)
-  ) {
-    return
-  }
+    const activeEl = document.activeElement
+    if (
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            (activeEl as HTMLElement).isContentEditable)
+    ) {
+        return
+    }
 
-  // Bypass application shortcut system handlers
-  if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Escape' || e.key === 'Tab') {
-    return
-  }
+    // Bypass application shortcut system handlers
+    if (e.metaKey || e.ctrlKey || e.altKey || e.key === 'Escape' || e.key === 'Tab') {
+        return
+    }
 
-  // If a valid plain string character is struck, move context focus to input
-  if (e.key.length === 1 && inputRef.value) {
-    keyword.value = ''
-    inputRef.value.focus()
-  }
+    // If a valid plain string character is struck, move context focus to input
+    if (e.key.length === 1 && inputRef.value) {
+        keyword.value = ''
+        inputRef.value.focus()
+    }
 }
 
 const scrollToActiveItem = () => {
@@ -303,6 +307,13 @@ const handleSearchMethodChange = (newMethod: string) => {
     padding: 16px;
     text-align: center;
     color: var(--el-text-color-secondary, #909399);
+    font-size: 13px;
+}
+
+.error-suggestions {
+    padding: 16px;
+    text-align: center;
+    color: var(--el-text-color-danger, #f56c6c);
     font-size: 13px;
 }
 </style>
