@@ -6,12 +6,12 @@
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
         :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" />
     <el-splitter>
-        <el-splitter-panel size="30%">
+        <el-splitter-panel :size="wordOptionsSize" @update:size="handlePanelResize">
             <div class="word-options">
                 <WordOptions :webSocket="webSocket as SessionWebSocketService" :wordOptions="wordOptions" />
             </div>
         </el-splitter-panel>
-        <el-splitter-panel :min="200">
+        <el-splitter-panel :min="400">
             <div class="word-detail"
                 :class="{ 'anki-mode': envFromRoute === 'anki', 'not-anki-mode': envFromRoute !== 'anki' }">
                 <el-collapse class="sticky-collapse" expand-icon-position="left" v-model="activeNames">
@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, onBeforeUnmount, computed, watch } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
 import { CaretRight, CaretBottom, MoreFilled } from '@element-plus/icons-vue'
@@ -140,6 +140,8 @@ const sessionConfig = ref<SessionConfig>({
 })
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
+const wordOptionsSize = ref<number | string>(0)
+const splitterRef = ref<any>(null)
 
 const activeNames = ref<string[]>([])
 const isWordFavorited = ref<boolean>(false)
@@ -157,6 +159,32 @@ const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned 
 watch(() => sessionConfig.value?.pin?.is_pinned, (newVal) => {
     isFloatingWindowPinned.value = newVal
 })
+
+// 1. Sync manual user dragging changes back to the reactive ref state
+const handlePanelResize = (size: number) => {
+    console.log("size:", size)
+    wordOptionsSize.value = size
+}
+
+// 2. Programmatically resize panels safely
+const resize_wordoptions = async () => {
+    console.log("Current tracking size before shift:", wordOptionsSize.value)
+
+    if (Number(wordOptionsSize.value) <= 5) {
+        // Update the layout tracking value
+        wordOptionsSize.value = 300
+
+        // Forcing component element updates to bypass internal flex caching layers
+        await nextTick()
+        if (splitterRef.value) {
+            // Accessing internal element instance layouts directly to force rendering updates
+            const panelEl = splitterRef.value.$el?.querySelector('.el-splitter-panel')
+            if (panelEl) {
+                panelEl.style.flexBasis = '300px'
+            }
+        }
+    }
+}
 
 const setupDicsSettingsInfo = () => {
     if (!sessionConfig.value?.dictsSettingInfo) {
@@ -244,6 +272,7 @@ const handleWebSocketMessage = (message: any) => {
             break
         case 'keyword_options_search':
             wordOptions.value = message.data.options
+            resize_wordoptions()
             console.log('keyword_options_search:', wordOptions.value)
             break
         case 'lookup_keyword_request':
