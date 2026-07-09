@@ -5,7 +5,7 @@
             <div class="floating-window-search-container" @mousedown="preventDrag = true"
                 @mouseup="preventDrag = false">
                 <WordOptionsAutoComplete class="floating-window-search" :webSocket="props.webSocket"
-                    :redirectWord="props.redirectWord" :redirectHisotryWord="redirectHisotryWord"
+                    :redirectWord="props.redirectWord" :redirectHistoryWord="redirectHistoryWord"
                     :wordOptions="props.wordOptions" :sessionConfig="props.sessionConfig" :searchHistory="searchHistory"
                     @change:keyword="keywordChange" />
             </div>
@@ -177,7 +177,7 @@ const emits = defineEmits<{
 
 const tauriAppWindow = ref<any | null>(null)
 const preventDrag = ref(false)
-const redirectHisotryWord = ref('')
+const redirectHistoryWord = ref('')
 const keywordEditingNote = ref('')
 const favoriteWordsDialogVisible = ref(false)
 const dictSSDialogVisible = ref(false)
@@ -203,7 +203,7 @@ const submitNote = () => {
     noteDialogVisible.value = false
 }
 
-const keywordChange = (newVal) =>{
+const keywordChange = (newVal) => {
     emits('change:keyword', newVal)
 }
 
@@ -264,8 +264,8 @@ watch(() => props.leftHistory, (newVal) => {
 watch(() => props.searchHistory, () => {
     if (isHistoryTriggered.value) {
         isHistoryTriggered.value = false
-        redirectHisotryWord.value = props.searchHistory[historyIndex.value].word
-        props.webSocket?.sendLookupKeyword(redirectHisotryWord.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []), false)
+        redirectHistoryWord.value = props.searchHistory[historyIndex.value].word
+        props.webSocket?.sendLookupKeyword(redirectHistoryWord.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []), false)
     }
 })
 
