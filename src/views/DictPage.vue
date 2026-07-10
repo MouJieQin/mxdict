@@ -234,6 +234,7 @@ onMounted(() => {
     } else {
         document.body.classList.remove('anki-mode')
     }
+    console.log("Current env:", envFromRoute.value)
 
     setupWebSocket()
     // window.addEventListener('keydown', handleKeydown)

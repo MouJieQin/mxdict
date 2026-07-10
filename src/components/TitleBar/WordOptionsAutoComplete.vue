@@ -183,7 +183,8 @@ const syncSuggestions = () => {
             link: String(item),
         }))
     }
-    activeIndex.value = links.value.length > 0 ? 0 : -1
+    // activeIndex.value = links.value.length > 0 ? 0 : -1
+    activeIndex.value = -1
     nextTick(() => {
         if (virtualListRef.value?.$el) virtualListRef.value.$el.scrollTop = 0
     })
