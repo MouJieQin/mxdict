@@ -413,24 +413,56 @@ const handleToggleFavor = (data: any) => {
 
 const handleDropdownCommand = (dictName: string) => {
     const element = document.getElementById(`dict-iframe-container-${dictName}`)
-    if (element) {
-        // 核心：给元素设置顶部滚动边距 = 标题高度
-        element.scrollIntoView({ behavior: 'instant', block: 'start'})
-        // element.scrollBy(0, 0)
-        if (!(dictName in activeNames.value)) {
-            activeNames.value.push(dictName)
-        }
+    if (!element) return
+
+    // 1. 先展开词典
+    if (!(dictName in activeNames.value)) {
+        activeNames.value.push(dictName)
     }
+
+    // 2. 等 Vue DOM 更新 + 浏览器重排完成后再滚动
+    nextTick(() => {
+        // 获取滚动容器（你的 el-main，替换成你实际的 class/id）
+        const scrollContainer = document.querySelector('.word-detail') as HTMLElement
+        if (!scrollContainer) return
+
+        // 计算元素相对滚动容器的位置
+        const containerRect = scrollContainer.getBoundingClientRect()
+        const elementRect = element.getBoundingClientRect()
+
+        const targetScrollTop =
+            scrollContainer.scrollTop +
+            (elementRect.top - containerRect.top)
+
+        // 执行滚动
+        scrollContainer.scrollTo({
+            top: targetScrollTop,
+            behavior: 'instant'
+        })
+    })
 }
+
+// const handleDropdownCommand = (dictName: string) => {
+
+// 核心：给元素设置顶部滚动边距 = 标题高度
+// element.style.scrollMarginTop = '68px';
+//     element.scrollIntoView({ behavior: 'instant', block: 'start' })
+//     // element.scrollBy(0, 0)
+//     if (!(dictName in activeNames.value)) {
+//         activeNames.value.push(dictName)
+//     }
+// }
+// }
 
 </script>
 
 <style scoped>
 :deep(.no-padding-main) {
-  padding: 0; /* 直接清除全部内边距 */
-  /* 只清除左右保留上下间距就写 padding: 20px 0; */
-  flex: 1;
-  overflow-y: auto;
+    padding: 0;
+    /* 直接清除全部内边距 */
+    /* 只清除左右保留上下间距就写 padding: 20px 0; */
+    flex: 1;
+    overflow-y: auto;
 }
 
 /* 自定义图标样式 */
