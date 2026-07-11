@@ -62,6 +62,10 @@ class UtilsBase:
         return UtilsBase.DICTIONARYS_PATH + "/" + dict_name
 
     @staticmethod
+    def getDictPath(dict_name: str) -> str:
+        return UtilsBase.getDictDir(dict_name) + "/" + dict_name + ".fstdx"
+
+    @staticmethod
     def removeFileIfExists(path: str):
         if os.path.exists(path):
             os.remove(path)

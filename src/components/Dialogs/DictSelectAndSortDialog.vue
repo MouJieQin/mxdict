@@ -1,5 +1,6 @@
 <template>
   <div v-if="isTauriEnv" class="drag-area" :class="{ active: dragOver }">
+    <BsUpload size="35" />
     拖拽(.fstdx .fstdd)或(.mdx .mdd)文件到此
   </div>
   <div ref="listRef" class="dict-select-sort-dialog">
@@ -15,7 +16,18 @@
             <span class="name">{{ item.name }}</span>
           </div>
           <div class="right-group">
-            <el-switch v-model="item.is_enabled" />
+            <el-switch v-model="item.is_enabled" style="margin-right: 30px;" />
+            <el-dropdown placement="bottom-end" @command="handleDropdownCommand">
+              <el-icon style="align-items: center;">
+                <MoreFilled />
+              </el-icon>
+              <template #dropdown>
+                <el-dropdown-menu>
+                    <el-dropdown-item :command="{cmd:'showInFolder',name:item.name}">在文件夹中显示</el-dropdown-item>
+                    <el-dropdown-item :command="{cmd:'delete',name:item.name}">删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
       </el-card>
@@ -26,13 +38,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onBeforeUnmount, watch, nextTick } from 'vue'
 import Sortable from 'sortablejs'
-
+import { MoreFilled } from '@element-plus/icons-vue'
 import type { DictSettingInfo, DictsSettingInfo, SessionConfig } from '@/common/type-interface'
 import type { PropType } from 'vue'
 import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { ElNotification } from 'element-plus'
+import { BsUpload } from 'vue-icons-plus/bs'
+
 
 const isTauriEnv = computed(() => {
   return props.env === ''
@@ -97,6 +111,14 @@ const initSortable = () => {
       console.log('New list order:', list.value?.map(i => i.name).join(', '))
     }
   })
+}
+
+const handleDropdownCommand = (command: { cmd: string, name: string }) => {
+  if (command.cmd === 'showInFolder') {
+    props.webSocket?.sendShowDictInFolder(command.name)
+  } else if (command.cmd === 'delete') {
+    props.webSocket?.sendDeleteDict(command.name)
+  }
 }
 
 watch(() => props.addDictMsgs, (newVal) => {
@@ -197,10 +219,14 @@ const handleFileProcessing = async (paths: string[]) => {
 }
 
 .drag-area {
-  width: 420px;
-  height: 220px;
+  /* width: 420px; */
+  border-radius: 12px;
+  height: 100px;
+  margin: 0 auto;
+  max-width: 960px;
   border: 2px dashed #ccc;
   display: grid;
+  margin-bottom: 12px;
   place-items: center;
 }
 

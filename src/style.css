@@ -252,6 +252,8 @@ body::-webkit-scrollbar-thumb {
 
 /* 开关固定右侧 */
 .right-group {
+    display: flex;
+    align-items: center;
     /* 关键：开关永远不缩小、不换行 */
     flex-shrink: 0;
 }

@@ -174,6 +174,26 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendShowDictInFolder(dictName: string) {
+        this._send(
+            'show_dict_in_folder',
+            {
+                dict_name: dictName,
+            }
+        )
+    }
+
+    sendDeleteDict(dictName: string) {
+        this._send(
+            'delete_dictionary',
+            {
+                dict_name: dictName,
+            }
+        )
+    }
+
+
+
     sendKeywordOptionsSearch(keyword: string, searchMethod: string = 'prefix_search', dictSettings: string[] | null = null) {
         this._send(
             'keyword_options_search',

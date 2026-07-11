@@ -113,6 +113,8 @@ class MessageHandler:
                 "favorite_words_request": MessageHandler._handle_favorite_words_request,
                 "search_history_request": MessageHandler._handle_search_history_request,
                 "add_dictionary": MessageHandler._handle_add_dictionary,
+                "show_dict_in_folder": MessageHandler._handle_show_dict_in_folder,
+                "delete_dictionary": MessageHandler._handle_delete_dictionary,
             }
 
             if message_type in handlers:
@@ -397,3 +399,12 @@ class MessageHandler:
             session_id, connection_id, json.dumps(msg)
         )
         await SessionManager.send_dict_info_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_show_dict_in_folder(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
+        dict_name = message["data"]["dict_name"]
+        Utils.reveal_dict_in_file_manager(dict_name)
+
+    @staticmethod
+    async def _handle_delete_dictionary(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
+        pass
