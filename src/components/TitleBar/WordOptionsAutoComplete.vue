@@ -1,7 +1,16 @@
 <template>
     <div class="floating-window-search-container" @mousedown="preventDrag = true" @mouseup="preventDrag = false">
+        <el-input v-if="!showPopoverSuggestions" ref="inputRef" v-model="keyword" placeholder="Search" clearable
+            style="font-size: 1rem;" @input="handleInputChange" @focus="handleFocus" @blur="handleBlur"
+            @keydown.down.prevent="handleKeyDown" @keydown.up.prevent="handleKeyUp"
+            @keydown.enter.prevent="handleKeyEnter" @keydown.escape="isDropdownVisible = false">
+            <template #prefix>
+                <SearchMethodSelect :searchMethod="props.sessionConfig.default_search_method?.method || 'prefix_search'"
+                    @update-search-method="handleSearchMethodChange" />
+            </template>
+        </el-input>
         <!-- 1. Restored clean popover bounds and synchronized width binding perfectly -->
-        <el-popover ref="popoverRef" trigger="contextmenu" placement="bottom-start" :visible="isDropdownVisible"
+        <el-popover v-else ref="popoverRef" trigger="contextmenu" placement="bottom-start" :visible="isDropdownVisible"
             :width="popoverWidth" :show-arrow="false" popper-class="virtual-autocomplete-popper" :teleported="true">
             <template #reference>
                 <el-input ref="inputRef" v-model="keyword" placeholder="Search" clearable style="font-size: 1rem;"
@@ -25,8 +34,8 @@
                     class="error-suggestions">
                     {{ links[0].value.replace('FSTD_ERROR', '') || 'No error message' }}
                 </div>
-                <UseVirtualList v-else ref="virtualListRef" :list="links" :options="{ itemHeight: 35, overscan: 10 }"
-                    height="250px">
+                <UseVirtualList v-show="(links.length >= 1 && (!links[0].value.startsWith('FSTD_ERROR')))"
+                    ref="virtualListRef" :list="links" :options="{ itemHeight: 35, overscan: 10 }" height="250px">
                     <template #default="{ data, index }">
                         <div class="suggestion-item" :class="{ 'is-active': index === activeIndex }"
                             @mousedown.prevent="handleSelect(data)" @mouseenter="activeIndex = index">
@@ -40,7 +49,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { UseVirtualList } from '@vueuse/components'
 import { ElInput } from 'element-plus'
 import { getDictSettingsForLookup } from '@/common/utility'
@@ -53,6 +62,7 @@ interface LinkItem {
 
 const props = defineProps<{
     webSocket: any
+    env: string
     sessionConfig: any
     redirectWord: string
     redirectHistoryWord: string
@@ -77,6 +87,10 @@ const virtualListRef = ref<any>(null)
 let searchDebounceTimer: any = null
 const preventDrag = ref(false)
 let resizeObserver: ResizeObserver | null = null
+
+const showPopoverSuggestions = computed(() => {
+    return props.env === 'anki'
+})
 
 // Setup layout trackers and global input listener bounds on initialization
 onMounted(() => {

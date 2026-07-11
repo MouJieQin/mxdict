@@ -49,9 +49,17 @@ class UtilsBase:
             os.makedirs(path)
 
     @staticmethod
+    def copyFile(src: str, dst: str):
+        shutil.copy2(src, dst)
+
+    @staticmethod
     def removeDirIfExists(path: str):
         if os.path.exists(path):
             shutil.rmtree(path)
+
+    @staticmethod
+    def getDictDir(dict_name: str) -> str:
+        return UtilsBase.DICTIONARYS_PATH + "/" + dict_name
 
     @staticmethod
     def removeFileIfExists(path: str):
@@ -80,7 +88,38 @@ class UtilsBase:
             UtilsBase.CONFIG = config
             UtilsBase.Config.syncConfig()
 
-            # UtilsBase.AI_CONFIG = UtilsBase.CONFIG["ai_assistant"]
+        @staticmethod
+        def checkDickInfo(file: Path):
+            fstdx_path = file.absolute() / f"{file.name}.fstdx"
+            if fstdx_path.is_file():
+                UtilsBase.DICT_INFO[file.name] = {}
+                UtilsBase.DICT_INFO[file.name]["name"] = file.name
+                UtilsBase.DICT_INFO[file.name]["root"] = str(file.absolute())
+                UtilsBase.DICT_INFO[file.name]["path"] = str(fstdx_path.absolute())
+                UtilsBase.DICT_INFO[file.name]["css"] = (
+                    UtilsBase.find_files_by_postfix(str(file.absolute()), file.name, ".css")
+                )
+                UtilsBase.DICT_INFO[file.name]["js"] = (
+                    UtilsBase.find_files_by_postfix(str(file.absolute()), file.name, ".js")
+                )
+                data_path = file.absolute() / "data"
+                if data_path.is_dir():
+                    UtilsBase.DICT_INFO[file.name]["data"] = str(
+                        data_path.absolute()
+                    )
+                else:
+                    UtilsBase.DICT_INFO[file.name]["data"] = ""
+                UtilsBase.DICT_INFO[file.name]["cover"] = ""
+                # walk through the current folder to find cover image with suffix .jpg/.jpeg/.png/.gif
+                for img_file in file.iterdir():
+                    if img_file.is_file() and img_file.suffix.lower() in [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".gif",
+                    ]:
+                        UtilsBase.DICT_INFO[file.name]["cover"] = "/".join([file.name, img_file.name])
+                        break
 
 
 def init_config():
@@ -99,49 +138,14 @@ def init_config():
     else:
         UtilsBase.CONFIG = {}
 
-    def checkDickInfo():
-        dict_path = Path(UtilsBase.DICTIONARYS_PATH)
-        # 获取所有文件
-        for file in dict_path.iterdir():
-            if file.is_dir():
-                fstdx_path = file.absolute() / f"{file.name}.fstdx"
-                fstdict_info_json = file.absolute() / "fstdict_info.json"
-                if fstdx_path.is_file():
-                    if fstdict_info_json.is_file():
-                        UtilsBase.DICT_INFO[file.name] = {}
-                        UtilsBase.DICT_INFO[file.name]["name"] = file.name
-                        UtilsBase.DICT_INFO[file.name]["root"] = str(file.absolute())
-                        UtilsBase.DICT_INFO[file.name]["path"] = str(fstdx_path.absolute())
-                        UtilsBase.DICT_INFO[file.name]["css"] = (
-                            UtilsBase.find_files_by_postfix(str(file.absolute()), file.name, ".css")
-                        )
-                        UtilsBase.DICT_INFO[file.name]["js"] = (
-                            UtilsBase.find_files_by_postfix(str(file.absolute()), file.name, ".js")
-                        )
-                        data_path = file.absolute() / "data"
-                        if data_path.is_dir():
-                            UtilsBase.DICT_INFO[file.name]["data"] = str(
-                                data_path.absolute()
-                            )
-                        else:
-                            UtilsBase.DICT_INFO[file.name]["data"] = ""
-                        UtilsBase.DICT_INFO[file.name]["cover"] = ""
-                        # walk through the current folder to find cover image with suffix .jpg/.jpeg/.png/.gif
-                        for img_file in file.iterdir():
-                            if img_file.is_file() and img_file.suffix.lower() in [
-                                ".jpg",
-                                ".jpeg",
-                                ".png",
-                                ".gif",
-                            ]:
-                                UtilsBase.DICT_INFO[file.name]["cover"] = "/".join([file.name, img_file.name])
-                                break
-
-    checkDickInfo()
+    dict_path = Path(UtilsBase.DICTIONARYS_PATH)
+    for file in dict_path.iterdir():
+        if file.is_dir():
+            UtilsBase.Config.checkDickInfo(file)
 
     diff_flag = False
-
     # 检查配置项是否缺失，并使用默认值填充
+
     def setDefaultValIfNone(config: dict, defaultConfig: dict):
         nonlocal diff_flag
         for key, default_val in defaultConfig.items():

@@ -1,4 +1,7 @@
 <template>
+  <div v-if="isTauriEnv" class="drag-area" :class="{ active: dragOver }">
+    拖拽(.fstdx .fstdd)或(.mdx .mdd)文件到此
+  </div>
   <div ref="listRef" class="dict-select-sort-dialog">
     <div class="dict-settings-drag-cards" v-for="item in list" :key="item.id">
       <el-card class="dict-settings-drag-card" shadow="always" :class="{ 'is-disabled': !item.is_enabled }">
@@ -21,18 +24,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount, watch, nextTick } from 'vue'
 import Sortable from 'sortablejs'
 
 import type { DictSettingInfo, DictsSettingInfo, SessionConfig } from '@/common/type-interface'
 import type { PropType } from 'vue'
 import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
+import { getCurrentWebview } from '@tauri-apps/api/webview'
+import { ElNotification } from 'element-plus'
+
+const isTauriEnv = computed(() => {
+  return props.env === ''
+})
+
+const dragOver = ref(false)
+let unlistenDragDrop: (() => void) | null = null
 
 const props = defineProps({
   dictSSDialogVisible: {
     type: Boolean,
     required: true // 修复拼写错误：require → required
+  },
+  env: {
+    type: String,
+    default: 'web'
   },
   webSocket: {
     type: [SessionWebSocketService, null],
@@ -41,7 +57,11 @@ const props = defineProps({
   sessionConfig: {
     type: Object as PropType<SessionConfig>,
     required: true
-  }
+  },
+  addDictMsgs: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const listRef = ref<HTMLElement | null>(null)
@@ -79,6 +99,20 @@ const initSortable = () => {
   })
 }
 
+watch(() => props.addDictMsgs, (newVal) => {
+  if (newVal.length > 0) {
+    let msg = ''
+    for (let item of newVal) {
+      msg += item.msg + '\n'
+    }
+    ElNotification({
+      title: 'Prompt',
+      message: msg,
+      duration: 0,
+    })
+  }
+})
+
 // 弹窗打开时初始化拖拽
 watch(() => props.dictSSDialogVisible, async (newVal) => {
   if (newVal) {
@@ -98,11 +132,61 @@ watch(() => props.dictSSDialogVisible, async (newVal) => {
 }, { deep: true })
 
 // 页面挂载（兜底初始化）
-onMounted(() => {
+onMounted(async () => {
   if (props.dictSSDialogVisible) {
     nextTick(() => initSortable())
   }
+  // Get a handle on the current application window context
+  const webview = getCurrentWebview()
+
+  // Subscribe directly to the OS-level system file-dropping stream
+  unlistenDragDrop = await webview.onDragDropEvent((event) => {
+    switch (event.payload.type) {
+      case 'enter':
+      case 'over':
+        // Triggers when files break the visual application viewport barrier
+        dragOver.value = true
+        break
+
+      case 'drop':
+        // Triggers once the user releases the files onto the app window boundary
+        dragOver.value = false
+
+        // event.payload.paths contains the complete array of true absolute file string paths
+        const absolutePaths = event.payload.paths
+        console.log('Absolute system paths extracted:', absolutePaths)
+
+        // Process your collected absolute paths safely
+        handleFileProcessing(absolutePaths)
+        break
+
+      case 'cancel':
+        // Triggers if the user drags out of the app window without releasing the cursor
+        dragOver.value = false
+        break
+
+      case 'leave':
+      default:
+        // Triggers if a user exits the view boundary without letting go of the cursor
+        dragOver.value = false
+        break
+    }
+  })
 })
+
+// Always clean up window level global background listeners to prevent memory leaks
+onBeforeUnmount(() => {
+  if (unlistenDragDrop) {
+    unlistenDragDrop()
+  }
+})
+
+const handleFileProcessing = async (paths: string[]) => {
+  for (const filePath of paths) {
+    props.webSocket?.sendAddDictionary(filePath)
+  }
+}
+
 </script>
 
 <style scoped>
@@ -110,5 +194,18 @@ onMounted(() => {
 :deep(.sortable-ghost) {
   opacity: 0.5;
   background: #f5f5f5;
+}
+
+.drag-area {
+  width: 420px;
+  height: 220px;
+  border: 2px dashed #ccc;
+  display: grid;
+  place-items: center;
+}
+
+.active {
+  border-color: #2584ff;
+  background: #e8f3ff;
 }
 </style>

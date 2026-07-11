@@ -165,6 +165,15 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendAddDictionary(dictPath: string) {
+        this._send(
+            'add_dictionary',
+            {
+                dict_path: dictPath, // 使用传入的字典设置
+            }
+        )
+    }
+
     sendKeywordOptionsSearch(keyword: string, searchMethod: string = 'prefix_search', dictSettings: string[] | null = null) {
         this._send(
             'keyword_options_search',

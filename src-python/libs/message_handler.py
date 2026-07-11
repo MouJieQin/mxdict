@@ -112,6 +112,7 @@ class MessageHandler:
                 "lookup_keyword_request": MessageHandler._handle_lookup_keyword_request,
                 "favorite_words_request": MessageHandler._handle_favorite_words_request,
                 "search_history_request": MessageHandler._handle_search_history_request,
+                "add_dictionary": MessageHandler._handle_add_dictionary,
             }
 
             if message_type in handlers:
@@ -381,3 +382,18 @@ class MessageHandler:
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         await SessionManager.send_search_history_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_add_dictionary(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
+        dict_path = message["data"]["dict_path"]
+        msgs = fstdict_searcher.add_dictionary(dict_path)
+        msg = {
+            "type": "add_dictionary",
+            "data": {
+                "msgs": msgs
+            }
+        }
+        await SessionManager.send_msg_to_session_by_id(
+            session_id, connection_id, json.dumps(msg)
+        )
+        await SessionManager.send_dict_info_to_session(session_id, connection_id)

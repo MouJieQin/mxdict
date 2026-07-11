@@ -4,7 +4,7 @@
         <div v-show="showTitleBar" class="floating-window-titlebar">
             <div class="floating-window-search-container" @mousedown="preventDrag = true"
                 @mouseup="preventDrag = false">
-                <WordOptionsAutoComplete class="floating-window-search" :webSocket="props.webSocket"
+                <WordOptionsAutoComplete class="floating-window-search" :webSocket="props.webSocket" :env="props.env"
                     :redirectWord="props.redirectWord" :redirectHistoryWord="redirectHistoryWord"
                     :wordOptions="props.wordOptions" :sessionConfig="props.sessionConfig" :searchHistory="searchHistory"
                     @change:keyword="keywordChange" />
@@ -70,8 +70,8 @@
         </Settings>
     </el-dialog>
     <el-dialog v-model="dictSSDialogVisible" fullscreen>
-        <DictSelectAndSortDialog :webSocket="props.webSocket" :dictSSDialogVisible="dictSSDialogVisible"
-            :sessionConfig="props.sessionConfig"></DictSelectAndSortDialog>
+        <DictSelectAndSortDialog :webSocket="props.webSocket" :env="props.env" :dictSSDialogVisible="dictSSDialogVisible"
+            :sessionConfig="props.sessionConfig" :addDictMsgs="props.addDictMsgs"></DictSelectAndSortDialog>
     </el-dialog>
 </template>
 
@@ -168,6 +168,10 @@ const props = defineProps({
         type: Object,
         required: true,
         default: () => ({})
+    },
+    addDictMsgs: {
+        type: Array,
+        default: () => [],
     },
 })
 

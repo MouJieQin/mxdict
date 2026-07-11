@@ -4,7 +4,7 @@
         :leftHistory="leftHistory" :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned"
         :lastSearchKeyword="lastSearchKeyword" :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent"
         :wordOptions="wordOptions" :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
-        :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" />
+        :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" :addDictMsgs="addDictMsgs" />
     <el-splitter>
         <el-splitter-panel :size="wordOptionsSize" @update:size="handlePanelResize">
             <div class="word-options">
@@ -154,6 +154,7 @@ const leftHistory = ref<boolean>(false)
 const searchHistory = ref<WordInfoWithLastSearch[]>([])
 const iframeKeydownEvent = ref<any | null>(null)
 const ankiProgress = ref<any>({})
+const addDictMsgs = ref<any>([])
 
 const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
 
@@ -318,6 +319,9 @@ const handleWebSocketMessage = (message: any) => {
             break
         case 'anki_progress':
             ankiProgress.value[message.deck_name] = message.data
+            break
+        case 'add_dictionary':
+            addDictMsgs.value = message.data.msgs
             break
         case 'error_session_not_exist':
             router.push('/')
