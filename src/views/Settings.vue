@@ -89,7 +89,8 @@
             </template>
         </el-dialog>
 
-        <el-dialog v-model="favoriteWordsDialogVisible" fullscreen :z-index="10000">
+        <!-- :z-index="10000" -->
+        <el-dialog v-model="favoriteWordsDialogVisible" fullscreen >
             <FavoriteWords :favoriteWordsDialogVisible="favoriteWordsDialogVisible" :webSocket="props.webSocket"
                 @update-visible="(visible) => favoriteWordsDialogVisible = visible" :favoriteWords="favoriteWords"
                 :folderName="folderIdNameToShow" :folderId="folderIdToShow" />

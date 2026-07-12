@@ -26,8 +26,9 @@
                 <el-button :icon="Edit" text @click="noteDialogVisible = true" class="floating-window-titlebar-button"
                     size="small" :disabled="!(lastSearchKeyword !== '')" />
 
-                <el-button :icon="ImBooks" text @click="dictSSDialogVisible = !dictSSDialogVisible"
-                    class="floating-window-titlebar-button" size="small" id="titlebar-dictss-button" />
+                <el-button :icon="ImBooks" text id="titlebar-dictss-button"
+                    @click="dictSSDialogVisible = !dictSSDialogVisible" class="floating-window-titlebar-button"
+                    size="small" />
                 <el-button :icon="Setting" text id="titlebar-setting-button"
                     @click="settingDialogVisible = !settingDialogVisible" class="floating-window-titlebar-button"
                     size="small" />
@@ -58,7 +59,8 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-model="favoriteWordsDialogVisible" fullscreen :z-index="10000">
+    <!-- </el-dialog> :z-index="10000"> -->
+    <el-dialog v-model="favoriteWordsDialogVisible" fullscreen>
         <FavoriteWords :favoriteWordsDialogVisible="favoriteWordsDialogVisible" :webSocket="props.webSocket"
             @update-visible="(visible) => favoriteWordsDialogVisible = visible" :favoriteWords="favoriteWords"
             :folderName="sessionDefaultFolderName" :folderId="props.sessionConfig.default_folder.id" />
@@ -71,7 +73,8 @@
     <el-dialog v-model="dictSSDialogVisible" fullscreen>
         <DictSelectAndSortDialog :webSocket="props.webSocket" :env="props.env"
             :dictSSDialogVisible="dictSSDialogVisible" :sessionConfig="props.sessionConfig"
-            :addDictMsgs="props.addDictMsgs"></DictSelectAndSortDialog>
+            :addDictMsgs="props.addDictMsgs" :refreshDicsSettingsInfoFlag="props.refreshDicsSettingsInfoFlag">
+        </DictSelectAndSortDialog>
     </el-dialog>
 </template>
 
@@ -172,6 +175,10 @@ const props = defineProps({
     addDictMsgs: {
         type: Array,
         default: () => [],
+    },
+    refreshDicsSettingsInfoFlag: {
+        type: Boolean,
+        default: true,
     },
 })
 

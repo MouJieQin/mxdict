@@ -23,8 +23,13 @@
               </el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
-                    <el-dropdown-item :command="{cmd:'showInFolder',name:item.name}">在文件夹中显示</el-dropdown-item>
-                    <el-dropdown-item :command="{cmd:'delete',name:item.name}">删除</el-dropdown-item>
+                  <el-dropdown-item :command="{ cmd: 'showInFolder', name: item.name }">在文件夹中显示</el-dropdown-item>
+                  <el-dropdown-item :command="{ cmd: 'delete', name: item.name }">
+                    <el-icon>
+                      <Delete style="color: #FF4949;" />
+                    </el-icon>
+                    <span>删除</span>
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -37,8 +42,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import Sortable from 'sortablejs'
-import { MoreFilled } from '@element-plus/icons-vue'
+import { MoreFilled, Delete } from '@element-plus/icons-vue'
 import type { DictSettingInfo, DictsSettingInfo, SessionConfig } from '@/common/type-interface'
 import type { PropType } from 'vue'
 import { BiSolidBookBookmark } from 'vue-icons-plus/bi'
@@ -75,6 +81,10 @@ const props = defineProps({
   addDictMsgs: {
     type: Array,
     default: () => [],
+  },
+  refreshDicsSettingsInfoFlag: {
+    type: Boolean,
+    default: true,
   },
 })
 
@@ -113,15 +123,50 @@ const initSortable = () => {
   })
 }
 
+// 删除字典
+const handleDeleteDict = (name: string) => {
+  ElMessageBox.confirm(
+    `Are you sure you want to delete the dict ${name}? This will permanently delete the dict and all its data.`,
+    'Warning',
+    {
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Cancel',
+      type: 'warning',
+      center: true,
+    }
+  )
+    .then(() => {
+      props.webSocket?.sendDeleteDict(name)
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: 'Delete canceled',
+      })
+    })
+}
+
+
+
 const handleDropdownCommand = (command: { cmd: string, name: string }) => {
   if (command.cmd === 'showInFolder') {
     props.webSocket?.sendShowDictInFolder(command.name)
   } else if (command.cmd === 'delete') {
-    props.webSocket?.sendDeleteDict(command.name)
+    handleDeleteDict(command.name)
   }
 }
 
-watch(() => props.addDictMsgs, (newVal) => {
+const refresh_dict_info = async () => {
+  // 深拷贝数据
+  sessionConfig.value = JSON.parse(JSON.stringify(props.sessionConfig || {}))
+  list.value = sessionConfig.value?.dictsSettingInfo || []
+
+  // 等待 DOM 渲染完成后初始化拖拽
+  await nextTick()
+  initSortable()
+}
+
+watch(() => props.addDictMsgs, async (newVal) => {
   if (newVal.length > 0) {
     let msg = ''
     for (let item of newVal) {
@@ -135,16 +180,14 @@ watch(() => props.addDictMsgs, (newVal) => {
   }
 })
 
+watch(() => props.refreshDicsSettingsInfoFlag, async (newVal) => {
+  await refresh_dict_info()
+})
+
 // 弹窗打开时初始化拖拽
 watch(() => props.dictSSDialogVisible, async (newVal) => {
   if (newVal) {
-    // 深拷贝数据
-    sessionConfig.value = JSON.parse(JSON.stringify(props.sessionConfig || {}))
-    list.value = sessionConfig.value?.dictsSettingInfo || []
-
-    // 等待 DOM 渲染完成后初始化拖拽
-    await nextTick()
-    initSortable()
+    await refresh_dict_info()
   } else {
     // 关闭弹窗时保存数据
     if (JSON.stringify(sessionConfig.value) !== JSON.stringify(props.sessionConfig)) {

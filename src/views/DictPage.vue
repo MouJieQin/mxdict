@@ -7,7 +7,8 @@
                 :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
                 :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
                 :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
-                :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" :addDictMsgs="addDictMsgs" />
+                :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" :addDictMsgs="addDictMsgs"
+                :refreshDicsSettingsInfoFlag="refreshDicsSettingsInfoFlag" />
         </el-header>
         <el-main class="no-padding-main">
             <el-splitter>
@@ -147,6 +148,7 @@ const sessionConfig = ref<SessionConfig>({
     default_search_method: { "method": "prefix_search" },
     pin: { "is_pinned": true }
 })
+const refreshDicsSettingsInfoFlag = ref<boolean>(false)
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
 const wordOptionsSize = ref<number | string>(0)
@@ -223,6 +225,7 @@ const setupDicsSettingsInfo = () => {
             }
         }
     }
+    refreshDicsSettingsInfoFlag.value = !refreshDicsSettingsInfoFlag.value
 }
 
 // 初始化WebSocket
@@ -491,7 +494,7 @@ const handleDropdownCommand = (dictName: string) => {
     /* 使用Element Plus主题变量，自动适配深色模式 */
 
     /* 确保悬浮在所有内容（包括iframe）的最上层 */
-    z-index: 100;
+    /* z-index: 100; */
 
     /* 可选：添加阴影，增强悬浮层次感 */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

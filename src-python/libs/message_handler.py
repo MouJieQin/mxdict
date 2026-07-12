@@ -407,4 +407,6 @@ class MessageHandler:
 
     @staticmethod
     async def _handle_delete_dictionary(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
-        pass
+        dict_name = message["data"]["dict_name"]
+        Utils.delete_dictionary(dict_name)
+        await SessionManager.send_dict_info_to_session(session_id, connection_id)

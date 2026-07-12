@@ -15,24 +15,16 @@ class Utils(UtilsBase):
     dict_db = DictDatabase(UtilsBase.DICT_DATABASE_PATH)
     iwin_ws_client: WsClient
 
-    # 初始化服务
-    # db = ChatDatabase(UtilsBase.DATABASE_PATH)
-    # api = OpenAIChatAPI(db)
-    # speaker = Speaker(UtilsBase.CONFIG, UtilsBase.VOICHAI_STORAGE_PATH)
-    # recognizer = Recognizer(UtilsBase.CONFIG)
-
-    # @staticmethod
-    # def create_api() -> OpenAIChatAPI:
-    #     db = ChatDatabase(UtilsBase.DATABASE_PATH)
-    #     api = OpenAIChatAPI(db)
-    #     return api
-
-    # @staticmethod
-    # def init_services():
-    #     Utils.db = ChatDatabase(UtilsBase.DATABASE_PATH)
-    #     Utils.api = OpenAIChatAPI(Utils.db)
-    #     Utils.speaker = Speaker(UtilsBase.CONFIG, UtilsBase.VOICHAI_STORAGE_PATH)
-    #     Utils.recognizer = Recognizer(UtilsBase.CONFIG)
+    @staticmethod
+    def delete_dictionary(dict_name: str) -> None:
+        """
+        删除指定字典文件夹
+        dict_name (str): 字典名称
+        return (bool): 是否执行成功
+        """
+        dict_dir = Utils.getDictDir(dict_name)
+        Utils.removeDirIfExists(dict_dir)
+        Utils.Config.removeDictInfo(dict_name)
 
     @staticmethod
     def reveal_dict_in_file_manager(dict_name: str) -> bool:

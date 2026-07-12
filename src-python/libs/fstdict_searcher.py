@@ -35,6 +35,11 @@ class FstDictSearcher:
         self._fstd_engine.insert_if_not_exists(dict_name, dict_path)
         self._all_dict_names.append(dict_name)
 
+    def remove_dictionary(self, dict_name: str):
+        """删除词典"""
+        # self._fstd_engine.remove(dict_name)
+        self._all_dict_names.remove(dict_name)
+
     def _add_dictionary_from_dir(self, dict_path_str: str):
         dict_path = Path(dict_path_str)
         css = []
@@ -97,7 +102,7 @@ class FstDictSearcher:
                 if ret != 0:
                     logger.error(f"转换词典 {item} 失败")
                     msgs.append({"msg": f"转换词典 {item} 失败", "type": "error"})
-            UtilsBase.Config.checkDickInfo(Path(dict_dir))
+            UtilsBase.Config.checkDictInfo(Path(dict_dir))
             self._load_dict(dict_name, fstdx_path)
             msgs.append({"msg": f"词典 {dict_name} 添加成功", "type": "success"})
             return msgs
@@ -128,7 +133,7 @@ class FstDictSearcher:
                 UtilsBase.copyFile(item, dict_dir)
             for item in js:
                 UtilsBase.copyFile(item, dict_dir)
-            UtilsBase.Config.checkDickInfo(Path(dict_dir))
+            UtilsBase.Config.checkDictInfo(Path(dict_dir))
             self._load_dict(dict_name, fstdx_path)
             msgs.append({"msg": f"词典 {dict_name} 添加成功", "type": "success"})
             return msgs

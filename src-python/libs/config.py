@@ -93,27 +93,28 @@ class UtilsBase:
             UtilsBase.Config.syncConfig()
 
         @staticmethod
-        def checkDickInfo(file: Path):
-            fstdx_path = file.absolute() / f"{file.name}.fstdx"
+        def checkDictInfo(file: Path):
+            dict_name = file.name
+            fstdx_path = file.absolute() / f"{dict_name}.fstdx"
             if fstdx_path.is_file():
-                UtilsBase.DICT_INFO[file.name] = {}
-                UtilsBase.DICT_INFO[file.name]["name"] = file.name
-                UtilsBase.DICT_INFO[file.name]["root"] = str(file.absolute())
-                UtilsBase.DICT_INFO[file.name]["path"] = str(fstdx_path.absolute())
-                UtilsBase.DICT_INFO[file.name]["css"] = (
-                    UtilsBase.find_files_by_postfix(str(file.absolute()), file.name, ".css")
+                UtilsBase.DICT_INFO[dict_name] = {}
+                UtilsBase.DICT_INFO[dict_name]["name"] = dict_name
+                UtilsBase.DICT_INFO[dict_name]["root"] = str(file.absolute())
+                UtilsBase.DICT_INFO[dict_name]["path"] = str(fstdx_path.absolute())
+                UtilsBase.DICT_INFO[dict_name]["css"] = (
+                    UtilsBase.find_files_by_postfix(str(file.absolute()), dict_name, ".css")
                 )
-                UtilsBase.DICT_INFO[file.name]["js"] = (
-                    UtilsBase.find_files_by_postfix(str(file.absolute()), file.name, ".js")
+                UtilsBase.DICT_INFO[dict_name]["js"] = (
+                    UtilsBase.find_files_by_postfix(str(file.absolute()), dict_name, ".js")
                 )
                 data_path = file.absolute() / "data"
                 if data_path.is_dir():
-                    UtilsBase.DICT_INFO[file.name]["data"] = str(
+                    UtilsBase.DICT_INFO[dict_name]["data"] = str(
                         data_path.absolute()
                     )
                 else:
-                    UtilsBase.DICT_INFO[file.name]["data"] = ""
-                UtilsBase.DICT_INFO[file.name]["cover"] = ""
+                    UtilsBase.DICT_INFO[dict_name]["data"] = ""
+                UtilsBase.DICT_INFO[dict_name]["cover"] = ""
                 # walk through the current folder to find cover image with suffix .jpg/.jpeg/.png/.gif
                 for img_file in file.iterdir():
                     if img_file.is_file() and img_file.suffix.lower() in [
@@ -122,8 +123,13 @@ class UtilsBase:
                         ".png",
                         ".gif",
                     ]:
-                        UtilsBase.DICT_INFO[file.name]["cover"] = "/".join([file.name, img_file.name])
+                        UtilsBase.DICT_INFO[dict_name]["cover"] = "/".join([dict_name, img_file.name])
                         break
+
+        @staticmethod
+        def removeDictInfo(dict_name: str):
+            """删除字典信息"""
+            UtilsBase.DICT_INFO.pop(dict_name, None)
 
 
 def init_config():
@@ -145,7 +151,7 @@ def init_config():
     dict_path = Path(UtilsBase.DICTIONARYS_PATH)
     for file in dict_path.iterdir():
         if file.is_dir():
-            UtilsBase.Config.checkDickInfo(file)
+            UtilsBase.Config.checkDictInfo(file)
 
     diff_flag = False
     # 检查配置项是否缺失，并使用默认值填充
