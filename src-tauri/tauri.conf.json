@@ -24,6 +24,10 @@
     }
   },
   "bundle": {
+    "resources": [
+      "sidecars/**/*"
+    ],
+    "externalBin": [],
     "active": true,
     "targets": "all",
     "icon": [
@@ -32,10 +36,6 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "resources": [
-      "../src-python/**/*",
-      "../dist/**/*"
     ]
   }
 }

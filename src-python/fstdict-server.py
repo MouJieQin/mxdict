@@ -193,12 +193,12 @@ def run_frontend_server():
 def main():
     if getattr(sys, "frozen", False):
         # 启动前检查
-        if not is_port_available(5959):
-            logger.error("❌ 端口 5959 已被占用，词典后端可能已经在运行")
-            sys.exit(1)
-        if not is_port_available(9595):
-            logger.error("❌ 端口 9595 已被占用，词典前端可能已经在运行")
-            sys.exit(1)
+        # if not is_port_available(5959):
+        #     logger.error("❌ 端口 5959 已被占用，词典后端可能已经在运行")
+        #     sys.exit(1)
+        # if not is_port_available(9595):
+        #     logger.error("❌ 端口 9595 已被占用，词典前端可能已经在运行")
+        #     sys.exit(1)
         # 前端静态服务放子线程（daemon=True，主线程退出它自动结束）
         fe_thread = threading.Thread(target=run_frontend_server, daemon=True)
         fe_thread.start()
@@ -209,9 +209,9 @@ def main():
         # API 服务放主线程（阻塞运行，程序主循环在这里）
         run_api_server()
     else:
-        if not is_port_available(5959):
-            logger.error("❌ 端口 5959 已被占用，词典后端可能已经在运行")
-            sys.exit(1)
+        # if not is_port_available(5959):
+        #     logger.error("❌ 端口 5959 已被占用，词典后端可能已经在运行")
+        #     sys.exit(1)
 
         run_api_server()
 

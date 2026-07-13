@@ -1,73 +1,121 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 use chrono::Local;
+use colored::*;
 use env_logger::{Builder, Env};
-use log::{debug, error, info, warn};
-use log::{Level, LevelFilter};
+use log::{debug, error, info, warn, Level, LevelFilter};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Child;
 use std::sync::Mutex;
-use tauri::utils::platform::current_exe;
 use tauri::{App, Manager, RunEvent};
 
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 
-/// 初始化日志：控制台彩色 + 文件输出 + 按天切割（Tauri 2.x 专用）
+/// Initialize logging: colored console + daily rotated file output.
+/// Logs are written to the system-standard log directory
+/// (macOS: ~/Library/Logs/FstDict/, Linux: ~/.local/share/FstDict/logs/)
 pub fn init_logging() {
-    // 基础配置
     let env = Env::default().filter_or("RUST_LOG", "info");
     let mut builder = Builder::from_env(env);
 
-    // 屏蔽第三方库噪音
+    // Silence noisy third-party crates
     builder
         .filter_module("reqwest", LevelFilter::Warn)
         .filter_module("hyper", LevelFilter::Warn)
         .filter_module("hyper_util", LevelFilter::Warn)
         .filter_module("tauri_plugin_updater", LevelFilter::Warn);
 
-    let exe_path = std::env::current_exe().unwrap();
-    let exe_dir = exe_path.parent().expect("无法获取可执行文件目录");
-    let log_dir = exe_dir.join("logs");
-    println!("log_dir: {:?}", log_dir);
+    // Resolve system-standard log directory
+    let log_dir = get_app_log_dir();
     let _ = fs::create_dir_all(&log_dir);
+    println!("Log directory: {:?}", log_dir);
 
-    // 自定义格式
+    // Custom formatter matching Python server style
     builder.format(move |buf, record| {
         let now = Local::now();
-        let time_str = now.format("%H:%M:%S%.3f").to_string();
+        let time_str = now.format("%Y-%m-%d %H:%M:%S").to_string();
         let level = record.level();
+        let level_str = format!("{:>8}", level.as_str());
 
-        // 颜色 ANSI 码
-        let (level_char, color, reset) = match level {
-            Level::Error => ("e", "\x1B[31m", "\x1B[0m"), // 红
-            Level::Warn => ("w", "\x1B[33m", "\x1B[0m"),  // 黄
-            Level::Info => ("i", "\x1B[32m", "\x1B[0m"),  // 绿
-            Level::Debug => ("d", "\x1B[36m", "\x1B[0m"), // 青
-            Level::Trace => ("t", "\x1B[37m", "\x1B[0m"), // 白
+        // Thread ID (abbreviated, Rust thread ids are not numeric like Python's)
+        let thread_id = format!("{:?}", std::thread::current().id());
+        let thread_short = thread_id.replace("ThreadId(", "").replace(')', "");
+
+        // File location: filename:line
+        let file_loc = match (record.file(), record.line()) {
+            (Some(file), Some(line)) => {
+                let filename = file.rsplit('/').next().unwrap_or(file);
+                format!("{}:{}", filename, line)
+            }
+            _ => "-".to_string(),
         };
 
-        // 控制台输出（彩色）
-        let console_line = format!("{time_str} [{color}{level_char}{reset}] {}", record.args());
+        // ── Colored console output ──
+        let colored_level = match level {
+            Level::Error => level_str.red().bold(),
+            Level::Warn => level_str.yellow().bold(),
+            Level::Info => level_str.green(),
+            Level::Debug => level_str.cyan(),
+            Level::Trace => level_str.white().dimmed(),
+        };
+
+        let console_line = format!(
+            "{} [{}] [thread {}] [{}] {}",
+            time_str.dimmed(),
+            colored_level,
+            thread_short,
+            file_loc.purple(),
+            record.args()
+        );
         let _ = writeln!(buf, "{}", console_line);
 
-        // 文件输出（无颜色、按天切割）
+        // ── Plain file output (no ANSI codes, daily rotation) ──
         if let Ok(mut file) = daily_log_file(&log_dir) {
-            let file_line = format!("{time_str} [{level_char}] {}", record.args());
+            let file_line = format!(
+                "{} [{}] [thread {}] [{}] {}",
+                time_str,
+                level_str,
+                thread_short,
+                file_loc,
+                record.args()
+            );
             let _ = writeln!(file, "{}", file_line);
             let _ = file.flush();
         }
+
         Ok(())
     });
 
-    // 忽略重复初始化错误
     let _ = builder.try_init();
 }
 
-/// 获取每日日志文件句柄
+/// Get the system-standard log directory for the app.
+fn get_app_log_dir() -> PathBuf {
+    dirs::home_dir()
+        .map(|home| {
+            #[cfg(target_os = "macos")]
+            {
+                home.join("Library/Logs/FstDict")
+            }
+            #[cfg(target_os = "windows")]
+            {
+                home.join("AppData/Roaming/FstDict/logs")
+            }
+            #[cfg(target_os = "linux")]
+            {
+                home.join(".local/share/FstDict/logs")
+            }
+        })
+        .unwrap_or_else(|| PathBuf::from("./logs"))
+}
+
+/// Get or create the daily log file handle
 fn daily_log_file(log_dir: &PathBuf) -> std::io::Result<fs::File> {
     let today = Local::now().format("%Y-%m-%d").to_string();
-    let log_file = log_dir.join(format!("{today}.log"));
+    let log_file = log_dir.join(format!("fstdict-app-{}.log", today));
 
     OpenOptions::new()
         .create(true)
@@ -76,40 +124,108 @@ fn daily_log_file(log_dir: &PathBuf) -> std::io::Result<fs::File> {
         .open(log_file)
 }
 
-static PYTHON_PROCESS: Mutex<Option<Child>> = Mutex::new(None);
-static NODE_PROCESS: Mutex<Option<Child>> = Mutex::new(None);
-
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-fn is_app_mode() -> bool {
-    current_exe()
-        .unwrap()
-        .to_string_lossy()
-        .contains("Contents/MacOS")
+/// Application state holding the Python sidecar process handle
+struct PythonServer(Mutex<Option<Child>>);
+
+/// Build platform-specific sidecar binary base name.
+fn sidecar_filename(base_name: &str) -> String {
+    format!("{}{}", base_name, std::env::consts::EXE_SUFFIX)
 }
 
-/// 获取 macOS 应用内的 Resources/_up_ 资源目录
-fn get_resource_dir() -> Result<PathBuf, &'static str> {
-    // 1. 获取当前可执行文件路径
-    let exe_path = current_exe().map_err(|_| "无法获取可执行文件路径")?;
+/// Locate the sidecar binary by trying multiple paths.
+/// Supports both onefile (single binary) and onedir (directory) layouts.
+fn find_sidecar_path(app: &App, base_name: &str) -> Option<std::path::PathBuf> {
+    let filename = sidecar_filename(base_name);
 
-    // 2. 获取可执行文件所在目录：xxx.app/Contents/MacOS
-    let exe_dir = exe_path.parent().ok_or("无法获取可执行文件目录")?;
-    if exe_path.to_string_lossy().contains("Contents/MacOS") {
-        // 3. 向上跳一级到 Contents，再进入 Resources/_up_
-        let resource_dir = exe_dir
-            .parent()
-            .ok_or("无法跳转到 Contents 目录")?
-            .join("Resources")
-            .join("_up_");
+    // Candidate 1: resource_dir/sidecars/<name>/<binary> (onedir, .app bundle)
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let p = resource_dir.join("sidecars").join(base_name).join(&filename);
+        if p.exists() {
+            return Some(p);
+        }
+    }
 
-        Ok(resource_dir.to_path_buf())
-    } else {
-        let resource_dir = exe_dir.join("_up_");
-        Ok(resource_dir.to_path_buf())
+    // Candidate 2: same directory as executable (onefile mode, bare binary)
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let p = exe_dir.join(&filename);
+            if p.exists() {
+                return Some(p);
+            }
+        }
+    }
+
+    None
+}
+
+/// Start the Python sidecar server (release build only).
+/// Creates a new process group so we can terminate all children cleanly.
+#[cfg(not(dev))]
+fn start_python_sidecar(app: &App) -> Result<Option<Child>, Box<dyn std::error::Error>> {
+    let binary = match find_sidecar_path(app, "fstdict-server") {
+        Some(path) => path,
+        None => {
+            warn!("Python sidecar 'fstdict-server' not found — skipping");
+            return Ok(None);
+        }
+    };
+
+    info!("Starting Python server from: {:?}", binary);
+
+    let mut cmd = std::process::Command::new(&binary);
+
+    // Spawn in a new process group to kill the whole tree at once.
+    // Handles PyInstaller's bootloader + Python child process model.
+    #[cfg(unix)]
+    cmd.process_group(0);
+
+    let child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to spawn Python server: {}", e))?;
+
+    info!("Python server started (PID: {})", child.id());
+    Ok(Some(child))
+}
+
+/// Dev mode stub — sidecar is not bundled, skip startup entirely.
+#[cfg(dev)]
+fn start_python_sidecar(_app: &App) -> Result<Option<Child>, Box<dyn std::error::Error>> {
+    info!("Dev mode — skipping Python sidecar (run backend manually)");
+    Ok(None)
+}
+
+/// Gracefully terminate the entire Python sidecar process group.
+/// Kills both the PyInstaller bootloader and the actual Python child process.
+fn stop_python_sidecar(process: &mut Option<Child>) {
+    if let Some(mut proc) = process.take() {
+        let pid = proc.id();
+        info!("Shutting down Python server (process group PID: {})", pid);
+
+        #[cfg(unix)]
+        {
+            // Send SIGTERM to the entire process group (negative PID)
+            unsafe {
+                libc::kill(-(pid as i32), libc::SIGTERM);
+            }
+            // Give it a moment to exit gracefully, then force kill if needed
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            unsafe {
+                libc::kill(-(pid as i32), libc::SIGKILL);
+            }
+        }
+
+        #[cfg(not(unix))]
+        {
+            let _ = proc.kill();
+        }
+
+        let _ = proc.wait();
+        info!("Python server stopped");
     }
 }
 
@@ -120,101 +236,37 @@ pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet])
-        .setup(|app: &mut App | {
-        // ✅ 获取 Application Support/包名
-            // Get the app data directory
+        .manage(PythonServer(Mutex::new(None)))
+        .setup(|app: &mut App| {
+            // Ensure app data directory exists
             let app_data_dir = app.path().app_data_dir()?;
-            
-            info!("App Data Dir: {:?}", app_data_dir);
-            fs::create_dir_all(app_data_dir)?;
-            
+            fs::create_dir_all(&app_data_dir)?;
+            info!("App data directory: {:?}", app_data_dir);
 
-            let resource_dir: PathBuf = get_resource_dir().map_err(|_| "无法获取资源目录")?;
-            info!("资源目录: {:?}", resource_dir);
-
-            let python_script: PathBuf = resource_dir.join("src-python/fstdict-server.py");
-            info!("Python 脚本路径: {:?}", python_script);
-            // let dist_dir: PathBuf = resource_dir.join("dist");
-
-            if is_app_mode() {
-
-            // 启动 Python
-            info!("准备启动 Python 服务器");
-            let python_child = match std::process::Command::new("python3.11")
-                .env(
-        "PATH",
-        "/opt/homebrew/bin:/usr/local/bin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/usr/bin:/bin"
-    )
-
-                .arg(python_script)
-                .spawn()
-            {
-                Ok(child) => {
-                    info!("Python 服务器启动成功");
-                    child
-                },
-                Err(e) => {
-                    // 先打印错误日志
-                    error!("启动 Python 服务器失败: {}", e);
-
-                    // 再返回错误（让函数退出）
-                    return Err(format!("启动 Python 服务器失败: {}", e).into());
+            // Start Python sidecar (skipped automatically in dev mode)
+            match start_python_sidecar(app) {
+                Ok(Some(child)) => {
+                    *app.state::<PythonServer>().0.lock().unwrap() = Some(child);
                 }
-            };
-
-            *PYTHON_PROCESS.lock().unwrap() = Some(python_child);
-        }
-            if is_app_mode() {
-                let dist_dir: PathBuf = resource_dir.join("dist");
-
-                info!("准备启动 Node 服务器");
-                let node_child = match std::process::Command::new("node")
-        // 把常用 Python 路径优先加进去，兼容所有 macOS
-               .env(
-        "PATH",
-        "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-    )
-                    .arg("/usr/local/bin/vite")
-                    .arg("preview")
-                    .arg("--port")
-                    .arg("9595")
-                    .arg("--strictPort")
-                    .arg("--outDir")
-                    .arg(dist_dir)
-                    .spawn()
-                {
-                    Ok(child) => {
-                        info!("Node 服务器启动成功");
-                        child
-                    },
-                    Err(e) => {
-                        // 先打印错误日志
-                        error!("启动 Node 服务器失败: {}", e);
-                        // 再返回错误（让函数退出）
-                        return Err(format!("启动 Node 服务器失败: {}", e).into());
-                    }
-                };
-                *NODE_PROCESS.lock().unwrap() = Some(node_child);
+                Ok(None) => {
+                    debug!("Python sidecar not started (dev mode or not found)");
+                }
+                Err(e) => {
+                    error!("Failed to start Python server: {}", e);
+                    return Err(e);
+                }
             }
+
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while building tauri application");
+        .expect("Failed to build Tauri application");
 
-    app.run(|_, event: RunEvent| {
-        if let RunEvent::Exit = event {
-            if let Some(mut proc) = PYTHON_PROCESS.lock().unwrap().take() {
-                info!("准备关闭 Python 服务器");
-                let _ = proc.kill();
-                let _ = proc.wait();
-                info!("Python 服务器已关闭");
-            }
-            if let Some(mut proc) = NODE_PROCESS.lock().unwrap().take() {
-                info!("准备关闭 Node 服务器");
-                let _ = proc.kill();
-                let _ = proc.wait();
-                info!("Node 服务器已关闭");
-            }
+    app.run(|app_handle, event: RunEvent| {
+        if let RunEvent::ExitRequested { .. } = event {
+            let state = app_handle.state::<PythonServer>();
+            let mut proc_guard = state.0.lock().unwrap();
+            stop_python_sidecar(&mut proc_guard);
         }
     });
 }
