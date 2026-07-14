@@ -24,8 +24,8 @@ jobs:
                       rust_target: aarch64-apple-darwin
                       pyinstaller_arch: arm64
 
-                    # macOS Intel
-                    - os: macos-13
+                    # macOS Intel (Running on Apple Silicon via Rosetta)
+                    - os: macos-14 # Use the ARM runner
                       platform: macos
                       arch: x86_64
                       rust_target: x86_64-apple-darwin
@@ -68,9 +68,17 @@ jobs:
             # 2. Python + PyInstaller Sidecar Build
             # ─────────────────────────────────────────
             - name: Setup Python
+              if: matrix.platform != 'macos' || matrix.arch != 'x86_64'
               uses: actions/setup-python@v5
               with:
                   python-version: "3.11"
+
+            - name: Setup Python (macos x86_64)
+              if: matrix.platform == 'macos' && matrix.arch == 'x86_64'
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+                  architecture: "x64"
 
             - name: Install Python dependencies
               working-directory: src-python
