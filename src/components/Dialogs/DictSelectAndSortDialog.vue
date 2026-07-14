@@ -109,16 +109,22 @@ const initSortable = () => {
   // 关键：Tauri 必须加 draggable 选择器
   sortableInstance = Sortable.create(listRef.value, {
     animation: 300,
-    draggable: '.dict-settings-drag-cards', // 指定可拖拽元素
+    draggable: '.dict-settings-drag-cards',
     ghostClass: 'sortable-ghost',
+
+    // 关键：强制使用鼠标事件模拟拖拽，绕过 HTML5 DnD API
+    forceFallback: true,
+
+    // 可选：调整 fallback 体验
+    fallbackClass: 'sortable-dragging',
+    fallbackOnBody: true,
+
     onEnd: ({ oldIndex, newIndex }) => {
-      // 安全判断索引
       if (oldIndex === undefined || newIndex === undefined) return
       if (oldIndex === newIndex) return
 
       const item = list.value?.splice(oldIndex as number, 1)[0]
       list.value?.splice(newIndex as number, 0, item as DictSettingInfo)
-      console.log('New list order:', list.value?.map(i => i.name).join(', '))
     }
   })
 }

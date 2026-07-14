@@ -225,6 +225,21 @@ body::-webkit-scrollbar-thumb {
     box-sizing: border-box;
 }
 
+/* 拖拽中全局禁用文字选中，避免蓝色高亮 */
+.sortable-dragging,
+.sortable-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* 可选：拖拽元素本身也禁用选中 */
+/* .dict-settings-drag-cards {
+  user-select: none;
+  -webkit-user-select: none;
+} */
+
 /* 左侧组：固定不挤压 */
 .left-group {
     display: flex;

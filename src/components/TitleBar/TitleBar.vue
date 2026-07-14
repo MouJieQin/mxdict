@@ -232,6 +232,14 @@ watch(() => favoriteWordsDialogVisible.value, (newVal) => {
     }
 })
 
+watch(() => dictSSDialogVisible.value, (newVal) => {
+    if (newVal) {
+        preventDrag.value = true
+    } else {
+        preventDrag.value = false
+    }
+})
+
 watch(() => props.iframeKeydownEvent, (newVal) => {
     if (newVal) {
         handleKeydown(newVal)
