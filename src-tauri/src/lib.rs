@@ -144,7 +144,10 @@ fn find_sidecar_path(app: &App, base_name: &str) -> Option<std::path::PathBuf> {
 
     // Candidate 1: resource_dir/sidecars/<name>/<binary> (onedir, .app bundle)
     if let Ok(resource_dir) = app.path().resource_dir() {
-        let p = resource_dir.join("sidecars").join(base_name).join(&filename);
+        let p = resource_dir
+            .join("sidecars")
+            .join(base_name)
+            .join(&filename);
         if p.exists() {
             return Some(p);
         }
@@ -219,9 +222,20 @@ fn stop_python_sidecar(process: &mut Option<Child>) {
             }
         }
 
-        #[cfg(not(unix))]
+        // #[cfg(not(unix))]
+        // {
+        //     let _ = proc.kill();
+        // }
+
+        #[cfg(windows)]
         {
-            let _ = proc.kill();
+            // taskkill /T kills the entire process tree
+            // /F forces termination
+            let _ = std::process::Command::new("taskkill")
+                .args(["/F", "/T", "/PID", &pid.to_string()])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status();
         }
 
         let _ = proc.wait();
