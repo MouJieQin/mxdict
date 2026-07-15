@@ -2,9 +2,7 @@
     <div class="floating-window-search-container">
         <el-input v-if="!showPopoverSuggestions" ref="inputRef" v-model="keyword" autocomplete="off" autocorrect="off"
             autocapitalize="off" spellcheck="false" placeholder="Search" clearable style="font-size: 1rem;"
-            @input="handleInputChange" @focus="handleFocus" @blur="handleBlur" @keydown.down.prevent="handleKeyDown"
-            @keydown.up.prevent="handleKeyUp" @keydown.enter.prevent="handleKeyEnter"
-            @keydown.escape="isDropdownVisible = false">
+            @input="handleInputChange" @keydown.enter.prevent="handleKeyEnter">
             <template #prefix>
                 <SearchMethodSelect :searchMethod="props.sessionConfig.default_search_method?.method || 'prefix_search'"
                     @update-search-method="handleSearchMethodChange" />
@@ -178,11 +176,15 @@ const handleKeyUp = () => {
 }
 
 const handleKeyEnter = () => {
-    if (isDropdownVisible.value && activeIndex.value >= 0 && activeIndex.value < links.value.length) {
-        handleSelect(links.value[activeIndex.value])
-    } else {
-        isDropdownVisible.value = false
+    if (!showPopoverSuggestions) {
         sendLookupKeyword()
+    } else {
+        if (isDropdownVisible.value && activeIndex.value >= 0 && activeIndex.value < links.value.length) {
+            handleSelect(links.value[activeIndex.value])
+        } else {
+            isDropdownVisible.value = false
+            sendLookupKeyword()
+        }
     }
 }
 
@@ -232,7 +234,9 @@ const sendLookupKeyword = (leftHistory: boolean = true) => {
 }
 
 const handleInputChange = () => {
-    isDropdownVisible.value = true
+    if (showPopoverSuggestions) {
+        isDropdownVisible.value = true
+    }
     emits('change:keyword', keyword.value)
     triggerAsyncSearch()
 }
