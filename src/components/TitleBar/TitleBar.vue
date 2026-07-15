@@ -222,6 +222,9 @@ watch(() => noteDialogVisible.value, (newVal) => {
     if (newVal) {
         keywordEditingNote.value = props.lastSearchKeyword
         noteContent.value = props.noteContent
+        preventDrag.value = true
+    }else{
+        preventDrag.value = false
     }
     props.webSocket?.sendNoteIsEditing(newVal)
 })
@@ -239,6 +242,23 @@ watch(() => dictSSDialogVisible.value, (newVal) => {
         preventDrag.value = false
     }
 })
+
+watch(() => settingDialogVisible.value, (newVal) => {
+    if (newVal) {
+        preventDrag.value = true
+    } else {
+        preventDrag.value = false
+    }
+})
+
+watch(() => favoriteWordsDialogVisible.value, (newVal) => {
+    if (newVal) {
+        preventDrag.value = true
+    } else {
+        preventDrag.value = false
+    }
+})
+
 
 watch(() => props.iframeKeydownEvent, (newVal) => {
     if (newVal) {
