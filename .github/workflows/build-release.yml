@@ -81,11 +81,21 @@ jobs:
                   architecture: "x64"
 
             - name: Install Python dependencies
+              if: matrix.platform != 'macos' || matrix.arch != 'x86_64'
               working-directory: src-python
               run: |
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
                   pip install pyinstaller
+
+            - name: Install Python dependencies (macos x86_64)
+              if: matrix.platform == 'macos' && matrix.arch == 'x86_64'
+              working-directory: src-python
+              run: |
+                  # Force pip to run inside the Intel layer to grab x86_64 binary wheels
+                  arch -x86_64 python -m pip install --upgrade pip
+                  arch -x86_64 pip install -r requirements.txt
+                  arch -x86_64 pip install pyinstaller
 
             - name: Copy Vue dist to Python static (Unix)
               if: matrix.platform != 'windows'
@@ -103,13 +113,11 @@ jobs:
               if: matrix.platform != 'windows'
               working-directory: src-python
               run: |
-                  # Define the command wrapper: default to empty, but force x86_64 on Intel mac builds
                   PREFIX=""
                   if [[ "${{ matrix.platform }}" == "macos" && "${{ matrix.arch }}" == "x86_64" ]]; then
                     PREFIX="arch -x86_64"
                   fi
 
-                  # Run PyInstaller with the prefix
                   $PREFIX pyinstaller \
                     --clean \
                     -y \
