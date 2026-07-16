@@ -55,7 +55,7 @@
                                     </template>
 
                                     <div v-for="html in result" :key="html">
-                                        <el-divider style="margin:0 10px" />
+                                        <el-divider style="margin:0 10px;"/>
                                         <DictIframe :dictionary-name="dictName" :html="html"
                                             :css-urls="dictsInfo[dictName].css" :js-urls="dictsInfo[dictName].js"
                                             :base-path="dictsInfo[dictName].data"
@@ -495,7 +495,7 @@ const handleDropdownCommand = (dictName: string) => {
     /* 使用Element Plus主题变量，自动适配深色模式 */
 
     /* 确保悬浮在所有内容（包括iframe）的最上层 */
-    /* z-index: 100; */
+    z-index: 1;
 
     /* 可选：添加阴影，增强悬浮层次感 */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
