@@ -40,33 +40,46 @@ class FstDictSearcher:
         self._fstd_engine.erase(dict_name)
         self._all_dict_names.remove(dict_name)
 
+    def reload_dictionary(self, dict_name: str):
+        UtilsBase.Config.removeDictInfo(dict_name)
+        self._fstd_engine.erase(dict_name)
+        dict_dir = UtilsBase.getDictDir(dict_name)
+        UtilsBase.Config.checkDictInfo(Path(dict_dir))
+        fstdx_path = os.path.join(dict_dir, dict_name + ".fstdx")
+        self._fstd_engine.insert_if_not_exists(dict_name, fstdx_path)
+
+    def _copy_file(self, file: str, msgs: list, reload_dict_names: list[str]) -> None:
+        dict_name = Path(file).stem
+        dict_dir = UtilsBase.getDictDir(dict_name)
+        if os.path.exists(dict_dir):
+            target_path = os.path.join(dict_dir, Path(file).name)
+            if os.path.exists(target_path):
+                msgs.append({"msg": f"文件 {target_path} 已存在，跳过 {file}", "type": "warning"})
+                return
+            UtilsBase.copyFile(file, dict_dir)
+            reload_dict_names.append(dict_name)
+            return
+        msgs.append({"msg": f"不存在词典 {dict_name}，跳过 {file}", "type": "warning"})
+
     def _add_dictionary_from_dir(self, dict_path_str: str):
         dict_path = Path(dict_path_str)
         css = []
         js = []
-        fstdx = ""
+        fstdx = []
         fstdd = []
-        mdx = ""
+        mdx = []
         mdd = []
-        cover = ""
+        cover = []
         msgs = []
         # 获取所有文件
         for file in dict_path.iterdir():
             if file.is_file():
                 if file.suffix == ".fstdx":
-                    if not fstdx:
-                        fstdx = str(file.absolute())
-                    else:
-                        logger.error(f"词典路径 {dict_path_str} 下有多个 fstdx 文件")
-                        return [{"msg": f"词典路径 {dict_path_str} 下有多个 fstdx 文件", "type": "error"}]
+                    fstdx.append(str(file.absolute()))
                 elif file.suffix == ".fstdd":
                     fstdd.append(str(file.absolute()))
                 elif file.suffix == ".mdx":
-                    if not mdx:
-                        mdx = str(file.absolute())
-                    else:
-                        logger.error(f"词典路径 {dict_path_str} 下有多个 mdx 文件")
-                        return [{"msg": f"词典路径 {dict_path_str} 下有多个 mdx 文件", "type": "error"}]
+                    mdx.append(str(file.absolute()))
                 elif file.suffix == ".mdd":
                     mdd.append(str(file.absolute()))
                 elif file.suffix == ".css":
@@ -74,52 +87,44 @@ class FstDictSearcher:
                 elif file.suffix == ".js":
                     js.append(str(file.absolute()))
                 elif file.suffix == ".jpg" or file.suffix == ".jpeg" or file.suffix == ".png" or file.suffix == ".gif":
-                    cover = str(file.absolute())
-        if fstdx and mdx:
-            logger.error(f"词典路径 {dict_path_str} 下同时存在 fstdx 文件和 mdx 文件")
-            return [{"msg": f"词典路径 {dict_path_str} 下同时存在 fstdx 文件和 mdx 文件", "type": "error"}]
-        if fstdx:
-            dict_name = Path(fstdx).stem
+                    cover.append(str(file.absolute()))
+        new_dict_names = []
+        for fstdx_ in fstdx:
+            dict_name = Path(fstdx_).stem
             dict_dir = UtilsBase.getDictDir(dict_name)
             fstdx_path = os.path.join(dict_dir, dict_name + ".fstdx")
             if os.path.exists(fstdx_path):
                 reader = fstd.FstdxReader(fstdx_path)
                 if reader:
-                    logger.warning(f"词典 {dict_name} 已存在，跳过")
-                    return [{"msg": f"词典 {dict_name} 已存在，跳过", "type": "warning"}]
+                    logger.warning(f"词典 {dict_name} 已存在，跳过 {fstdx_}")
+                    msgs.append({"msg": f"词典 {dict_name} 已存在，跳过 {fstdx_}", "type": "warning"})
+                    continue
             UtilsBase.createDirIfnotExists(dict_dir)
-            UtilsBase.copyFile(fstdx, dict_dir)
-            UtilsBase.copyFile(cover, dict_dir)
-            for item in css:
-                UtilsBase.copyFile(item, dict_dir)
-            for item in js:
-                UtilsBase.copyFile(item, dict_dir)
-            for item in fstdd:
-                UtilsBase.copyFile(item, dict_dir)
-            for item in mdd:
-                output_path = os.path.join(dict_dir, Path(item).stem + ".fstdd")
-                ret = fstdtools.convert(item, output_path, compress_level=5, compress_dict_size=130, block_size=32)
-                if ret != 0:
-                    logger.error(f"转换词典 {item} 失败")
-                    msgs.append({"msg": f"转换词典 {item} 失败", "type": "error"})
-            UtilsBase.Config.checkDictInfo(Path(dict_dir))
-            self._load_dict(dict_name, fstdx_path)
-            msgs.append({"msg": f"词典 {dict_name} 添加成功", "type": "success"})
-            return msgs
-        if mdx:
-            dict_name = Path(mdx).stem
+            UtilsBase.copyFile(fstdx_, dict_dir)
+            new_dict_names.append(dict_name)
+
+        for mdx_ in mdx:
+            dict_name = Path(mdx_).stem
             dict_dir = UtilsBase.getDictDir(dict_name)
             fstdx_path = os.path.join(dict_dir, dict_name + ".fstdx")
             if os.path.exists(fstdx_path):
                 reader = fstd.FstdxReader(fstdx_path)
                 if reader:
-                    logger.warning(f"词典 {dict_name} 已存在，跳过")
-                    return [{"msg": f"词典 {dict_name} 已存在，跳过", "type": "warning"}]
+                    logger.warning(f"词典 {dict_name} 已存在，跳过 {mdx_}")
+                    msgs.append({"msg": f"词典 {dict_name} 已存在，跳过 {mdx_}", "type": "warning"})
+                    continue
             UtilsBase.createDirIfnotExists(dict_dir)
-            ret = fstdtools.convert(mdx, fstdx_path, compress_level=5, compress_dict_size=130, block_size=32)
+            ret = fstdtools.convert(mdx_, fstdx_path, compress_level=5, compress_dict_size=130, block_size=32)
             if ret != 0:
-                logger.error(f"转换词典 {mdx} 失败")
-                return [{"msg": f"转换词典 {mdx} 失败", "type": "error"}]
+                logger.error(f"转换词典 {mdx_} 失败")
+                msgs.append({"msg": f"转换词典 {mdx_} 失败", "type": "error"})
+                continue
+            new_dict_names.append(dict_name)
+
+        if len(new_dict_names) == 1:
+            dict_name = new_dict_names[0]
+            dict_dir = UtilsBase.getDictDir(dict_name)
+            fstdx_path = os.path.join(dict_dir, dict_name + ".fstdx")
             for item in mdd:
                 output_path = os.path.join(dict_dir, Path(item).stem + ".fstdd")
                 ret = fstdtools.convert(item, output_path, compress_level=5, compress_dict_size=130, block_size=32)
@@ -128,7 +133,8 @@ class FstDictSearcher:
                     msgs.append({"msg": f"转换词典 {item} 失败", "type": "error"})
             for item in fstdd:
                 UtilsBase.copyFile(item, dict_dir)
-            UtilsBase.copyFile(cover, dict_dir)
+            for item in cover:
+                UtilsBase.copyFile(item, dict_dir)
             for item in css:
                 UtilsBase.copyFile(item, dict_dir)
             for item in js:
@@ -137,6 +143,40 @@ class FstDictSearcher:
             self._load_dict(dict_name, fstdx_path)
             msgs.append({"msg": f"词典 {dict_name} 添加成功", "type": "success"})
             return msgs
+
+        reload_dict_names = []
+        for item in mdd:
+            dict_name = Path(item).stem
+            dict_dir = UtilsBase.getDictDir(dict_name)
+            if not os.path.exists(dict_dir):
+                msgs.append({"msg": f"不存在词典 {dict_name}，跳过 {item}", "type": "warning"})
+                continue
+
+            output_path = os.path.join(dict_dir, dict_name + ".fstdd")
+            ret = fstdtools.convert(item, output_path, compress_level=5, compress_dict_size=130, block_size=32)
+            if ret != 0:
+                logger.error(f"转换词典 {item} 失败")
+                msgs.append({"msg": f"转换词典 {item} 失败", "type": "error"})
+            reload_dict_names.append(dict_name)
+
+        for item in fstdd:
+            self._copy_file(item, msgs, reload_dict_names)
+        for item in cover:
+            self._copy_file(item, msgs, reload_dict_names)
+        for item in css:
+            self._copy_file(item, msgs, reload_dict_names)
+        for item in js:
+            self._copy_file(item, msgs, reload_dict_names)
+
+        for dict_name in new_dict_names:
+            dict_dir = UtilsBase.getDictDir(dict_name)
+            fstdx_path = os.path.join(dict_dir, dict_name + ".fstdx")
+            UtilsBase.Config.checkDictInfo(Path(dict_dir))
+            self._load_dict(dict_name, fstdx_path)
+
+        for dict_name in reload_dict_names:
+            self.reload_dictionary(dict_name)
+
         return msgs
 
     def _add_dictionary_from_dir_2_depth(self, dir: Path):
@@ -145,6 +185,7 @@ class FstDictSearcher:
         for item in dir.iterdir():
             if item.is_dir():
                 msgs_ = self._add_dictionary_from_dir(str(item.absolute()))
+                msgs.extend(msgs_)
         msgs_ = self._add_dictionary_from_dir(str(dir.absolute()))
         msgs.extend(msgs_)
         return msgs
