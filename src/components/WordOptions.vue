@@ -76,6 +76,10 @@ const showErrorSuggestion = computed(() => {
     return (props.wordOptions.length === 1 && props.wordOptions[0].startsWith('FSTD_ERROR'))
 })
 
+watch(() => props.keyword, (newVal) => {
+    selectedWord.value = newVal
+})
+
 watch(
     () => props.wordOptions,
     () => {
