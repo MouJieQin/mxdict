@@ -205,7 +205,7 @@ const setupDicsSettingsInfo = () => {
             sessionConfig.value?.dictsSettingInfo.push({
                 id: dictName,
                 name: dict.name,
-                cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
+                cover_url: `http://localhost:5959/api/download?path=${encodeURIComponent(dict.cover)}`,
                 is_enabled: true
             })
         }
@@ -219,7 +219,7 @@ const setupDicsSettingsInfo = () => {
                 sessionConfig.value?.dictsSettingInfo.push({
                     id: dictName,
                     name: dict.name,
-                    cover_url: `http://localhost:5959/api/download?path=${dict.cover}`,
+                    cover_url: `http://localhost:5959/api/download?path=${encodeURIComponent(dict.cover)}`,
                     is_enabled: true
                 })
             }

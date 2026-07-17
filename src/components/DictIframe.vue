@@ -76,7 +76,7 @@ async function renderIframe() {
     for (const cssUrl of props.cssUrls) {
       const link = doc.createElement('link')
       link.rel = 'stylesheet'
-      link.href = `${API_PREFIX}${cssUrl}`
+      link.href = `${API_PREFIX}${encodeURIComponent(cssUrl)}`
       doc.head.appendChild(link)
     }
   }
@@ -85,7 +85,7 @@ async function renderIframe() {
   if (props.jsUrls) {
     for (const jsUrl of props.jsUrls) {
       const script = doc.createElement('script')
-      script.src = `${API_PREFIX}${jsUrl}`
+      script.src = `${API_PREFIX}${encodeURIComponent(jsUrl)}`
       script.charset = 'UTF-8'
       doc.head.appendChild(script)
     }
