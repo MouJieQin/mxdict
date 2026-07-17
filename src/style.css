@@ -19,6 +19,7 @@ body {
 /* ANKI 模式：自动滚动 + 隐藏滚动条 */
 body.anki-mode {
     overflow-x: hidden;
+    overflow-y: hidden;
     /* overflow-y: auto; */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE */
@@ -107,6 +108,8 @@ body::-webkit-scrollbar-thumb {
 }
 
 .word-detail.anki-mode {
+    overflow-y: auto;
+    overflow-x: hidden;
     max-width: 800px;
     margin: 0 auto;
 }

@@ -88,7 +88,7 @@ let searchDebounceTimer: any = null
 let resizeObserver: ResizeObserver | null = null
 
 const showPopoverSuggestions = computed(() => {
-    return props.env === 'anki'
+    return props.env === 'iwin'
 })
 
 // Setup layout trackers and global input listener bounds on initialization

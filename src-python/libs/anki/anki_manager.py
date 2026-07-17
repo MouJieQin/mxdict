@@ -15,7 +15,12 @@ class AnkiManager:
     html_back_content_prefix = """
             <meta charset="utf-8">
             <style>
-                body { margin: 0; padding: 0; }
+                body { 
+                    overflow-x: hidden;
+                    overflow-y: hidden;
+                    margin: 0;
+                    padding: 0; 
+                }
                 body::-webkit-scrollbar {
                     display: none;
                 }
@@ -57,7 +62,7 @@ class AnkiManager:
         end_index = front.find('">', start_index)
         if start_index == -1 or end_index == -1:
             return ""
-        return front[start_index + len(self.prefix_div) : end_index]
+        return front[start_index + len(self.prefix_div): end_index]
 
     def get_deck_cards_indexed_by_unique_id(self, deck_name: str) -> dict:
         cards = self.anki_api.get_deck_cards_info(deck_name)
