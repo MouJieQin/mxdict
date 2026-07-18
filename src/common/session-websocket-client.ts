@@ -54,6 +54,15 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendUpdateSystemConfig(systemConfig: any) {
+        this._send(
+            'update_system_config',
+            {
+                system_config: systemConfig
+            }
+        )
+    }
+
     sendLookupKeywordRequest(keyword: string) {
         this._send(
             'lookup_keyword_request',

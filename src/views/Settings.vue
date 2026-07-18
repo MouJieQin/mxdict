@@ -4,6 +4,41 @@
             <p class="system-config-title">系统设置</p>
         </div>
         <div>
+            <el-form v-if="localSystemConfig" :model="localSystemConfig" label-width="150px" class="config-form">
+                <div class="config-class">
+                    <p class="config-class-title">Appearance</p>
+                    <el-form-item label="主题">
+                        <el-radio-group v-model="appTheme" size="large" fill="#6cf">
+                            <el-radio-button value="light">
+                                <div class="config-radio-button">
+                                    <el-icon class="config-radio-icon">
+                                        <Sunny />
+                                    </el-icon>
+                                    <span>浅色模式</span>
+                                </div>
+                            </el-radio-button>
+                            <el-radio-button :icon="Moon" label="深色模式" value="dark">
+                                <div class="config-radio-button">
+                                    <el-icon class="config-radio-icon">
+                                        <Moon />
+                                    </el-icon>
+                                    <span>深色模式</span>
+                                </div>
+                            </el-radio-button>
+                            <el-radio-button :icon="SwitchFilled" label="跟随系统" value="auto">
+                                <div class="config-radio-button">
+                                    <el-icon class="config-radio-icon">
+                                        <SwitchFilled />
+                                    </el-icon>
+                                    <span>跟随系统</span>
+                                </div>
+                            </el-radio-button>
+                        </el-radio-group>
+                    </el-form-item>
+                </div>
+            </el-form>
+
+
             <div class="config-class">
                 <p class="config-class-title">收藏夹列表</p>
                 <el-table v-if="localFolderConfig" :data="localFolderConfig.folders.folder_info" height="350"
@@ -92,8 +127,8 @@
         <!-- :z-index="10000" -->
         <el-dialog v-model="favoriteWordsDialogVisible" fullscreen>
             <FavoriteWords :favoriteWordsDialogVisible="favoriteWordsDialogVisible" :webSocket="props.webSocket"
-                @update-visible="handle_update_visible(visible)" :favoriteWords="favoriteWords" :folderName="folderIdNameToShow"
-                :folderId="folderIdToShow" />
+                @update-visible="handle_update_visible(visible)" :favoriteWords="favoriteWords"
+                :folderName="folderIdNameToShow" :folderId="folderIdToShow" />
         </el-dialog>
     </div>
 </template>
@@ -104,8 +139,8 @@ import { reactive, ref, onBeforeMount, watch, computed } from 'vue'
 import type { PropType } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessageBox } from 'element-plus'
-import { useFolderConfigStore } from '@/stores/stores'
-import { Edit, Delete, Document, Plus } from '@element-plus/icons-vue'
+import { useFolderConfigStore, useSystemConfigStore } from '@/stores/stores'
+import { Edit, Delete, Document, Plus, Sunny, Moon, SwitchFilled } from '@element-plus/icons-vue'
 
 import AnkiIcon from '@/components/Icons/AnkiIcon.vue'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
@@ -154,6 +189,9 @@ const folderIdEditing = ref('')
 const folderIdToShow = ref<number>(0)
 const folderIdNameToShow = ref('')
 const ankiProgresses = ref<Record<string, any>>(JSON.parse(JSON.stringify(props.ankiProgress)))
+const systemConfigStore = useSystemConfigStore();
+const localSystemConfig = ref<any>(JSON.parse(JSON.stringify(systemConfigStore.systemConfig)))
+
 
 watch(() => folderConfigStore.folderConfig, (newVal) => {
     localFolderConfig.value = JSON.parse(JSON.stringify(newVal))
@@ -166,6 +204,23 @@ watch(() => localSessionConfig.value.default_folder.id, () => {
 watch(() => props.ankiProgress, (newVal) => {
     ankiProgresses.value = JSON.parse(JSON.stringify(newVal))
 }, { deep: true })
+
+watch(() => systemConfigStore.systemConfig, (newVal) => {
+    localSystemConfig.value = JSON.parse(JSON.stringify(newVal))
+}, { deep: true })
+
+
+const updateSystemConfig = () => {
+    props.webSocket.sendUpdateSystemConfig(localSystemConfig.value)
+}
+
+const appTheme = computed({
+    get: () => localSystemConfig.value?.appearance.theme,
+    set: (val) => {
+        localSystemConfig.value.appearance.theme = val
+        updateSystemConfig()
+    }
+})
 
 const handle_update_visible = (visible) => {
     favoriteWordsDialogVisible.value = visible

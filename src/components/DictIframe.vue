@@ -45,8 +45,8 @@ function updateDarkMode(isDark: boolean) {
   }
 
   styleEl.textContent = isDark ? `
-    html { filter: invert(1) hue-rotate(180deg); }
-    img { filter: invert(1) hue-rotate(180deg) contrast(1.05); }
+    html { filter: invert(0.92) hue-rotate(180deg); }
+    img { filter: invert(0.92) hue-rotate(180deg) contrast(1.05); }
   ` : ''
 }
 
@@ -73,8 +73,8 @@ async function renderIframe() {
   styleEl.id = 'dict-custom-style'
   doc.head.appendChild(styleEl)
   styleEl.textContent = props.isDark ? `
-    html { filter: invert(1) hue-rotate(180deg); }
-    img { filter: invert(1) hue-rotate(180deg) contrast(1.05); }
+    html { filter: invert(0.92) hue-rotate(180deg); }
+    img { filter: invert(0.92) hue-rotate(180deg) contrast(1.05); }
   ` : ''
   doc.head.appendChild(styleEl)
 

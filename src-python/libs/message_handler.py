@@ -105,6 +105,7 @@ class MessageHandler:
                 "update_to_anki": MessageHandler._handle_update_to_anki,
                 "cancel_anki_update": MessageHandler._handle_cancel_anki_update,
                 "update_folder": MessageHandler._handle_update_folder,
+                "update_system_config": MessageHandler._handle_update_system_config,
                 "folder_config": MessageHandler._handle_folder_config,
                 "toggle_favor": MessageHandler._handle_toggle_favor,
                 "save_word_note": MessageHandler._handle_save_word_note,
@@ -295,6 +296,12 @@ class MessageHandler:
         Utils.db.rename_folder(folder_id, folder_name)
         Utils.db.update_folder_description(folder_id, folder_description)
         await SessionManager.send_folder_config_to_session(session_id, connection_id)
+
+    @staticmethod
+    async def _handle_update_system_config(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
+        system_config = message["data"]["system_config"]
+        Utils.Config.init_config(system_config)
+        await SessionManager.send_system_config()
 
     @staticmethod
     async def _handle_folder_config(
