@@ -45,10 +45,14 @@ export const useFolderConfigStore = defineStore('folderConfig', {
 export const useSystemConfigStore = defineStore('systemConfig', {
     state: () => ({
         systemConfig: null as any | null,
+        isDark: false as boolean,
     }),
     actions: {
         setSystemConfig(systemConfig: any) {
             this.systemConfig = systemConfig
         },
+        setIsDark(isDark: boolean) {
+            this.isDark = isDark
+        }
     }
 })

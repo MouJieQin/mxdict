@@ -13,7 +13,8 @@ interface Props {
   cssUrls: string[]
   jsUrls: string[]
   basePath: string
-  dictionaryRoot: string
+  dictionaryRoot: string,
+  isDark: bool
 }
 
 const props = defineProps<Props>()
@@ -30,6 +31,23 @@ const doc_content = ref('')
 function handleEntryClick(entryPath: string) {
   console.log('✅ 点击词条:', entryPath)
   emits('entry-click', entryPath)
+}
+
+function updateDarkMode(isDark: boolean) {
+  const doc = iframeRef.value?.contentDocument
+  if (!doc) return
+
+  let styleEl = doc.getElementById('dict-custom-style') as HTMLStyleElement | null
+  if (!styleEl) {
+    styleEl = doc.createElement('style')
+    styleEl.id = 'dict-custom-style'
+    doc.head.appendChild(styleEl)
+  }
+
+  styleEl.textContent = isDark ? `
+    html { filter: invert(1) hue-rotate(180deg); }
+    img { filter: invert(1) hue-rotate(180deg) contrast(1.05); }
+  ` : ''
 }
 
 // ================ 核心渲染（极速版） ================
@@ -51,37 +69,32 @@ async function renderIframe() {
   //   meta.charset = 'UTF-8'
   //   doc.head.appendChild(meta)
   // }
+  const styleEl = doc.createElement('style')
+  styleEl.id = 'dict-custom-style'
+  doc.head.appendChild(styleEl)
+  styleEl.textContent = props.isDark ? `
+    html { filter: invert(1) hue-rotate(180deg); }
+    img { filter: invert(1) hue-rotate(180deg) contrast(1.05); }
+  ` : ''
+  doc.head.appendChild(styleEl)
+
 
   const style = doc.createElement('style')
   style.textContent = `
-    // html {
-        // background: #1a1a2e !important;
-        // color: #e5e7eb !important;
-      // filter: invert(1) hue-rotate(180deg);
-    // }
     // a { color: #818cf8 !important; }
     // h1, h2, h3, h4, h5, h6 { color: #f3f4f6 !important; }
     // table { border-color: #374151 !important; }
     // th, td { border-color: #374151 !important; }
-    // /* 图片完全不动，保持原色 */
-    // img { filter: none !important; }
-      // body {
-      //     filter: invert(1) hue-rotate(180deg);
-      // }
-
-      // img {
-      //     filter: invert(1) hue-rotate(180deg) contrast(1.05);
-      // }
-      // body {
-      //  padding-left: 1rem !important;
-      //  padding-right: 1rem !important;
-      // }
-      // @media (max-width: 500px) {
-      //   body {
-      //     padding-left: 0 !important;
-      //     padding-right: 0 !important;
-      //   }
-      // }
+    // body {
+    //  padding-left: 1rem !important;
+    //  padding-right: 1rem !important;
+    // }
+    // @media (max-width: 500px) {
+    //   body {
+    //     padding-left: 0 !important;
+    //     padding-right: 0 !important;
+    //   }
+    // }
     `
   doc.head.appendChild(style)
 
@@ -214,6 +227,10 @@ function updateIframeHeight() {
 }
 
 // ================ 监听变化 ================
+watch(() => props.isDark, (dark) => {
+  updateDarkMode(dark)
+})
+
 watch(
   () => [props.html, props.basePath],
   async () => {

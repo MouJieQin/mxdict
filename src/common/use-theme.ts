@@ -19,9 +19,13 @@ export const useTheme = () => {
         const theme = systemConfigStore.systemConfig?.appearance.theme;
         if (theme) {
             if (theme === 'auto') {
-                document.documentElement.classList.toggle('dark', operationSystemTheme.value === 'dark');
+                const isDark = operationSystemTheme.value === 'dark';
+                document.documentElement.classList.toggle('dark', isDark);
+                systemConfigStore.setIsDark(isDark);
             } else {
+                const isDark = theme === 'dark';
                 document.documentElement.classList.toggle('dark', theme === 'dark');
+                systemConfigStore.setIsDark(isDark);
             }
         }
     }
@@ -35,9 +39,11 @@ export const useTheme = () => {
     const watchSystemTheme = () => {
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             operationSystemTheme.value = e.matches ? 'dark' : 'light';
+            const isDark = operationSystemTheme.value === 'dark';
             const theme = systemConfigStore.systemConfig?.appearance.theme;
+            systemConfigStore.setIsDark(isDark);
             if (theme === 'auto') {
-                document.documentElement.classList.toggle('dark', operationSystemTheme.value === 'dark');
+                document.documentElement.classList.toggle('dark', isDark);
             }
         });
     };
