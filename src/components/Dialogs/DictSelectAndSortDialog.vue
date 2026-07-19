@@ -14,7 +14,7 @@
     </div>
   </div>
   <div ref="listRef" class="dict-select-sort-dialog">
-    <div class="dict-settings-drag-cards" v-for="item in list" :key="item.id">
+    <div class="dict-settings-drag-cards" v-for="item in list" :key="item.name">
       <el-card class="dict-settings-drag-card" shadow="always" :class="{ 'is-disabled': !item.is_enabled }">
         <div class="dict-settings-drag-card-content">
           <div class="left-group">
@@ -63,7 +63,6 @@ import { SessionWebSocketService } from '@/common/session-websocket-client'
 import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { ElNotification } from 'element-plus'
 import { BsUpload } from 'vue-icons-plus/bs'
-
 
 const isTauriEnv = computed(() => {
   return props.env === ''

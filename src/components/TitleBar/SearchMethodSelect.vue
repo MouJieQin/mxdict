@@ -22,7 +22,7 @@
                     </el-dropdown-item>
                     <el-dropdown-item command="suggest_search">
                         <VscSearchFuzzy class="option-icon" size="35" />
-                        <span>建议搜索</span>
+                        <span>模糊搜索</span>
                     </el-dropdown-item>
                 </el-dropdown-menu>
             </template>
