@@ -69,6 +69,10 @@ const isTauriEnv = computed(() => {
   return props.env === ''
 })
 
+const disableDeleteButton = computed(() => {
+  return localSessionConfig.value.dictsSettingInfoName === 'default'
+})
+
 const dragOver = ref(false)
 let unlistenDragDrop: (() => void) | null = null
 
@@ -103,13 +107,19 @@ const listRef = ref<HTMLElement | null>(null)
 const localSessionConfig = ref<SessionConfig>(JSON.parse(JSON.stringify(props.sessionConfig || {})))
 const systemConfigStore = useSystemConfigStore();
 const localSystemConfig = ref<any>(JSON.parse(JSON.stringify(systemConfigStore.systemConfig)))
+const list = ref<DictSettingInfo>(localSystemConfig.value?.dict_set_options[localSessionConfig.value?.dictsSettingInfoName] || [])
 
 watch(() => systemConfigStore.systemConfig, (newVal) => {
   localSystemConfig.value = JSON.parse(JSON.stringify(newVal))
 }, { deep: true })
 
+watch(() => localSessionConfig.value.dictsSettingInfoName, async (name) => {
+  list.value = localSystemConfig.value?.dict_set_options[name] || []
+  await nextTick()
+  initSortable()  // 重新初始化拖拽
+})
+
 // 声明数组类型，兼容 Tauri 响应式
-const list = ref<DictSettingInfo>(localSystemConfig.value?.dict_set_options[localSessionConfig.value?.dictsSettingInfoName] || [])
 
 // 拖拽实例（方便销毁，避免内存泄漏）
 let sortableInstance: Sortable | null = null
@@ -135,14 +145,20 @@ const initSortable = () => {
 
     // 可选：调整 fallback 体验
     fallbackClass: 'sortable-dragging',
-    fallbackOnBody: true,
+    fallbackOnBody: false,
 
     onEnd: ({ oldIndex, newIndex }) => {
       if (oldIndex === undefined || newIndex === undefined) return
       if (oldIndex === newIndex) return
 
-      const item = list.value?.splice(oldIndex as number, 1)[0]
-      list.value?.splice(newIndex as number, 0, item as DictSettingInfo)
+      const item = list.value.splice(oldIndex as number, 1)[0]
+      list.value.splice(newIndex as number, 0, item)
+
+      // 同步回配置对象
+      const name = localSessionConfig.value.dictsSettingInfoName
+      if (name && localSystemConfig.value?.dict_set_options?.[name]) {
+        localSystemConfig.value.dict_set_options[name] = [...list.value]
+      }
     }
   })
 }
@@ -190,11 +206,16 @@ const handleCreateDictSetOption = () => {
     }
   })
     .then(({ value }) => {
+      update_system_config_if_need()
       props.webSocket?.sendCreateDictSetOption(value)
       localSessionConfig.value.dictsSettingInfoName = value
     })
     .catch(() => {
     })
+}
+
+const handleDeleteSelected = () => {
+
 }
 
 const refresh_dict_info = async () => {
@@ -225,12 +246,19 @@ watch(() => props.refreshDicsSettingsInfoFlag, async (newVal) => {
   await refresh_dict_info()
 })
 
+const update_system_config_if_need = () => {
+  if (JSON.stringify(localSystemConfig.value) !== JSON.stringify(systemConfigStore.systemConfig)) {
+    props.webSocket.sendUpdateSystemConfig(localSystemConfig.value)
+  }
+}
+
 // 弹窗打开时初始化拖拽
 watch(() => props.dictSSDialogVisible, async (newVal) => {
   if (newVal) {
     await refresh_dict_info()
   } else {
     // 关闭弹窗时保存数据
+    update_system_config_if_need()
     if (JSON.stringify(localSessionConfig.value) !== JSON.stringify(props.sessionConfig)) {
       props.webSocket?.sendSessionConfig(localSessionConfig.value)
     }
@@ -242,42 +270,47 @@ onMounted(async () => {
   if (props.dictSSDialogVisible) {
     nextTick(() => initSortable())
   }
-  // Get a handle on the current application window context
-  const webview = getCurrentWebview()
 
-  // Subscribe directly to the OS-level system file-dropping stream
-  unlistenDragDrop = await webview.onDragDropEvent((event) => {
-    switch (event.payload.type) {
-      case 'enter':
-      case 'over':
-        // Triggers when files break the visual application viewport barrier
-        dragOver.value = true
-        break
+  if (props.env === '') {
+    // Get a handle on the current application window context
+    const webview = getCurrentWebview()
 
-      case 'drop':
-        // Triggers once the user releases the files onto the app window boundary
-        dragOver.value = false
+    // Subscribe directly to the OS-level system file-dropping stream
+    unlistenDragDrop = await webview.onDragDropEvent((event) => {
+      switch (event.payload.type) {
+        case 'enter':
+        case 'over':
+          // Triggers when files break the visual application viewport barrier
+          // 判断鼠标位置是否在拖拽区域内
+          const dragArea = document.querySelector('.drag-area')?.getBoundingClientRect()
+          if (dragArea) {
+            const { x, y } = event.payload.position || { x: 0, y: 0 }
+            dragOver.value = x >= dragArea.left && x <= dragArea.right && y >= dragArea.top && y <= dragArea.bottom
+          }
+          break
+        case 'drop':
+          // Triggers once the user releases the files onto the app window boundary
+          if (dragOver.value) {
+            // event.payload.paths contains the complete array of true absolute file string paths
+            const absolutePaths = event.payload.paths
+            console.log('Absolute system paths extracted:', absolutePaths)
+            handleFileProcessing(absolutePaths)
+            dragOver.value = false
+          }
+          break
+        case 'cancel':
+          // Triggers if the user drags out of the app window without releasing the cursor
+          dragOver.value = false
+          break
 
-        // event.payload.paths contains the complete array of true absolute file string paths
-        const absolutePaths = event.payload.paths
-        console.log('Absolute system paths extracted:', absolutePaths)
-
-        // Process your collected absolute paths safely
-        handleFileProcessing(absolutePaths)
-        break
-
-      case 'cancel':
-        // Triggers if the user drags out of the app window without releasing the cursor
-        dragOver.value = false
-        break
-
-      case 'leave':
-      default:
-        // Triggers if a user exits the view boundary without letting go of the cursor
-        dragOver.value = false
-        break
-    }
-  })
+        case 'leave':
+        default:
+          // Triggers if a user exits the view boundary without letting go of the cursor
+          dragOver.value = false
+          break
+      }
+    })
+  }
 })
 
 // Always clean up window level global background listeners to prevent memory leaks

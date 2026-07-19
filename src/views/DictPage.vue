@@ -307,6 +307,7 @@ const handleWebSocketMessage = (message: any) => {
             break
         case 'system_config':
             systemConfigStore.setSystemConfig(message.data.system_config)
+            setupDicsSettingsInfo()
             console.log('system_config:', message.data.system_config)
             break;
         case 'close_fixed_window':
@@ -362,6 +363,7 @@ const handleIframeKeydown = (e: any) => {
 
 const handleSessionConfig = (message: any) => {
     sessionConfig.value = message.data.config
+    setupDicsSettingsInfo()
     if (message.data.is_right_after_connection) {
         if (envFromRoute.value === 'iwin') {
             webSocket.value?.sendFloatingWindowPinClick(sessionId.value, sessionConfig.value?.pin?.is_pinned || false)
