@@ -146,7 +146,7 @@ const dictsInfo = ref<DictsInfo>({})
 const sessionDictsSettingInfo = ref<DictsSettingInfo>([])
 const sessionConfig = ref<SessionConfig>({
     default_folder: { "id": null },
-    dictsSettingInfoName: "default",
+    dictsSettingOptionName: "default",
     default_search_method: { "method": "prefix_search" },
     pin: { "is_pinned": true }
 })
@@ -201,10 +201,10 @@ const resize_wordoptions = async () => {
 }
 
 const setupDicsSettingsInfo = () => {
-    if (!sessionConfig.value?.dictsSettingInfoName || !(sessionConfig.value.dictsSettingInfoName in systemConfigStore.systemConfig.dict_set_options)) {
-        sessionConfig.value.dictsSettingInfoName = 'default'
+    if (!sessionConfig.value?.dictsSettingOptionName || !(sessionConfig.value.dictsSettingOptionName in systemConfigStore.systemConfig.dict_set_options)) {
+        sessionConfig.value.dictsSettingOptionName = 'default'
     }
-    sessionDictsSettingInfo.value = systemConfigStore.systemConfig.dict_set_options[sessionConfig.value.dictsSettingInfoName]
+    sessionDictsSettingInfo.value = systemConfigStore.systemConfig.dict_set_options[sessionConfig.value.dictsSettingOptionName]
     refreshDicsSettingsInfoFlag.value = !refreshDicsSettingsInfoFlag.value
 }
 

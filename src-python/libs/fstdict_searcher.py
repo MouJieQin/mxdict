@@ -197,9 +197,13 @@ class FstDictSearcher:
             return [{"msg": f"词典路径 {dict_path_str} 不存在", "type": "error"}]
         if dict.is_file():
             parent = dict.parent
-            return self._add_dictionary_from_dir_2_depth(parent)
+            msgs = self._add_dictionary_from_dir_2_depth(parent)
+            UtilsBase.Config.renew_dict_set_options()
+            return msgs
         elif dict.is_dir():
-            return self._add_dictionary_from_dir_2_depth(dict)
+            msgs = self._add_dictionary_from_dir_2_depth(dict)
+            UtilsBase.Config.renew_dict_set_options()
+            return msgs
         else:
             logger.error(f"词典路径 {dict_path_str} 不是文件或目录")
             return [{"msg": f"词典路径 {dict_path_str} 不是文件或目录", "type": "error"}]

@@ -36,7 +36,7 @@ export interface SessionPin {
 
 
 export interface SessionConfig {
-    dictsSettingInfoName: string;
+    dictsSettingOptionName: string;
     default_folder: SessiondefaultFolder;
     default_search_method: SessionDefaultSearchMethod;
     pin?: SessionPin;

@@ -25,6 +25,7 @@ class Utils(UtilsBase):
         dict_dir = Utils.getDictDir(dict_name)
         Utils.removeDirIfExists(dict_dir)
         Utils.Config.removeDictInfo(dict_name)
+        Utils.Config.renew_dict_set_options()
 
     @staticmethod
     def reveal_dict_in_file_manager(dict_name: str) -> bool:

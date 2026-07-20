@@ -300,7 +300,7 @@ watch(() => props.searchHistory, () => {
     if (isHistoryTriggered.value) {
         isHistoryTriggered.value = false
         redirectHistoryWord.value = props.searchHistory[historyIndex.value].word
-        props.webSocket?.sendLookupKeyword(redirectHistoryWord.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingInfo || []), false)
+        props.webSocket?.sendLookupKeyword(redirectHistoryWord.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingOptionName), false)
     }
 })
 
