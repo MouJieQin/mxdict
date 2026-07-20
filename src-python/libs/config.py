@@ -127,7 +127,7 @@ class UtilsBase:
         @staticmethod
         def _renew_dict_set_option(old_dict_set_option: list) -> list:
             old_dict_names = []
-            default_dict_set_options = []
+            dict_set_options = []
             for item in old_dict_set_option:
                 name = item["name"]
                 if name in UtilsBase.DICT_INFO:
@@ -137,14 +137,14 @@ class UtilsBase:
                 if dict_name not in old_dict_names:
                     new_dict_names.append(dict_name)
             for name in new_dict_names:
-                default_dict_set_options.append({"name": name,
-                                                 "cover_url": f"http://localhost:5959/api/download?path={quote(UtilsBase.DICT_INFO[name]['cover'])}",
-                                                 "is_enabled": True})
+                dict_set_options.append({"name": name,
+                                         "cover_url": f"http://localhost:5959/api/download?path={quote(UtilsBase.DICT_INFO[name]['cover'])}",
+                                         "is_enabled": False})
             for item in old_dict_set_option:
                 name = item["name"]
                 if name in UtilsBase.DICT_INFO:
-                    default_dict_set_options.append(item)
-            return default_dict_set_options
+                    dict_set_options.append(item)
+            return dict_set_options
 
         @staticmethod
         def renew_dict_set_options():

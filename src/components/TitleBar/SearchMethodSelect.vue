@@ -9,19 +9,27 @@
             <template #dropdown>
                 <el-dropdown-menu>
                     <el-dropdown-item command="prefix_search">
-                        <BsSearch class="option-icon" size="35" />
+                        <el-icon size="20">
+                            <BsSearch />
+                        </el-icon>
                         <span>前缀搜索</span>
                     </el-dropdown-item>
                     <el-dropdown-item command="regex_search">
-                        <VscRegex class="option-icon" size="35" />
+                        <el-icon size="20">
+                            <VscRegex />
+                        </el-icon>
                         <span>正则搜索</span>
                     </el-dropdown-item>
                     <el-dropdown-item command="prefix_distance_search">
-                        <Fa6Searchengin class="option-icon" size="35" />
+                        <el-icon size="20">
+                            <Fa6Searchengin/>
+                        </el-icon>
                         <span>前缀距离搜索</span>
                     </el-dropdown-item>
                     <el-dropdown-item command="suggest_search">
-                        <VscSearchFuzzy class="option-icon" size="35" />
+                        <el-icon size="20">
+                            <VscSearchFuzzy />
+                        </el-icon>
                         <span>模糊搜索</span>
                     </el-dropdown-item>
                 </el-dropdown-menu>
@@ -73,11 +81,5 @@ const currentIcon = computed(() => {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-}
-
-.option-icon {
-    margin-right: 8px;
-    vertical-align: middle;
-    font-size: 20px;
 }
 </style>
