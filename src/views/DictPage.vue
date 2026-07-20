@@ -201,7 +201,7 @@ const resize_wordoptions = async () => {
 }
 
 const setupDicsSettingsInfo = () => {
-    if (!sessionConfig.value?.dictsSettingInfoName) {
+    if (!sessionConfig.value?.dictsSettingInfoName || !(sessionConfig.value.dictsSettingInfoName in systemConfigStore.systemConfig.dict_set_options)) {
         sessionConfig.value.dictsSettingInfoName = 'default'
     }
     sessionDictsSettingInfo.value = systemConfigStore.systemConfig.dict_set_options[sessionConfig.value.dictsSettingInfoName]

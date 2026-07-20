@@ -102,6 +102,8 @@ class MessageHandler:
                 "session_config": MessageHandler._handle_session_config,
                 "create_folder": MessageHandler._handle_create_folder,
                 "create_dict_set_option": MessageHandler._handle_create_dict_set_option,
+                "remove_dict_set_option": MessageHandler._handle_remove_dict_set_option,
+                "rename_dict_set_option": MessageHandler._handle_rename_dict_set_option,
                 "delete_folder": MessageHandler._handle_delete_folder,
                 "update_to_anki": MessageHandler._handle_update_to_anki,
                 "cancel_anki_update": MessageHandler._handle_cancel_anki_update,
@@ -248,6 +250,23 @@ class MessageHandler:
     ):
         option_name = message["data"]["option_name"]
         Utils.Config.create_dict_set_option(option_name)
+        await SessionManager.send_system_config()
+
+    @staticmethod
+    async def _handle_remove_dict_set_option(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        option_name = message["data"]["option_name"]
+        Utils.Config.remove_dict_set_option(option_name)
+        await SessionManager.send_system_config()
+
+    @staticmethod
+    async def _handle_rename_dict_set_option(
+        websocket: WebSocket, session_id: int, connection_id: int, message: dict
+    ):
+        old_option_name = message["data"]["old_option_name"]
+        new_option_name = message["data"]["new_option_name"]
+        Utils.Config.rename_dict_set_option(old_option_name, new_option_name)
         await SessionManager.send_system_config()
 
     @staticmethod

@@ -105,6 +105,26 @@ class UtilsBase:
             return False
 
         @staticmethod
+        def remove_dict_set_option(option_name: str) -> bool:
+            dict_set_options: dict = UtilsBase.CONFIG["dict_set_options"]
+            if option_name != 'default' and option_name in dict_set_options:
+                del dict_set_options[option_name]
+                UtilsBase.Config.syncConfig()
+                return True
+            return False
+
+        @staticmethod
+        def rename_dict_set_option(old_option_name: str, new_option_name: str) -> bool:
+            dict_set_options: dict = UtilsBase.CONFIG["dict_set_options"]
+            if old_option_name != 'default' and old_option_name in dict_set_options:
+                new_option = json.loads(json.dumps(dict_set_options[old_option_name], ensure_ascii=False))
+                del dict_set_options[old_option_name]
+                dict_set_options[new_option_name] = new_option
+                UtilsBase.Config.syncConfig()
+                return True
+            return False
+
+        @staticmethod
         def _renew_dict_set_option(old_dict_set_option: list) -> list:
             old_dict_names = []
             default_dict_set_options = []

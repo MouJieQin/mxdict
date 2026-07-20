@@ -101,6 +101,25 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
+    sendRemoveDictSetOption(optionName: string) {
+        this._send(
+            'remove_dict_set_option',
+            {
+                option_name: optionName
+            }
+        )
+    }
+
+    sendRenameDictSetOption(oldOptionName: string, newOptionName: string) {
+        this._send(
+            'rename_dict_set_option',
+            {
+                old_option_name: oldOptionName,
+                new_option_name: newOptionName
+            }
+        )
+    }
+
     sendDeleteFolder(folderId: number) {
         this._send(
             'delete_folder',

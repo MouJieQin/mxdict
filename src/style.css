@@ -206,6 +206,14 @@ body::-webkit-scrollbar-thumb {
     font-size: 15px !important;
 }
 
+.dict-set-options {
+    margin: 20px auto;
+    max-width: 960px;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--el-box-shadow);
+}
+
 .dict-set-options-control {
     margin: 20px auto;
     max-width: 960px;
@@ -498,17 +506,6 @@ el-tabs__item {
     color: var(--el-text-color-danger, #f56c6c);
     font-size: 13px;
 }
-
-/* 隐藏原生下拉框，只保留弹出功能 */
-/* defined in vue */
-
-/* .hidden-select {
-    position: absolute !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    height: 0 !important;
-    pointer-events: none !important;
-} */
 
 /* 搜索框整体样式 */
 .floating-window-search {

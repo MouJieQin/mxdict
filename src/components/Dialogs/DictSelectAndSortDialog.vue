@@ -3,49 +3,53 @@
     <BsUpload size="35" />
     拖拽(.fstdx .fstdd)或(.mdx .mdd)文件到此
   </div>
-  <div class="dict-set-options-control">
-    <div style="text-align: center;">
-      <el-button type="primary" :icon="Plus" @click="handleCreateDictSetOption"></el-button>
-      <el-button type="danger" :icon="Delete" @click="handleDeleteSelected" :disabled="disableDeleteButton"></el-button>
-      <el-select v-model="localSessionConfig.dictsSettingInfoName" filterable placeholder="Select dict settings option"
-        style="margin-left: 20px;max-width: 240px;">
-        <el-option v-for="(_, name) in localSystemConfig.dict_set_options" :key="name" :label="name" :value="name" />
-      </el-select>
+  <div class="dict-set-options">
+    <div class="dict-set-options-control">
+      <div style="text-align: center;">
+        <el-button type="primary" :icon="Plus" @click="handleCreateDictSetOption"></el-button>
+        <el-button type="danger" :icon="Delete" @click="handleDeleteSelected"
+          :disabled="disableDeleteButton"></el-button>
+        <el-button :icon="Edit" @click="handleRenameDictSetOption" :disabled="disableEditButton"></el-button>
+        <el-select v-model="localSessionConfig.dictsSettingInfoName" filterable
+          placeholder="Select dict settings option" style="margin-left: 20px;max-width: 240px;">
+          <el-option v-for="(_, name) in localSystemConfig.dict_set_options" :key="name" :label="name" :value="name" />
+        </el-select>
+      </div>
     </div>
-  </div>
-  <div ref="listRef" class="dict-select-sort-dialog">
-    <div class="dict-settings-drag-cards" v-for="item in list" :key="item.name">
-      <el-card class="dict-settings-drag-card" shadow="always" :class="{ 'is-disabled': !item.is_enabled }">
-        <div class="dict-settings-drag-card-content">
-          <div class="left-group">
-            <el-image :src="item.cover_url" class="icon">
-              <template #error>
-                <BiSolidBookBookmark size="35" />
-              </template>
-            </el-image>
-            <span class="name">{{ item.name }}</span>
+    <div ref="listRef" class="dict-select-sort-dialog">
+      <div class="dict-settings-drag-cards" v-for="item in list" :key="item.name">
+        <el-card class="dict-settings-drag-card" shadow="always" :class="{ 'is-disabled': !item.is_enabled }">
+          <div class="dict-settings-drag-card-content">
+            <div class="left-group">
+              <el-image :src="item.cover_url" class="icon">
+                <template #error>
+                  <BiSolidBookBookmark size="35" />
+                </template>
+              </el-image>
+              <span class="name">{{ item.name }}</span>
+            </div>
+            <div class="right-group">
+              <el-switch v-model="item.is_enabled" style="margin-right: 30px;" />
+              <el-dropdown placement="bottom-end" @command="handleDropdownCommand">
+                <el-icon style="align-items: center;">
+                  <MoreFilled />
+                </el-icon>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item :command="{ cmd: 'showInFolder', name: item.name }">在文件夹中显示</el-dropdown-item>
+                    <el-dropdown-item :command="{ cmd: 'delete', name: item.name }">
+                      <el-icon>
+                        <Delete style="color: #FF4949;" />
+                      </el-icon>
+                      <span>删除</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </div>
-          <div class="right-group">
-            <el-switch v-model="item.is_enabled" style="margin-right: 30px;" />
-            <el-dropdown placement="bottom-end" @command="handleDropdownCommand">
-              <el-icon style="align-items: center;">
-                <MoreFilled />
-              </el-icon>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item :command="{ cmd: 'showInFolder', name: item.name }">在文件夹中显示</el-dropdown-item>
-                  <el-dropdown-item :command="{ cmd: 'delete', name: item.name }">
-                    <el-icon>
-                      <Delete style="color: #FF4949;" />
-                    </el-icon>
-                    <span>删除</span>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-        </div>
-      </el-card>
+        </el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -69,6 +73,10 @@ const isTauriEnv = computed(() => {
 })
 
 const disableDeleteButton = computed(() => {
+  return localSessionConfig.value.dictsSettingInfoName === 'default'
+})
+
+const disableEditButton = computed(() => {
   return localSessionConfig.value.dictsSettingInfoName === 'default'
 })
 
@@ -113,12 +121,11 @@ watch(() => systemConfigStore.systemConfig, (newVal) => {
 }, { deep: true })
 
 watch(() => localSessionConfig.value.dictsSettingInfoName, async (name) => {
+  update_system_config_if_need()
   list.value = localSystemConfig.value?.dict_set_options[name] || []
   await nextTick()
   initSortable()  // 重新初始化拖拽
 })
-
-// 声明数组类型，兼容 Tauri 响应式
 
 // 拖拽实例（方便销毁，避免内存泄漏）
 let sortableInstance: Sortable | null = null
@@ -202,19 +209,63 @@ const handleCreateDictSetOption = () => {
       if (value in dict_set_options) {
         return "该名字已存在"
       }
+      if (value.lenght > 30) {
+        return "不能超过30个字符"
+      }
     }
   })
     .then(({ value }) => {
       update_system_config_if_need()
       props.webSocket?.sendCreateDictSetOption(value)
       localSessionConfig.value.dictsSettingInfoName = value
+      update_session_config_if_need()
+    })
+    .catch(() => {
+    })
+}
+
+const handleRenameDictSetOption = () => {
+  ElMessageBox.prompt('请重命名词典设置可选项的名字', 'Tip', {
+    confirmButtonText: 'OK',
+    cancelButtonText: 'Cancel',
+    inputValue: localSessionConfig.value.dictsSettingInfoName,
+    inputValidator: (value: string) => {
+      const dict_set_options: {} = localSystemConfig.value?.dict_set_options;
+      if (value in dict_set_options) {
+        return "该名字已存在"
+      }
+      if (value.lenght > 30) {
+        return "不能超过30个字符"
+      }
+    }
+  })
+    .then(({ value }) => {
+      update_system_config_if_need()
+      props.webSocket?.sendRenameDictSetOption(localSessionConfig.value.dictsSettingInfoName, value)
+      localSessionConfig.value.dictsSettingInfoName = value
+      update_session_config_if_need()
     })
     .catch(() => {
     })
 }
 
 const handleDeleteSelected = () => {
-
+  ElMessageBox.confirm(
+    `The dictioary setting options 「${localSessionConfig.value.dictsSettingInfoName}」 will be deleted. Continue?`,
+    'Warning',
+    {
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Cancel',
+      type: 'warning',
+      center: true,
+    }
+  )
+    .then(() => {
+      props.webSocket?.sendRemoveDictSetOption(localSessionConfig.value.dictsSettingInfoName)
+      localSessionConfig.value.dictsSettingInfoName = 'default'
+    })
+    .catch(() => {
+    })
 }
 
 const refresh_dict_info = async () => {
@@ -251,6 +302,12 @@ const update_system_config_if_need = () => {
   }
 }
 
+const update_session_config_if_need = () => {
+  if (JSON.stringify(localSessionConfig.value) !== JSON.stringify(props.sessionConfig)) {
+    props.webSocket.sendSessionConfig(localSessionConfig.value)
+  }
+}
+
 // 弹窗打开时初始化拖拽
 watch(() => props.dictSSDialogVisible, async (newVal) => {
   if (newVal) {
@@ -258,9 +315,7 @@ watch(() => props.dictSSDialogVisible, async (newVal) => {
   } else {
     // 关闭弹窗时保存数据
     update_system_config_if_need()
-    if (JSON.stringify(localSessionConfig.value) !== JSON.stringify(props.sessionConfig)) {
-      props.webSocket?.sendSessionConfig(localSessionConfig.value)
-    }
+    update_session_config_if_need()
   }
 }, { deep: true })
 
