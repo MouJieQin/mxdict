@@ -326,7 +326,7 @@ const handleWebSocketMessage = (message: any) => {
 }
 
 const getDictIcon = (dictName: string) => {
-    const item = sessionConfig.value?.dictsSettingInfo.find((item: any) => item.name === dictName)
+    const item = sessionDictsSettingInfo.value?.find((item: any) => item.name === dictName)
     return item ? item.cover_url : ''
 }
 
