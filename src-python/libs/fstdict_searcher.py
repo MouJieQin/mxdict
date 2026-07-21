@@ -267,7 +267,8 @@ class FstDictSearcher:
         dict_names: Optional[list[str]] = None,
         limit=20,
     ):
-        use_dicts = dict_names or self._all_dict_names
+        # use_dicts = dict_names or self._all_dict_names
+        use_dicts = dict_names
         if search_method == "prefix_search":
             # calculate the time cost of predictive_search
             start_time = time.time()
