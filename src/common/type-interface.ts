@@ -34,14 +34,18 @@ export interface SessionPin {
     is_pinned: boolean;
 }
 
+export interface SessionNameId {
+    id: number;
+    name: string;
+}
 
 export interface SessionConfig {
+    name: string;
     dictsSettingOptionName: string;
     default_folder: SessiondefaultFolder;
     default_search_method: SessionDefaultSearchMethod;
     pin?: SessionPin;
 }
-
 export interface FolderInfo {
     id: number;
     name: string;

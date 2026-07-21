@@ -32,14 +32,60 @@
                 <el-button :icon="Setting" text id="titlebar-setting-button"
                     @click="settingDialogVisible = !settingDialogVisible" class="floating-window-titlebar-button"
                     size="small" />
+
+                <el-dropdown id="titlebar-sessions-button" trigger="click" placement="bottom-end"
+                    class="floating-window-titlebar-button" @command="handleSessionCommand">
+                    <el-button :icon="PiUserSwitch" text size="small" style="font-size: 15px;" />
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <div v-for="item in props.sessionsNameId" :key="item.id">
+                                <el-dropdown-item v-if="item.id === sessionId"
+                                    style="background-color: var(--el-color-primary-light-8) !important">
+                                    <el-icon style="color:var(--el-color-primary)" size="25">
+                                        <BiUserCheck />
+                                    </el-icon>
+                                    <span>{{ item.name }}</span>
+                                </el-dropdown-item>
+                            </div>
+
+                            <div v-for="item in props.sessionsNameId" :key="item.id">
+                                <el-dropdown-item v-if="item.id != sessionId" :command="{ cmd: 'switch', id: item.id }">
+                                    <el-icon>
+                                        <BiUser />
+                                    </el-icon>
+                                    <span>{{ item.name }}</span>
+                                </el-dropdown-item>
+                            </div>
+                            <el-dropdown-item :command="{ cmd: 'create', id: -1 }">
+                                <el-icon>
+                                    <BiUserPlus style="color: var(--el-color-primary);" />
+                                </el-icon>
+                                <span>创建新的Session</span>
+                            </el-dropdown-item>
+                            <el-dropdown-item :command="{ cmd: 'rename', id: -1 }">
+                                <el-icon>
+                                    <LiaUserEditSolid style="color: var(--el-color-success);" />
+                                </el-icon>
+                                <span>编辑当前Session</span>
+                            </el-dropdown-item>
+                            <el-dropdown-item :command="{ cmd: 'remove', id: -1 }">
+                                <el-icon>
+                                    <BiUserMinus style="color: var(--el-color-danger);" />
+                                </el-icon>
+                                <span>移除当前Session</span>
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+
                 <el-button v-if="props.env === 'iwin'" :icon="props.isPinned ? BsPinAngleFill : BsPin" text
                     @click="handlePinClick" class="floating-window-titlebar-button" size="small" />
             </el-button-group>
         </div>
     </div>
 
-    <el-dialog v-model="noteDialogVisible" :title="'「' + keywordEditingNote + '」' + '的笔记（markdown）'" width="500" align-center
-        draggable :close-on-click-modal="false">
+    <el-dialog v-model="noteDialogVisible" :title="'「' + keywordEditingNote + '」' + '的笔记（markdown）'" width="500"
+        align-center draggable :close-on-click-modal="false">
         <el-input class="note-content-input" v-model="noteContent" autocomplete="off" type="textarea"
             :autosize="{ minRows: 5, maxRows: 9 }" />
         <template #footer>
@@ -67,7 +113,7 @@
     </el-dialog>
     <el-dialog v-model="settingDialogVisible" fullscreen>
         <Settings :webSocket="props.webSocket" :settingDialogVisible="settingDialogVisible"
-            :sessionConfig="props.sessionConfig" :folderWords="props.folderWords" :ankiProgress="ankiProgress" 
+            :sessionConfig="props.sessionConfig" :folderWords="props.folderWords" :ankiProgress="ankiProgress"
             @update-visible="(visible) => settingDialogVisible = visible">
         </Settings>
     </el-dialog>
@@ -82,21 +128,25 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted, computed, onUnmounted } from 'vue'
 import type { PropType } from 'vue'
+import type { DropdownInstance } from 'element-plus'
 import { SessionWebSocketService } from '@/common/session-websocket-client'
 import {
     BsPin, BsPinAngleFill, BsHeartFill, BsHeart,
 } from 'vue-icons-plus/bs'
+import { BiUserCheck, BiUser, BiUserPlus, BiUserMinus } from 'vue-icons-plus/bi'
+import { LiaUserEditSolid } from 'vue-icons-plus/lia'
+import { PiUserSwitch } from 'vue-icons-plus/Pi'
 import { ImBooks } from 'vue-icons-plus/im'
 import WordOptionsAutoComplete from '@/components/TitleBar/WordOptionsAutoComplete.vue'
 import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
 import Settings from '@/views/Settings.vue'
 import FavoriteWords from '@/components/Dialogs/FavoriteWords.vue'
-import { type SessionConfig } from '@/common/type-interface'
-import { getDictSettingsForLookup } from '@/common/utility'
+import { getDictSettingsForLookup, getDefaultSessionConfig } from '@/common/utility'
 import { Setting, Edit, Delete, ArrowLeftBold, ArrowRightBold } from '@element-plus/icons-vue'
 import { useFolderConfigStore } from '@/stores/stores'
-import type { WordInfoWithLastSearch, FolderWords } from '@/common/type-interface'
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import type { WordInfoWithLastSearch, FolderWords, SessionNameId, SessionConfig } from '@/common/type-interface'
+import { useRouter } from 'vue-router'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 
 const props = defineProps({
     webSocket: {
@@ -111,6 +161,11 @@ const props = defineProps({
         type: String,
         required: true,
         default: '',
+    },
+    sessionsNameId: {
+        type: Array as PropType<SessionNameId[]>,
+        required: true,
+        default: () => [],
     },
     sessionConfig: {
         type: Object as () => SessionConfig,
@@ -186,7 +241,9 @@ const props = defineProps({
 const emits = defineEmits<{
     (e: 'change:keyword', keyword: string): void
 }>()
-
+const router = useRouter()
+const sessionsMenuVisble = ref(false)
+const dropdownSessions = ref<DropdownInstance>()
 const tauriAppWindow = ref<any | null>(null)
 const preventDrag = ref(false)
 const redirectHistoryWord = ref('')
@@ -201,6 +258,19 @@ const noteContent = ref(props.noteContent)
 const historyIndex = ref(-1)
 const isHistoryTriggered = ref(false)
 
+
+const handleSessionCommand = (command: { cmd: string, id: number }) => {
+    if (command.cmd === 'switch') {
+        window.location.href = `http://localhost:9595/#/dict/${command.id}?env=${props.env}`
+        window.location.reload()
+    } else if (command.cmd === 'create') {
+
+    }
+    else if (command.cmd === 'edit') {
+    }
+    else if (command.cmd === 'remove') {
+    }
+}
 
 const handleDeleteNote = () => {
     props.webSocket?.sendDeleteWordNote(keywordEditingNote.value)
@@ -224,7 +294,7 @@ watch(() => noteDialogVisible.value, (newVal) => {
         keywordEditingNote.value = props.lastSearchKeyword
         noteContent.value = props.noteContent
         preventDrag.value = true
-    }else{
+    } else {
         preventDrag.value = false
     }
     props.webSocket?.sendNoteIsEditing(newVal)
@@ -379,3 +449,8 @@ onUnmounted(() => {
 })
 
 </script>
+<!-- <style scoped>
+:deep(.el-dropdown-item) {
+    background-color: aqua;
+}
+</style> -->

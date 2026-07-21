@@ -1,4 +1,4 @@
-import type { DictSettingInfo } from '@/common/type-interface';
+import type { DictSettingInfo, SessionConfig } from '@/common/type-interface';
 import { useSystemConfigStore } from '@/stores/stores'
 const systemConfigStore = useSystemConfigStore();
 
@@ -11,5 +11,17 @@ const getDictSettingsForLookup = (dictsSettingOptionName: string) => {
     return dictnames
 }
 
+const getDefaultSessionConfig = (sessionName: string) => {
 
-export { getDictSettingsForLookup }
+    let sessionConfig: SessionConfig = {
+        name: sessionName,
+        default_folder: { "id": null },
+        dictsSettingOptionName: "default",
+        default_search_method: { "method": "prefix_search" },
+        pin: { "is_pinned": true }
+    }
+    return sessionConfig
+}
+
+
+export { getDictSettingsForLookup, getDefaultSessionConfig }

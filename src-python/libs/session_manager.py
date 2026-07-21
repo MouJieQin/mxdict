@@ -76,7 +76,7 @@ class SessionManager:
         )
 
     @staticmethod
-    async def send_system_config():
+    async def broadcast_all_system_config():
         """发送系统配置到SPA"""
         msg = {
             "type": "system_config",
@@ -85,6 +85,21 @@ class SessionManager:
             },
         }
         print(msg)
+        await SessionManager.broadcast_all(json.dumps(msg))
+
+    @staticmethod
+    async def broadcast_all_sessions_id_name():
+        sessions = Utils.db.get_all_sessions()
+        sessions_name_id = []
+        for session in sessions:
+            if "name" in session["config"]:
+                sessions_name_id.append({"id": session["id"], "name": session["config"]["name"]})
+            else:
+                sessions_name_id.append({"id": session["id"], "name": str(session["id"])})
+        msg = {
+            "type": "sessions_name_id",
+            "data": {"sessions_name_id": sessions_name_id},
+        }
         await SessionManager.broadcast_all(json.dumps(msg))
 
     @staticmethod

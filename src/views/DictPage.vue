@@ -3,8 +3,8 @@
         <el-header height="var(--header-height)" id="fstdict-header" class="fstdict-header">
             <Titlebar :webSocket="webSocket as SessionWebSocketService" :sessionId="sessionId" :env="envFromRoute"
                 :isWordFavorited="isWordFavorited" :sessionConfig="sessionConfig as SessionConfig"
-                :folderWords="folderWords" :leftHistory="leftHistory" :searchHistory="searchHistory"
-                :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
+                :sessionsNameId="sessionsNameId" :folderWords="folderWords" :leftHistory="leftHistory"
+                :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
                 :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
                 :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
                 :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" :addDictMsgs="addDictMsgs"
@@ -119,8 +119,9 @@ import { SessionWebSocketService, useSessionWebSocket } from '@/common/session-w
 import Titlebar from '@/components/TitleBar/TitleBar.vue'
 import WordOptions from '@/components/WordOptions.vue'
 import DictIframe from '@/components/DictIframe.vue';
-import type { DictsInfo, SessionConfig, DictsSettingInfo, WordInfoWithFavoriteAt, FolderWords, WordInfoWithLastSearch } from '@/common/type-interface'
+import type { DictsInfo, SessionNameId, SessionConfig, DictsSettingInfo, WordInfoWithFavoriteAt, FolderWords, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useFolderConfigStore, useSystemConfigStore } from '@/stores/stores'
+import { getDefaultSessionConfig } from '@/common/utility'
 import MarkdownIt from 'markdown-it'
 const md = new MarkdownIt(
     {
@@ -144,12 +145,8 @@ const envFromRoute = ref<string>(route.query.env as string || '')
 const redirectWord = ref<string>('')
 const dictsInfo = ref<DictsInfo>({})
 const sessionDictsSettingInfo = ref<DictsSettingInfo>([])
-const sessionConfig = ref<SessionConfig>({
-    default_folder: { "id": null },
-    dictsSettingOptionName: "default",
-    default_search_method: { "method": "prefix_search" },
-    pin: { "is_pinned": true }
-})
+const sessionsNameId = ref<SessionNameId[]>([])
+const sessionConfig = ref<SessionConfig>(getDefaultSessionConfig('default'))
 const refreshDicsSettingsInfoFlag = ref<boolean>(false)
 const lookupKeywordResult = ref<any>(null)
 const wordOptions = ref<string[]>([])
@@ -238,12 +235,12 @@ onUnmounted(() => {
     // window.removeEventListener('scroll', handleScroll)
 })
 
-router.beforeEach(async (__, _, next) => {
+router.beforeEach(async (to, from) => {
     // 关闭 WebSocket
     webSocket.value?.close()
-    next()
+    // 返回 true 代表正常放行路由跳转
+    return true
 })
-
 onBeforeUnmount(() => {
     document.title = 'FstDict'
 })
@@ -286,6 +283,10 @@ const handleWebSocketMessage = (message: any) => {
             handleSessionConfig(message)
             console.log('session_config:', sessionConfig.value)
             break
+        case 'sessions_name_id':
+            sessionsNameId.value = message.data.sessions_name_id
+            console.log('sessions_name_id:', sessionsNameId.value)
+            break
         case 'toggle_floating_pin':
             handleToggleFloatPin(message)
             break
@@ -308,7 +309,6 @@ const handleWebSocketMessage = (message: any) => {
         case 'system_config':
             systemConfigStore.setSystemConfig(message.data.system_config)
             setupDicsSettingsInfo()
-            console.log('system_config:', message.data.system_config)
             break;
         case 'close_fixed_window':
             handleCloseFixedWindow(message)

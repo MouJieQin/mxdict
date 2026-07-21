@@ -519,6 +519,9 @@ el-tabs__item {
     #titlebar-dictss-button {
         display: none;
     }
+    #titlebar-sessions-button {
+        display: none;
+    }
     #titlebar-history-back-button {
         display: none;
     }

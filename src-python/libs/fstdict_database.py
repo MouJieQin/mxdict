@@ -159,6 +159,10 @@ class FstDictDatabase:
                 (json.dumps(config_config, ensure_ascii=False), session_id),
             )
 
+    def get_all_sessions(self) -> List[Dict]:
+        cursor = self.conn.execute("SELECT * FROM sessions ORDER BY id")
+        return [dict({"id": row["id"], "config": json.loads(row["config"])}) for row in cursor.fetchall()]
+
     # ======================== 单词核心操作 ========================
     def get_or_create_word(self, word: str) -> int:
         """

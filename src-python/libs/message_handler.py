@@ -250,7 +250,7 @@ class MessageHandler:
     ):
         option_name = message["data"]["option_name"]
         Utils.Config.create_dict_set_option(option_name)
-        await SessionManager.send_system_config()
+        await SessionManager.broadcast_all_system_config()
 
     @staticmethod
     async def _handle_remove_dict_set_option(
@@ -258,7 +258,7 @@ class MessageHandler:
     ):
         option_name = message["data"]["option_name"]
         Utils.Config.remove_dict_set_option(option_name)
-        await SessionManager.send_system_config()
+        await SessionManager.broadcast_all_system_config()
 
     @staticmethod
     async def _handle_rename_dict_set_option(
@@ -267,7 +267,7 @@ class MessageHandler:
         old_option_name = message["data"]["old_option_name"]
         new_option_name = message["data"]["new_option_name"]
         Utils.Config.rename_dict_set_option(old_option_name, new_option_name)
-        await SessionManager.send_system_config()
+        await SessionManager.broadcast_all_system_config()
 
     @staticmethod
     async def _handle_delete_folder(
@@ -329,7 +329,7 @@ class MessageHandler:
     async def _handle_update_system_config(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
         system_config = message["data"]["system_config"]
         Utils.Config.init_config(system_config)
-        await SessionManager.send_system_config()
+        await SessionManager.broadcast_all_system_config()
 
     @staticmethod
     async def _handle_folder_config(
