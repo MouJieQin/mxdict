@@ -135,7 +135,7 @@ import {
 } from 'vue-icons-plus/bs'
 import { BiUserCheck, BiUser, BiUserPlus, BiUserMinus } from 'vue-icons-plus/bi'
 import { LiaUserEditSolid } from 'vue-icons-plus/lia'
-import { PiUserSwitch } from 'vue-icons-plus/Pi'
+import { PiUserSwitch } from 'vue-icons-plus/pi'
 import { ImBooks } from 'vue-icons-plus/im'
 import WordOptionsAutoComplete from '@/components/TitleBar/WordOptionsAutoComplete.vue'
 import DictSelectAndSortDialog from '@/components/Dialogs/DictSelectAndSortDialog.vue'
