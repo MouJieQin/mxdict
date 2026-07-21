@@ -1,7 +1,13 @@
 <template>
   <div v-if="isTauriEnv" class="drag-area" :class="{ active: dragOver }">
     <BsUpload size="35" />
-    拖拽(.fstdx .fstdd)或(.mdx .mdd)文件到此
+    <div>
+      拖拽(.fstdx .fstdd)或(.mdx .mdd)文件到此
+    </div>
+    <div>
+      您可以访问论坛 <el-link href="https://forum.freemdict.com" type="primary" target="_blank">freemdict</el-link>，或直接从 <el-link
+        href="https://downloads.freemdict.com" type="primary" target="_blank">download</el-link> 下载词典资源
+    </div>
   </div>
   <div class="dict-set-options">
     <div class="dict-set-options-control">

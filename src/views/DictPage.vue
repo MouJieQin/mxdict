@@ -68,6 +68,8 @@
                         <div v-show="!keyword && !hasResultLastSearch">
                             <p class="dict-homepage-type-p">Type a word to look up in…</p>
                             <br />
+                            <div v-if="showAddDictInfo" class="dict-homepage-type-p">
+                                您的词典库没有任何激活的词典，请点击右上角词库图标激活词典或添加新词典</div>
                             <div v-for="dictSetting in sessionDictsSettingInfo" :key="dictSetting.name">
                                 <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
                                     dictSetting.name }}</p>
@@ -76,6 +78,8 @@
                         <div v-show="keyword && lastSearchKeyword && !hasResultLastSearch">
                             <p class="dict-homepage-type-p">No results found for 「{{ lastSearchKeyword }}」 in…</p>
                             <br />
+                            <div v-if="showAddDictInfo" class="dict-homepage-type-p">
+                                您的词典库没有任何激活的词典，请点击右上角词库图标激活词典或添加新词典</div>
                             <div v-for="dictSetting in sessionDictsSettingInfo" :key="dictSetting.name">
                                 <p class="dict-homepage-dict-p" v-show="dictSetting.is_enabled">{{
                                     dictSetting.name }}</p>
@@ -121,7 +125,7 @@ import WordOptions from '@/components/WordOptions.vue'
 import DictIframe from '@/components/DictIframe.vue';
 import type { DictsInfo, SessionNameId, SessionConfig, DictsSettingInfo, WordInfoWithFavoriteAt, FolderWords, WordInfoWithLastSearch } from '@/common/type-interface'
 import { useFolderConfigStore, useSystemConfigStore } from '@/stores/stores'
-import { getDefaultSessionConfig } from '@/common/utility'
+import { getDefaultSessionConfig, getDictSettingsForLookup } from '@/common/utility'
 import MarkdownIt from 'markdown-it'
 const md = new MarkdownIt(
     {
@@ -164,12 +168,18 @@ const searchHistory = ref<WordInfoWithLastSearch[]>([])
 const iframeKeydownEvent = ref<any | null>(null)
 const ankiProgress = ref<any>({})
 const addDictMsgs = ref<any>([])
+const showAddDictInfo = ref(false)
 
 const isFloatingWindowPinned = ref<boolean>(sessionConfig.value?.pin?.is_pinned || false)
 
 watch(() => sessionConfig.value?.pin?.is_pinned, (newVal) => {
     isFloatingWindowPinned.value = newVal
 })
+
+const setShowAddDictInfo = () => {
+    const item = sessionDictsSettingInfo.value?.find((item: any) => item.is_enabled === true)
+    showAddDictInfo.value = item ? false : true;
+}
 
 // 1. Sync manual user dragging changes back to the reactive ref state
 const handlePanelResize = (size: number) => {
@@ -202,6 +212,7 @@ const setupDicsSettingsInfo = () => {
         sessionConfig.value.dict_setting_option_name = 'default'
     }
     sessionDictsSettingInfo.value = systemConfigStore.systemConfig.dict_set_options[sessionConfig.value.dict_setting_option_name]
+    setShowAddDictInfo()
     refreshDicsSettingsInfoFlag.value = !refreshDicsSettingsInfoFlag.value
 }
 
