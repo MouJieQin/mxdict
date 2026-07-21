@@ -260,29 +260,76 @@ const historyIndex = ref(-1)
 const isHistoryTriggered = ref(false)
 
 
-const handleSessionCommand = (command: { cmd: string, id: number }) => {
-    if (command.cmd === 'switch') {
-        window.location.href = `http://localhost:9595/#/dict/${command.id}?env=${props.env}`
-        window.location.reload()
-    } else if (command.cmd === 'create') {
-        ElMessageBox.prompt('请输入新的Session名字', 'Tip', {
+const handCreateSession = () => {
+    ElMessageBox.prompt('请输入新的Session名字', 'Tip', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        inputValidator: (value: string) => {
+            if (value.length > 30) {
+                return "不能超过30个字符"
+            }
+        }
+    })
+        .then(({ value }) => {
+            props.webSocket?.sendCreateSession(getDefaultSessionConfig(value))
+        })
+        .catch(() => {
+        })
+}
+
+const handRenameSession = () => {
+    ElMessageBox.prompt('重命名当前Session名字', 'Tip', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        inputValidator: (value: string) => {
+            if (value.length > 30) {
+                return "不能超过30个字符"
+            }
+        }
+    })
+        .then(({ value }) => {
+            props.webSocket?.sendRenameSession(value)
+        })
+        .catch(() => {
+        })
+}
+
+const handRemoveSession = () => {
+    ElMessageBox.confirm(
+        `Are you sure you want to remove the Current Session?`,
+        'Warning',
+        {
             confirmButtonText: 'OK',
             cancelButtonText: 'Cancel',
-            inputValidator: (value: string) => {
-                if (value.length > 30) {
-                    return "不能超过30个字符"
-                }
-            }
+            type: 'warning',
+            center: true,
+        }
+    )
+        .then(() => {
+            props.webSocket?.sendRemoveSession(props.SessionId)
+            redirectSession(1)
         })
-            .then(({ value }) => {
-                props.webSocket?.sendCreateSession(getDefaultSessionConfig(value))
-            })
-            .catch(() => {
-            })
+        .catch(() => {
+        })
+}
+
+const redirectSession = (sessionId: number) => {
+    window.location.href = `http://localhost:9595/#/dict/${sessionId}?env=${props.env}`
+    window.location.reload()
+}
+
+
+const handleSessionCommand = (command: { cmd: string, id: number }) => {
+    if (command.cmd === 'switch') {
+        redirectSession(command.id)
+    } else if (command.cmd === 'create') {
+        handCreateSession()
     }
-    else if (command.cmd === 'edit') {
+    else if (command.cmd === 'rename') {
+        handRenameSession()
     }
     else if (command.cmd === 'remove') {
+        handRemoveSession()
     }
 }
 
@@ -384,7 +431,7 @@ watch(() => props.searchHistory, () => {
     if (isHistoryTriggered.value) {
         isHistoryTriggered.value = false
         redirectHistoryWord.value = props.searchHistory[historyIndex.value].word
-        props.webSocket?.sendLookupKeyword(redirectHistoryWord.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingOptionName), false)
+        props.webSocket?.sendLookupKeyword(redirectHistoryWord.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dict_setting_option_name), false)
     }
 })
 

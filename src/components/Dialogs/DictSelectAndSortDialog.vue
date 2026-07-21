@@ -10,7 +10,7 @@
         <el-button type="danger" :icon="Delete" @click="handleDeleteSelected"
           :disabled="disableDeleteButton"></el-button>
         <el-button :icon="Edit" @click="handleRenameDictSetOption" :disabled="disableEditButton"></el-button>
-        <el-select v-model="localSessionConfig.dictsSettingOptionName" filterable
+        <el-select v-model="localSessionConfig.dict_setting_option_name" filterable
           placeholder="Select dict settings option" style="margin-left: 20px;max-width: 240px;">
           <el-option v-for="(_, name) in localSystemConfig.dict_set_options" :key="name" :label="name" :value="name" />
         </el-select>
@@ -73,11 +73,11 @@ const isTauriEnv = computed(() => {
 })
 
 const disableDeleteButton = computed(() => {
-  return localSessionConfig.value.dictsSettingOptionName === 'default'
+  return localSessionConfig.value.dict_setting_option_name === 'default'
 })
 
 const disableEditButton = computed(() => {
-  return localSessionConfig.value.dictsSettingOptionName === 'default'
+  return localSessionConfig.value.dict_setting_option_name === 'default'
 })
 
 const dragOver = ref(false)
@@ -114,13 +114,13 @@ const listRef = ref<HTMLElement | null>(null)
 const localSessionConfig = ref<SessionConfig>(JSON.parse(JSON.stringify(props.sessionConfig || {})))
 const systemConfigStore = useSystemConfigStore();
 const localSystemConfig = ref<any>(JSON.parse(JSON.stringify(systemConfigStore.systemConfig)))
-const list = ref<DictSettingInfo>(localSystemConfig.value?.dict_set_options[localSessionConfig.value?.dictsSettingOptionName] || [])
+const list = ref<DictSettingInfo>(localSystemConfig.value?.dict_set_options[localSessionConfig.value?.dict_setting_option_name] || [])
 
 watch(() => systemConfigStore.systemConfig, (newVal) => {
   localSystemConfig.value = JSON.parse(JSON.stringify(newVal))
 }, { deep: true })
 
-watch(() => localSessionConfig.value.dictsSettingOptionName, async (name) => {
+watch(() => localSessionConfig.value.dict_setting_option_name, async (name) => {
   update_system_config_if_need()
   list.value = localSystemConfig.value?.dict_set_options[name] || []
   await nextTick()
@@ -161,7 +161,7 @@ const initSortable = () => {
       list.value.splice(newIndex as number, 0, item)
 
       // 同步回配置对象
-      const name = localSessionConfig.value.dictsSettingOptionName
+      const name = localSessionConfig.value.dict_setting_option_name
       if (name && localSystemConfig.value?.dict_set_options?.[name]) {
         localSystemConfig.value.dict_set_options[name] = [...list.value]
       }
@@ -217,7 +217,7 @@ const handleCreateDictSetOption = () => {
     .then(({ value }) => {
       update_system_config_if_need()
       props.webSocket?.sendCreateDictSetOption(value)
-      localSessionConfig.value.dictsSettingOptionName = value
+      localSessionConfig.value.dict_setting_option_name = value
       update_session_config_if_need()
     })
     .catch(() => {
@@ -228,7 +228,7 @@ const handleRenameDictSetOption = () => {
   ElMessageBox.prompt('请重命名词典设置可选项的名字', 'Tip', {
     confirmButtonText: 'OK',
     cancelButtonText: 'Cancel',
-    inputValue: localSessionConfig.value.dictsSettingOptionName,
+    inputValue: localSessionConfig.value.dict_setting_option_name,
     inputValidator: (value: string) => {
       const dict_set_options: {} = localSystemConfig.value?.dict_set_options;
       if (value in dict_set_options) {
@@ -241,8 +241,8 @@ const handleRenameDictSetOption = () => {
   })
     .then(({ value }) => {
       update_system_config_if_need()
-      props.webSocket?.sendRenameDictSetOption(localSessionConfig.value.dictsSettingOptionName, value)
-      localSessionConfig.value.dictsSettingOptionName = value
+      props.webSocket?.sendRenameDictSetOption(localSessionConfig.value.dict_setting_option_name, value)
+      localSessionConfig.value.dict_setting_option_name = value
       update_session_config_if_need()
     })
     .catch(() => {
@@ -251,7 +251,7 @@ const handleRenameDictSetOption = () => {
 
 const handleDeleteSelected = () => {
   ElMessageBox.confirm(
-    `The dictioary setting options 「${localSessionConfig.value.dictsSettingOptionName}」 will be deleted. Continue?`,
+    `The dictioary setting options 「${localSessionConfig.value.dict_setting_option_name}」 will be deleted. Continue?`,
     'Warning',
     {
       confirmButtonText: 'OK',
@@ -261,8 +261,8 @@ const handleDeleteSelected = () => {
     }
   )
     .then(() => {
-      props.webSocket?.sendRemoveDictSetOption(localSessionConfig.value.dictsSettingOptionName)
-      localSessionConfig.value.dictsSettingOptionName = 'default'
+      props.webSocket?.sendRemoveDictSetOption(localSessionConfig.value.dict_setting_option_name)
+      localSessionConfig.value.dict_setting_option_name = 'default'
     })
     .catch(() => {
     })
@@ -271,7 +271,7 @@ const handleDeleteSelected = () => {
 const refresh_dict_info = async () => {
   // 深拷贝数据
   localSessionConfig.value = JSON.parse(JSON.stringify(props.sessionConfig || {}))
-  list.value = localSystemConfig.value?.dict_set_options[localSessionConfig.value?.dictsSettingOptionName] || []
+  list.value = localSystemConfig.value?.dict_set_options[localSessionConfig.value?.dict_setting_option_name] || []
 
   // 等待 DOM 渲染完成后初始化拖拽
   await nextTick()

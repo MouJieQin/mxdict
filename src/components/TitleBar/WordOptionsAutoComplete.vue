@@ -224,13 +224,13 @@ const triggerAsyncSearch = () => {
             props.webSocket?.sendSearchHistoryRequest()
         } else {
             sendLookupKeyword(false)
-            props.webSocket?.sendKeywordOptionsSearch(keyword.value, props.sessionConfig.default_search_method.method, getDictSettingsForLookup(props.sessionConfig.dictsSettingOptionName))
+            props.webSocket?.sendKeywordOptionsSearch(keyword.value, props.sessionConfig.default_search_method.method, getDictSettingsForLookup(props.sessionConfig.dict_setting_option_name))
         }
     }, 200)
 }
 
 const sendLookupKeyword = (leftHistory: boolean = true) => {
-    props.webSocket?.sendLookupKeyword(keyword.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingOptionName), leftHistory)
+    props.webSocket?.sendLookupKeyword(keyword.value, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dict_setting_option_name), leftHistory)
 }
 
 const handleInputChange = () => {

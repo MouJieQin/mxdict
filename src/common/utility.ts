@@ -4,10 +4,10 @@ const systemConfigStore = useSystemConfigStore();
 
 
 
-const getDictSettingsForLookup = (dictsSettingOptionName: string) => {
+const getDictSettingsForLookup = (dict_setting_option_name: string) => {
     // return a list that contains the dict name which is not disabled in the same order.
     let dictnames: string[] = []
-    systemConfigStore.systemConfig.dict_set_options[dictsSettingOptionName].filter((item: DictSettingInfo) => item.is_enabled).map(item => dictnames.push(item.name))
+    systemConfigStore.systemConfig.dict_set_options[dict_setting_option_name].filter((item: DictSettingInfo) => item.is_enabled).map(item => dictnames.push(item.name))
     return dictnames
 }
 
@@ -16,7 +16,7 @@ const getDefaultSessionConfig = (sessionName: string) => {
     let sessionConfig: SessionConfig = {
         name: sessionName,
         default_folder: { "id": null },
-        dictsSettingOptionName: "default",
+        dict_setting_option_name: "default",
         default_search_method: { "method": "prefix_search" },
         pin: { "is_pinned": true }
     }

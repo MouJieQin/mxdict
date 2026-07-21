@@ -176,7 +176,7 @@ class SessionWebSocketService extends WebSocketService {
         )
     }
 
-    sendRemoveSessionConfig() {
+    sendRemoveSession() {
         this._send(
             'remove_session',
             {

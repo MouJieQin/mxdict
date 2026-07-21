@@ -198,10 +198,10 @@ const resize_wordoptions = async () => {
 }
 
 const setupDicsSettingsInfo = () => {
-    if (!sessionConfig.value?.dictsSettingOptionName || !(sessionConfig.value.dictsSettingOptionName in systemConfigStore.systemConfig.dict_set_options)) {
-        sessionConfig.value.dictsSettingOptionName = 'default'
+    if (!sessionConfig.value?.dict_setting_option_name || !(sessionConfig.value.dict_setting_option_name in systemConfigStore.systemConfig.dict_set_options)) {
+        sessionConfig.value.dict_setting_option_name = 'default'
     }
-    sessionDictsSettingInfo.value = systemConfigStore.systemConfig.dict_set_options[sessionConfig.value.dictsSettingOptionName]
+    sessionDictsSettingInfo.value = systemConfigStore.systemConfig.dict_set_options[sessionConfig.value.dict_setting_option_name]
     refreshDicsSettingsInfoFlag.value = !refreshDicsSettingsInfoFlag.value
 }
 

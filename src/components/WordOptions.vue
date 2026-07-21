@@ -92,7 +92,7 @@ watch(
 
 const handleWordClick = (word: string) => {
     selectedWord.value = word
-    props.webSocket?.sendLookupKeyword(word, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dictsSettingOptionName), true)
+    props.webSocket?.sendLookupKeyword(word, props.sessionConfig.default_folder.id, getDictSettingsForLookup(props.sessionConfig.dict_setting_option_name), true)
 }
 </script>
 
