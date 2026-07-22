@@ -36,49 +36,57 @@
                         </el-radio-group>
                     </el-form-item>
                 </div>
-            </el-form>
 
 
-            <div class="config-class">
-                <p class="config-class-title">收藏夹列表</p>
-                <el-table v-if="localFolderConfig" :data="localFolderConfig.folders.folder_info" height="350"
-                    style="width: 100%" @selection-change="handleSelectionChange" stripe>
-                    <el-table-column type="selection" width="55" />
-                    <el-table-column fixed prop="name" label="Name" width="130" show-overflow-tooltip sortable />
-                    <el-table-column prop="words_count" label="Total" sortable />
-                    <el-table-column prop="created_at" label="Created" width="110" show-overflow-tooltip sortable />
-                    <el-table-column prop="description" label="Description" width="180" show-overflow-tooltip />
-                    <el-table-column fixed="right" label="Operations" width="130">
-                        <template #default="scope">
-                            <el-button-group>
-                                <el-button :icon="Edit" size="small" @click="handleEdit(scope.$index, scope.row)" />
-                                <el-button :icon="Document" size="small" @click="handleView(scope.$index, scope.row)" />
-                                <el-popconfirm confirm-button-text="删除" confirm-button-type="danger"
-                                    cancel-button-text="取消" :icon="Delete" icon-color="#FF4949" title="确定删除收藏夹吗？"
-                                    @confirm="handleDelete(scope.$index, scope.row)">
-                                    <template #reference>
-                                        <el-button :icon="Delete" size="small" type="danger" />
-                                    </template>
-                                </el-popconfirm>
-                            </el-button-group>
-                        </template>
-                    </el-table-column>
-                </el-table>
-                <div style="margin-top: 20px">
-                    <el-button type="primary" :icon="Plus" @click="handleCreateFolder"></el-button>
-                    <el-button type="danger" :icon="Delete" @click="handleDeleteSelected"
-                        :disabled="disableDeleteButton"></el-button>
-                    <el-button @click="handleUpdateToAnki" :disabled="disableAnkiButton">
-                        <AnkiIcon :size="24" style="margin-right: 8px;" />
-                        Update to Anki
-                    </el-button>
-                    <el-select v-if="localFolderConfig" v-model="localSessionConfig.default_folder.id" filterable
-                        placeholder="Select Default Folder" style="margin-left: 20px;max-width: 240px;">
-                        <el-option v-for="item in defaultFolderOptions" :key="item.id" :label="item.name"
-                            :value="item.id" />
-                    </el-select>
+                <div class="config-class">
+                    <p class="config-class-title">收藏夹列表</p>
+                    <el-table v-if="localFolderConfig" :data="localFolderConfig.folders.folder_info" height="350"
+                        style="width: 100%" @selection-change="handleSelectionChange" stripe>
+                        <el-table-column type="selection" width="55" />
+                        <el-table-column fixed prop="name" label="Name" width="130" show-overflow-tooltip sortable />
+                        <el-table-column prop="words_count" label="Total" sortable />
+                        <el-table-column prop="created_at" label="Created" width="110" show-overflow-tooltip sortable />
+                        <el-table-column prop="description" label="Description" width="180" show-overflow-tooltip />
+                        <el-table-column fixed="right" label="Operations" width="130">
+                            <template #default="scope">
+                                <el-button-group>
+                                    <el-button :icon="Edit" size="small" @click="handleEdit(scope.$index, scope.row)" />
+                                    <el-button :icon="Document" size="small"
+                                        @click="handleView(scope.$index, scope.row)" />
+                                    <el-popconfirm confirm-button-text="删除" confirm-button-type="danger"
+                                        cancel-button-text="取消" :icon="Delete" icon-color="#FF4949" title="确定删除收藏夹吗？"
+                                        @confirm="handleDelete(scope.$index, scope.row)">
+                                        <template #reference>
+                                            <el-button :icon="Delete" size="small" type="danger" />
+                                        </template>
+                                    </el-popconfirm>
+                                </el-button-group>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div style="margin-top: 20px">
+                        <el-button type="primary" :icon="Plus" @click="handleCreateFolder"></el-button>
+                        <el-button type="danger" :icon="Delete" @click="handleDeleteSelected"
+                            :disabled="disableDeleteButton"></el-button>
+                        <el-button @click="handleUpdateToAnki" :disabled="disableAnkiButton">
+                            <AnkiIcon :size="24" style="margin-right: 8px;" />
+                            Update to Anki
+                        </el-button>
+                        <el-select v-if="localFolderConfig" v-model="localSessionConfig.default_folder.id" filterable
+                            placeholder="Select Default Folder" style="margin-left: 20px;max-width: 240px;">
+                            <el-option v-for="item in defaultFolderOptions" :key="item.id" :label="item.name"
+                                :value="item.id" />
+                        </el-select>
+                    </div>
                 </div>
-            </div>
+
+                <div class="config-class">
+                    <p class="config-class-title">优先后缀</p>
+                    <p class="config-class-desc">
+                        前缀距离搜索时的优先后缀
+                    </p>
+                </div>
+            </el-form>
         </div>
 
         <el-dialog v-model="createOrEditDialogVisible" :title="dialogTitle" width="500" align-center>
@@ -131,6 +139,7 @@
                 :folderName="folderIdNameToShow" :folderId="folderIdToShow" />
         </el-dialog>
     </div>
+
 </template>
 
 

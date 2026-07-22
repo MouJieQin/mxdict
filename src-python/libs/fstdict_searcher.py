@@ -24,11 +24,13 @@ class FstDictSearcher:
             logger.info(f"开始导入 {dict_name} 到 fstd 引擎...")
             self._load_dict(dict_name, fstdx_path)
         logger.info("所有词典加载完成")
-        if "prior_suffix" in UtilsBase.CONFIG:
-            self._prior_suffix = UtilsBase.CONFIG["prior_suffix"]
-            logger.info(f"prior_suffix: {self._prior_suffix}")
-            for _, value in self._prior_suffix.items():
-                self._fstd_engine.insert_prior_suffix(value)
+        self.reload_prior_suffix()
+
+    def reload_prior_suffix(self):
+        prior_suffix = UtilsBase.CONFIG["app"]["prior_suffix"]
+        self._fstd_engine.remove_all_prior_suffix()
+        for _, value in prior_suffix.items():
+            self._fstd_engine.insert_prior_suffix(value)
 
     def _load_dict(self, dict_name: str, dict_path: str):
         """加载词典"""

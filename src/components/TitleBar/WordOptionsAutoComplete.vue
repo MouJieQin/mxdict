@@ -80,6 +80,8 @@ const isDropdownVisible = ref(false)
 const popoverWidth = ref(300)
 const activeIndex = ref(-1)
 
+const optionsReceivedFlag = ref(true)
+const lastKeywordForOptionSearch = ref("")
 const inputRef = ref<InstanceType<typeof ElInput> | null>(null)
 const popoverRef = ref<any>(null)
 const virtualListRef = ref<any>(null)
@@ -207,7 +209,7 @@ const syncSuggestions = () => {
     })
 }
 
-watch(() => props.wordOptions, syncSuggestions, { deep: true })
+watch(() => props.wordOptions, () => { optionsReceivedFlag.value = true; syncSuggestions(); }, { deep: true })
 watch(() => props.searchHistory, syncSuggestions, { deep: true })
 watch(() => props.redirectWord, (newVal) => {
     keyword.value = newVal
@@ -216,15 +218,30 @@ watch(() => props.redirectWord, (newVal) => {
 watch(() => props.redirectHistoryWord, (newVal) => {
     keyword.value = newVal
 })
+watch(() => optionsReceivedFlag.value, (newVal) => {
+    if (newVal) {
+        lastKeywordForOptionSearch.value != keyword.value
+        sendKeywordOptionsSearch()
+    }
+})
+
+const sendKeywordOptionsSearch = () => {
+    lastKeywordForOptionSearch.value = keyword.value
+    props.webSocket?.sendKeywordOptionsSearch(keyword.value, props.sessionConfig.default_search_method.method, getDictSettingsForLookup(props.sessionConfig.dict_setting_option_name))
+}
 
 const triggerAsyncSearch = () => {
     if (searchDebounceTimer) { clearTimeout(searchDebounceTimer) }
     searchDebounceTimer = setTimeout(() => {
-        if (!keyword.value.trim()) {
+        const trimKeyword = keyword.value.trim()
+        if (!trimKeyword) {
             props.webSocket?.sendSearchHistoryRequest()
         } else {
             sendLookupKeyword(false)
-            props.webSocket?.sendKeywordOptionsSearch(keyword.value, props.sessionConfig.default_search_method.method, getDictSettingsForLookup(props.sessionConfig.dict_setting_option_name))
+            if (optionsReceivedFlag.value) {
+                optionsReceivedFlag.value = false
+                sendKeywordOptionsSearch()
+            }
         }
     }, 200)
 }
