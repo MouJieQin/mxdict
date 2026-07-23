@@ -499,17 +499,27 @@ class MessageHandler:
     @staticmethod
     async def _handle_add_dictionary(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
         dict_path = message["data"]["dict_path"]
-        msgs = fstdict_searcher.add_dictionary(dict_path)
+
+        async def send_progress(msg_: dict):
+            msg = {
+                "type": "add_dictionary",
+                "data": msg_
+            }
+            await SessionManager.send_msg_to_session_by_id(
+                session_id, connection_id, json.dumps(msg)
+            )
+        await fstdict_searcher.add_dictionary(dict_path, send_progress)
         msg = {
             "type": "add_dictionary",
             "data": {
-                "msgs": msgs
+                "type": "done"
             }
         }
         await SessionManager.send_msg_to_session_by_id(
             session_id, connection_id, json.dumps(msg)
         )
-        await SessionManager.send_dict_info_to_session(session_id, connection_id)
+        await SessionManager.broadcast_all_dict_info()
+        await SessionManager.broadcast_all_system_config()
 
     @staticmethod
     async def _handle_show_dict_in_folder(websocket: WebSocket, session_id: int, connection_id: int, message: dict):
@@ -521,4 +531,5 @@ class MessageHandler:
         dict_name = message["data"]["dict_name"]
         fstdict_searcher.remove_dictionary(dict_name)
         Utils.delete_dictionary(dict_name)
-        await SessionManager.send_dict_info_to_session(session_id, connection_id)
+        await SessionManager.broadcast_all_dict_info()
+        await SessionManager.broadcast_all_system_config()

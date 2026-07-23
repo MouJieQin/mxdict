@@ -64,6 +64,14 @@ class SessionManager:
         )
 
     @staticmethod
+    async def broadcast_all_dict_info():
+        msg = {
+            "type": "dict_info",
+            "data": Utils.DICT_INFO,
+        }
+        await SessionManager.broadcast_all(json.dumps(msg))
+
+    @staticmethod
     async def send_folder_config_to_session(session_id: int, connection_id: int):
         folder_info = Utils.db.get_all_folder_info()
         """向特定会话的WebSocket连接发送文件夹信息"""
@@ -84,7 +92,7 @@ class SessionManager:
                 "system_config": Utils.CONFIG,
             },
         }
-        print(msg)
+        # print(msg)
         await SessionManager.broadcast_all(json.dumps(msg))
 
     @staticmethod

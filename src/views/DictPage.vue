@@ -357,7 +357,7 @@ const handleWebSocketMessage = (message: any) => {
             ankiProgress.value[message.deck_name] = message.data
             break
         case 'add_dictionary':
-            addDictMsgs.value = message.data.msgs
+            addDictMsgs.value.push(message.data)
             break
         case 'error_session_not_exist':
             router.push('/')

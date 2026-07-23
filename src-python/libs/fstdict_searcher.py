@@ -4,6 +4,7 @@ from typing import Dict, Optional
 from libs.log_config import logger
 from libs.config import UtilsBase
 from pathlib import Path
+from typing import Callable
 import fstd
 import fstdtools
 
@@ -63,7 +64,7 @@ class FstDictSearcher:
             return
         msgs.append({"msg": f"不存在词典 {dict_name}，跳过 {file}", "type": "warning"})
 
-    def _add_dictionary_from_dir(self, dict_path_str: str):
+    async def _add_dictionary_from_dir(self, dict_path_str: str, send_progress: Callable):
         dict_path = Path(dict_path_str)
         css = []
         js = []
@@ -99,7 +100,9 @@ class FstDictSearcher:
                 reader = fstd.FstdxReader(fstdx_path)
                 if reader:
                     logger.warning(f"词典 {dict_name} 已存在，跳过 {fstdx_}")
-                    msgs.append({"msg": f"词典 {dict_name} 已存在，跳过 {fstdx_}", "type": "warning"})
+                    msg = {"type": "warning", "msg": f"词典 {dict_name} 已存在，跳过 {fstdx_}"}
+                    await send_progress(msg)
+                    # msgs.append({"msg": f"词典 {dict_name} 已存在，跳过 {fstdx_}", "type": "warning"})
                     continue
             UtilsBase.createDirIfnotExists(dict_dir)
             UtilsBase.copyFile(fstdx_, dict_dir)
@@ -113,13 +116,13 @@ class FstDictSearcher:
                 reader = fstd.FstdxReader(fstdx_path)
                 if reader:
                     logger.warning(f"词典 {dict_name} 已存在，跳过 {mdx_}")
-                    msgs.append({"msg": f"词典 {dict_name} 已存在，跳过 {mdx_}", "type": "warning"})
+                    await send_progress({"msg": f"词典 {dict_name} 已存在，跳过 {mdx_}", "type": "warning"})
                     continue
             UtilsBase.createDirIfnotExists(dict_dir)
             ret = fstdtools.convert(mdx_, fstdx_path, compress_level=5, compress_dict_size=130, block_size=32)
             if ret != 0:
                 logger.error(f"转换词典 {mdx_} 失败")
-                msgs.append({"msg": f"转换词典 {mdx_} 失败", "type": "error"})
+                await send_progress({"msg": f"转换词典 {mdx_} 失败", "type": "error"})
                 continue
             new_dict_names.append(dict_name)
 
@@ -132,7 +135,7 @@ class FstDictSearcher:
                 ret = fstdtools.convert(item, output_path, compress_level=5, compress_dict_size=130, block_size=32)
                 if ret != 0:
                     logger.error(f"转换词典 {item} 失败")
-                    msgs.append({"msg": f"转换词典 {item} 失败", "type": "error"})
+                    await send_progress({"msg": f"转换词典 {item} 失败", "type": "error"})
             for item in fstdd:
                 UtilsBase.copyFile(item, dict_dir)
             for item in cover:
@@ -143,7 +146,7 @@ class FstDictSearcher:
                 UtilsBase.copyFile(item, dict_dir)
             UtilsBase.Config.checkDictInfo(Path(dict_dir))
             self._load_dict(dict_name, fstdx_path)
-            msgs.append({"msg": f"词典 {dict_name} 添加成功", "type": "success"})
+            await send_progress({"msg": f"词典 {dict_name} 添加成功", "type": "success"})
             return msgs
 
         reload_dict_names = []
@@ -151,14 +154,14 @@ class FstDictSearcher:
             dict_name = Path(item).stem
             dict_dir = UtilsBase.getDictDir(dict_name)
             if not os.path.exists(dict_dir):
-                msgs.append({"msg": f"不存在词典 {dict_name}，跳过 {item}", "type": "warning"})
+                await send_progress({"msg": f"不存在词典 {dict_name}，跳过 {item}", "type": "warning"})
                 continue
 
             output_path = os.path.join(dict_dir, dict_name + ".fstdd")
             ret = fstdtools.convert(item, output_path, compress_level=5, compress_dict_size=130, block_size=32)
             if ret != 0:
                 logger.error(f"转换词典 {item} 失败")
-                msgs.append({"msg": f"转换词典 {item} 失败", "type": "error"})
+                await send_progress({"msg": f"转换词典 {item} 失败", "type": "error"})
             reload_dict_names.append(dict_name)
 
         for item in fstdd:
@@ -181,34 +184,36 @@ class FstDictSearcher:
 
         return msgs
 
-    def _add_dictionary_from_dir_2_depth(self, dir: Path):
+    async def _add_dictionary_from_dir_2_depth(self, dir: Path, send_progress: Callable):
         """从目录添加词典"""
         msgs = []
         for item in dir.iterdir():
             if item.is_dir():
-                msgs_ = self._add_dictionary_from_dir(str(item.absolute()))
+                msgs_ = await self._add_dictionary_from_dir(str(item.absolute()), send_progress)
                 msgs.extend(msgs_)
-        msgs_ = self._add_dictionary_from_dir(str(dir.absolute()))
+        msgs_ = await self._add_dictionary_from_dir(str(dir.absolute()), send_progress)
         msgs.extend(msgs_)
         return msgs
 
-    def add_dictionary(self, dict_path_str: str):
+    async def add_dictionary(self, dict_path_str: str, send_progress: Callable):
         dict = Path(dict_path_str)
         if not dict.exists():
             logger.error(f"词典路径 {dict_path_str} 不存在")
-            return [{"msg": f"词典路径 {dict_path_str} 不存在", "type": "error"}]
+            await send_progress({"msg": f"词典路径 {dict_path_str} 不存在", "type": "error"})
+            return
         if dict.is_file():
             parent = dict.parent
-            msgs = self._add_dictionary_from_dir_2_depth(parent)
+            msgs = await self._add_dictionary_from_dir_2_depth(parent, send_progress)
             UtilsBase.Config.renew_dict_set_options()
             return msgs
         elif dict.is_dir():
-            msgs = self._add_dictionary_from_dir_2_depth(dict)
+            msgs = await self._add_dictionary_from_dir_2_depth(dict, send_progress)
             UtilsBase.Config.renew_dict_set_options()
             return msgs
         else:
             logger.error(f"词典路径 {dict_path_str} 不是文件或目录")
-            return [{"msg": f"词典路径 {dict_path_str} 不是文件或目录", "type": "error"}]
+            await send_progress({"msg": f"词典路径 {dict_path_str} 不是文件或目录", "type": "error"})
+            return
 
     def lookup(
         self,

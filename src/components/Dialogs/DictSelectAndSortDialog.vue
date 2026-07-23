@@ -5,8 +5,8 @@
       拖拽(.fstdx .fstdd)或(.mdx .mdd)文件到此
     </div>
     <div>
-      您可以访问论坛 <el-link href="https://forum.freemdict.com" type="primary" target="_blank">freemdict</el-link>，或直接从 <el-link
-        href="https://downloads.freemdict.com" type="primary" target="_blank">download</el-link> 下载词典资源
+      您可以访问论坛 <el-link href="https://forum.freemdict.com" type="primary" target="_blank">freemdict</el-link>，或直接从
+      <el-link href="https://downloads.freemdict.com" type="primary" target="_blank">download</el-link> 下载词典资源
     </div>
   </div>
   <div class="dict-set-options">
@@ -16,6 +16,7 @@
         <el-button type="danger" :icon="Delete" @click="handleDeleteSelected"
           :disabled="disableDeleteButton"></el-button>
         <el-button :icon="Edit" @click="handleRenameDictSetOption" :disabled="disableEditButton"></el-button>
+
         <el-select v-model="localSessionConfig.dict_setting_option_name" filterable
           placeholder="Select dict settings option" style="margin-left: 20px;max-width: 240px;">
           <el-option v-for="(_, name) in localSystemConfig.dict_set_options" :key="name" :label="name" :value="name" />
@@ -58,6 +59,34 @@
       </div>
     </div>
   </div>
+  <el-dialog class="add-dict-dialog" v-model="addDictVisible" :title="`Add Dictionary`" width="700"
+    :close-on-click-modal="false" :close-on-press-escape="false" draggable :show-close="true">
+    <!-- :close-on-click-modal="false" :close-on-press-escape="false" draggable :show-close="false"> -->
+    This is a test for adding dictionary.
+    <div v-for="(item, index) in props.addDictMsgs" :key="index">
+      <p v-if="item.type == 'error'" style="color:var(--el-color-danger)">{{ item.msg }}</p>
+      <p v-else-if="item.type == 'warning'" style="color:var(--el-color-warning)">{{ item.msg }}</p>
+      <p v-else-if="item.type == 'success'" style="color:var(--el-color-success)">{{ item.msg }}</p>
+      <p v-else-if="item.type == 'done'" style="color:var(--el-color-success)">Done.</p>
+    </div>
+    <!-- <div v-for="(item, index) in multipleSelection" :key="index">
+      <div class="config-class">
+        <p class="config-class-title">{{ item.name }}</p>
+        <AnkiPorgress :webSocket="props.webSocket" :ankiProgress="ankiProgresses[item.name]"
+          :ankiDialogVisible="ankiDialogVisible" />
+      </div>
+    </div> -->
+    <!-- <template #footer>
+      <div class="dialog-footer">
+        <el-button v-if="!isAllAnkiDone" type="danger" @click="ankiBeforeClose">
+          Cancel
+        </el-button>
+        <el-button v-else type="primary" @click="ankiBeforeClose">
+          Confirm
+        </el-button>
+      </div>
+    </template> -->
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
@@ -74,6 +103,7 @@ import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { ElNotification } from 'element-plus'
 import { BsUpload } from 'vue-icons-plus/bs'
 
+const addDictVisible = ref(false)
 const isTauriEnv = computed(() => {
   return props.env === ''
 })
@@ -284,19 +314,19 @@ const refresh_dict_info = async () => {
   initSortable()
 }
 
-watch(() => props.addDictMsgs, async (newVal) => {
-  if (newVal.length > 0) {
-    let msg = ''
-    for (let item of newVal) {
-      msg += item.msg + '\n'
-    }
-    ElNotification({
-      title: 'Prompt',
-      message: msg,
-      duration: 0,
-    })
-  }
-})
+// watch(() => props.addDictMsgs, async (newVal) => {
+//   if (newVal.length > 0) {
+//     let msg = ''
+//     for (let item of newVal) {
+//       msg += item.msg + '\n'
+//     }
+//     ElNotification({
+//       title: 'Prompt',
+//       message: msg,
+//       duration: 0,
+//     })
+//   }
+// })
 
 watch(() => props.refreshDicsSettingsInfoFlag, async (newVal) => {
   await refresh_dict_info()
@@ -381,6 +411,7 @@ onBeforeUnmount(() => {
 })
 
 const handleFileProcessing = async (paths: string[]) => {
+  addDictVisible.value = true
   for (const filePath of paths) {
     props.webSocket?.sendAddDictionary(filePath)
   }
