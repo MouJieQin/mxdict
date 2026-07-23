@@ -59,33 +59,23 @@
       </div>
     </div>
   </div>
-  <el-dialog class="add-dict-dialog" v-model="addDictVisible" :title="`Add Dictionary`" width="700"
-    :close-on-click-modal="false" :close-on-press-escape="false" draggable :show-close="true">
+  <el-dialog class="add-dict-dialog" v-model="addDictVisible" :title="`Adding Dictionary`" width="700"
+    :close-on-click-modal="false" :close-on-press-escape="false" draggable :show-close="false">
     <!-- :close-on-click-modal="false" :close-on-press-escape="false" draggable :show-close="false"> -->
-    This is a test for adding dictionary.
     <div v-for="(item, index) in props.addDictMsgs" :key="index">
-      <p v-if="item.type == 'error'" style="color:var(--el-color-danger)">{{ item.msg }}</p>
+      <p v-if="item.type == 'info'" style="color:var(--el-color-primary)">{{ item.msg }}</p>
       <p v-else-if="item.type == 'warning'" style="color:var(--el-color-warning)">{{ item.msg }}</p>
+      <p v-else-if="item.type == 'error'" style="color:var(--el-color-danger)">{{ item.msg }}</p>
       <p v-else-if="item.type == 'success'" style="color:var(--el-color-success)">{{ item.msg }}</p>
       <p v-else-if="item.type == 'done'" style="color:var(--el-color-success)">Done.</p>
     </div>
-    <!-- <div v-for="(item, index) in multipleSelection" :key="index">
-      <div class="config-class">
-        <p class="config-class-title">{{ item.name }}</p>
-        <AnkiPorgress :webSocket="props.webSocket" :ankiProgress="ankiProgresses[item.name]"
-          :ankiDialogVisible="ankiDialogVisible" />
-      </div>
-    </div> -->
-    <!-- <template #footer>
+    <template #footer>
       <div class="dialog-footer">
-        <el-button v-if="!isAllAnkiDone" type="danger" @click="ankiBeforeClose">
-          Cancel
-        </el-button>
-        <el-button v-else type="primary" @click="ankiBeforeClose">
+        <el-button v-if="isAddDictDone" type="primary" @click="addDictVisible = false">
           Confirm
         </el-button>
       </div>
-    </template> -->
+    </template>
   </el-dialog>
 </template>
 
@@ -104,6 +94,11 @@ import { ElNotification } from 'element-plus'
 import { BsUpload } from 'vue-icons-plus/bs'
 
 const addDictVisible = ref(false)
+
+const isAddDictDone = computed(() => {
+  return props.addDictMsgs.length == 0 ? false : props.addDictMsgs[props.addDictMsgs.length - 1].type == 'done'
+})
+
 const isTauriEnv = computed(() => {
   return props.env === ''
 })
@@ -145,6 +140,10 @@ const props = defineProps({
     default: true,
   },
 })
+
+const emits = defineEmits<{
+  (e: 'clear:addDictMsgs'): void
+}>()
 
 const listRef = ref<HTMLElement | null>(null)
 const localSessionConfig = ref<SessionConfig>(JSON.parse(JSON.stringify(props.sessionConfig || {})))
@@ -411,6 +410,7 @@ onBeforeUnmount(() => {
 })
 
 const handleFileProcessing = async (paths: string[]) => {
+  emits('clear:addDictMsgs')
   addDictVisible.value = true
   for (const filePath of paths) {
     props.webSocket?.sendAddDictionary(filePath)

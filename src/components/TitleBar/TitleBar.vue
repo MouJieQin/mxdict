@@ -120,7 +120,8 @@
     <el-dialog v-model="dictSSDialogVisible" fullscreen>
         <DictSelectAndSortDialog :webSocket="props.webSocket" :env="props.env"
             :dictSSDialogVisible="dictSSDialogVisible" :sessionConfig="props.sessionConfig"
-            :addDictMsgs="props.addDictMsgs" :refreshDicsSettingsInfoFlag="props.refreshDicsSettingsInfoFlag">
+            :addDictMsgs="props.addDictMsgs" :refreshDicsSettingsInfoFlag="props.refreshDicsSettingsInfoFlag"
+            @clear:addDictMsgs="() => emits('clear:addDictMsgs')">
         </DictSelectAndSortDialog>
     </el-dialog>
 </template>
@@ -241,6 +242,7 @@ const props = defineProps({
 
 const emits = defineEmits<{
     (e: 'change:keyword', keyword: string): void
+    (e: 'clear:addDictMsgs'): void
 }>()
 const router = useRouter()
 const sessionsMenuVisble = ref(false)

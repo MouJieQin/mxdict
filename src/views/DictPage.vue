@@ -7,7 +7,8 @@
                 :searchHistory="searchHistory" :isPinned="isFloatingWindowPinned" :lastSearchKeyword="lastSearchKeyword"
                 :hasResultLastSearch="hasResultLastSearch" :noteContent="noteContent" :wordOptions="wordOptions"
                 :redirectWord="redirectWord" @change:keyword="handleChangeKeyword"
-                :iframeKeydownEvent="iframeKeydownEvent" :ankiProgress="ankiProgress" :addDictMsgs="addDictMsgs"
+                @clear:addDictMsgs="() => addDictMsgs = []" :iframeKeydownEvent="iframeKeydownEvent"
+                :ankiProgress="ankiProgress" :addDictMsgs="addDictMsgs"
                 :refreshDicsSettingsInfoFlag="refreshDicsSettingsInfoFlag" />
         </el-header>
         <el-main class="no-padding-main">
