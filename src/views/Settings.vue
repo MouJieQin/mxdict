@@ -89,7 +89,7 @@
             </el-form>
         </div>
 
-        <el-dialog v-model="createOrEditDialogVisible" :title="dialogTitle" width="500" align-center>
+        <el-dialog v-model="createOrEditDialogVisible" :title="dialogTitle" width="500" align-center @keydown.enter.prevent.stop>
             <el-form ref="ruleFormRef" style="max-width: 600px" :model="ruleForm" status-icon :rules="rules"
                 label-width="auto" class="demo-ruleForm">
                 <el-form-item label="Name" prop="name" required>
@@ -212,6 +212,10 @@ watch(() => localSessionConfig.value.default_folder.id, () => {
 
 watch(() => props.ankiProgress, (newVal) => {
     ankiProgresses.value = JSON.parse(JSON.stringify(newVal))
+}, { deep: true })
+
+watch(() => props.sessionConfig, (newVak) => {
+    localSessionConfig.value = JSON.parse(JSON.stringify(newVak))
 }, { deep: true })
 
 watch(() => systemConfigStore.systemConfig, (newVal) => {

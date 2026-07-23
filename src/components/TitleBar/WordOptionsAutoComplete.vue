@@ -2,7 +2,8 @@
     <div class="floating-window-search-container">
         <el-input v-if="!showPopoverSuggestions" ref="inputRef" v-model="keyword" autocomplete="off" autocorrect="off"
             autocapitalize="off" spellcheck="false" placeholder="Search" clearable style="font-size: 1rem;"
-            @input="handleInputChange" @keydown.enter.prevent="handleKeyEnter">
+            @input="handleInputChange" @keydown.enter.prevent="handleKeyEnter" @compositionstart="onCompositionStart"
+            @compositionend="onCompositionEnd">
             <template #prefix>
                 <SearchMethodSelect :searchMethod="props.sessionConfig.default_search_method?.method || 'prefix_search'"
                     @update-search-method="handleSearchMethodChange" />
@@ -93,6 +94,7 @@ const lastKeywordForOptionSearch = ref("")
 const inputRef = ref<InstanceType<typeof ElInput> | null>(null)
 const popoverRef = ref<any>(null)
 const virtualListRef = ref<any>(null)
+const isComposing = ref(false)
 
 let searchDebounceTimer: any = null
 let resizeObserver: ResizeObserver | null = null
@@ -185,11 +187,25 @@ const handleKeyUp = () => {
     scrollToActiveItem()
 }
 
+const onCompositionStart = () => {
+    console.log("onCompositionStart")
+    isComposing.value = true
+}
+const onCompositionEnd = () => {
+    setTimeout(() => {
+        console.log("onCompositionEnd")
+        isComposing.value = false
+    }, 20);
+}
+
 const handleKeyEnter = () => {
+    if (isComposing.value) return
     if (props.sessionConfig.default_search_method.method == "regex_search") {
         if (keyword.value.trim() && willScanAllFstNodes(keyword.value)) {
-            props.webSocket?.sendKeywordOptionsNote(keyword.value, `FSTD_SEARCHING`)
-            sendKeywordOptionsSearch(true)
+            if (optionsReceivedFlag.value) {
+                optionsReceivedFlag.value = false
+                sendKeywordOptionsSearch(true)
+            }
         }
     }
     if (!showPopoverSuggestions) {

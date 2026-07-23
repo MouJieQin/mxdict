@@ -270,6 +270,9 @@ const handCreateSession = () => {
         confirmButtonText: 'OK',
         cancelButtonText: 'Cancel',
         inputValidator: (value: string) => {
+            if(!value){
+                return "不能为空"
+            }
             if (value.length > 30) {
                 return "不能超过30个字符"
             }
