@@ -270,7 +270,7 @@ const handCreateSession = () => {
         confirmButtonText: 'OK',
         cancelButtonText: 'Cancel',
         inputValidator: (value: string) => {
-            if(!value){
+            if (!value) {
                 return "不能为空"
             }
             if (value.length > 30) {
@@ -322,12 +322,10 @@ const handRemoveSession = () => {
 }
 
 const redirectSession = (sessionId: number) => {
-    if (isTauriEnv && sessionId != 1) {
-        const systemConfigStore = useSystemConfigStore();
-        let localSystemConfig = JSON.parse(JSON.stringify(systemConfigStore.systemConfig))
-        localSystemConfig.app.session.id = sessionId
-        props.webSocket.sendUpdateSystemConfig(localSystemConfig)
-    }
+    const systemConfigStore = useSystemConfigStore();
+    let localSystemConfig = JSON.parse(JSON.stringify(systemConfigStore.systemConfig))
+    localSystemConfig.app.session.id = sessionId
+    props.webSocket.sendUpdateSystemConfig(localSystemConfig)
     router.push({
         path: `/dict/${sessionId}`,
         query: { env: props.env }

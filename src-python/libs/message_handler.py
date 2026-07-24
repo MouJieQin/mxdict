@@ -259,7 +259,7 @@ class MessageHandler:
         websocket: WebSocket, session_id: int, connection_id: int, message: dict
     ):
         all_id = Utils.db.get_all_session_id()
-        for id in range(1, 10):
+        for id in range(1, 100):
             if id not in all_id:
                 Utils.db.update_session_config(id, message["data"]["config"])
                 msg = {

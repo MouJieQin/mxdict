@@ -133,8 +133,8 @@ async function renderIframe() {
   // 只更新内容，不重建整个 iframe
   doc.body.innerHTML = doc_content.value
   const p = doc.createElement('p')
-  // p.textContent = "tail"
-  p.id = props.dictionaryRoot + '-dict-tail'
+  p.textContent = "tail"
+  p.id = props.dictionaryName + '-dict-tail'
   doc.body.appendChild(p)
   setTimeout(() => {
     updateIframeHeight()
@@ -171,10 +171,11 @@ function injectClickHandler(doc: Document) {
 
       if (href.startsWith('entry://')) {
         e.preventDefault();
+        const raw_href = a.getAttribute('href') || a.href;
         window.parent.postMessage({
           type: 'ENTRY_CLICK',
           iframeId: '${iframeId.value}',
-          entry: href.replace('entry://', '')
+          entry: raw_href.replace('entry://', '')
         }, '*');
       }
       else if (href.startsWith('sound://')) {
@@ -221,7 +222,7 @@ function updateIframeHeight() {
   const iframe = iframeRef.value
   if (!iframe?.contentDocument) return
   const doc = iframe.contentDocument
-  const realHeight = doc.getElementById(`${props.dictionaryRoot}-dict-tail`)?.getBoundingClientRect().bottom || 0
+  const realHeight = doc.getElementById(`${props.dictionaryName}-dict-tail`)?.getBoundingClientRect().bottom || 0
   // 赋值给 iframe
   iframe.style.height = `${realHeight + 10}px`
 
@@ -266,7 +267,7 @@ watch(iframeRef, (val) => {
       changedByThisCode.value = true
 
       // 无论内容多少，直接取最新高度
-      const realHeight = doc.getElementById(`${props.dictionaryRoot}-dict-tail`)?.getBoundingClientRect().bottom || 0
+      const realHeight = doc.getElementById(`${props.dictionaryName}-dict-tail`)?.getBoundingClientRect().bottom || 0
       console.log(props.dictionaryRoot, "**realHeight:", realHeight)
       // 赋值给 iframe
       val.style.height = `${realHeight + 10}px`

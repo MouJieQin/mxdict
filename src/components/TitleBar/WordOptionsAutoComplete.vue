@@ -264,6 +264,9 @@ watch(() => optionsReceivedFlag.value, (newVal) => {
 const sendKeywordOptionsSearch = (forced: boolean = false) => {
     lastKeywordForOptionSearch.value = keyword.value
     if (props.sessionConfig.default_search_method.method == "regex_search") {
+        if (!keyword.value.trim()) {
+            return
+        }
         if (willScanAllFstNodes(keyword.value)) {
             if (!forced) {
                 props.webSocket?.sendKeywordOptionsNote(keyword.value, `FSTD_WARN该正则表达式「${keyword.value}」可能存在性能风险，按 enter 键继续检索。`)
